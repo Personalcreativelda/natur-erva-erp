@@ -62,7 +62,7 @@ const DEFAULT_CARDS: DashboardCard[] = [
  { id: 'payment-status', label: 'Valor Pendente no Período', visible: false, order: 17, category: 'vendas' }
 ];
 
-const PREFERENCES_KEY = 'naturerva_dashboard_preferences_v1';
+const PREFERENCES_KEY = 'app_dashboard_preferences_v1';
 
 const DashboardPreferencesContext = createContext<DashboardPreferencesContextType | undefined>(undefined);
 

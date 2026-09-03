@@ -2,9 +2,23 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import api, { downloadBlob } from '../../core/services/apiClient';
 import { Product } from '../../core/types/types';
 import { getEffectivePrice } from '../../core/utils/pricing';
-import { Settings, Plus, Trash2, Edit2, X as XIcon, Eye, Download, Printer } from 'lucide-react';
+import { Settings, Plus, Trash2, Edit2, X as XIcon, Eye, Download, Printer, FileText, Clock, Send, CheckCircle, RefreshCw, Wallet } from 'lucide-react';
 import { useAppAuth } from '../../auth/hooks/useAppAuth';
 import { PageShell } from '../../core/components/layout/PageShell';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
+
+function KpiCard({ label, value, sub, icon, accent }: { label: string; value: string | number; sub?: string; icon: React.ReactNode; accent: string }) {
+ return (
+ <div className="bg-surface-raised border border-border-default rounded-xl p-4 flex flex-col gap-2">
+ <div className="flex items-center justify-between">
+ <span className="text-xs font-semibold text-content-muted uppercase tracking-wide">{label}</span>
+ <span className={`p-2 rounded-lg ${accent}`}>{icon}</span>
+ </div>
+ <p className="text-xl font-bold text-content-primary">{value}</p>
+ {sub && <span className="text-xs text-content-muted">{sub}</span>}
+ </div>
+ );
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface QuoteItem {
@@ -77,7 +91,7 @@ const STATUS_STYLE: Record<QuoteStatus, string> = {
 };
 
 // ── Quote document builder ─────────────────────────────────────────────────────
-function printQuoteDoc(q: Quote, tax: { companyName: string; companyNuit: string; companyAddress: string; companyPhone: string; companyEmail: string; vatRate: number; bankName?: string; bankAccount?: string; bankIban?: string; bankAccountHolder?: string; bankSwift?: string; bankAccounts?: BankAccount[] }, logoUrl = `${window.location.origin}/logo.png`, mode: 'print' | 'preview' | 'download' = 'print', issuer?: { name: string; role?: string }) {
+function printQuoteDoc(q: Quote, tax: { companyName: string; companyNuit: string; companyAddress: string; companyPhone: string; companyEmail: string; vatRate: number; bankName?: string; bankAccount?: string; bankIban?: string; bankAccountHolder?: string; bankSwift?: string; bankAccounts?: BankAccount[] }, logoUrl = '', mode: 'print' | 'preview' | 'download' = 'print', issuer?: { name: string; role?: string }) {
  const vatMult = 1 + tax.vatRate / 100;
  const baseIva = q.total / vatMult;
  const ivaAmt = q.total - baseIva;
@@ -167,7 +181,7 @@ ${toolbar}
 <div id="doc">
 <div class="header">
  <div style="display:flex;align-items:center;gap:14px">
- <img src="${logoUrl}" onerror="this.style.display='none'" style="max-width:90px;max-height:55px;object-fit:contain">
+ ${logoUrl ? `<img src="${logoUrl}" style="max-width:90px;max-height:55px;object-fit:contain">` : ''}
  <div>
  <div class="company">${tax.companyName}</div>
  <div style="font-size:11px;color:#666;margin-top:3px">NUIT: ${tax.companyNuit || '—'}</div>
@@ -226,6 +240,7 @@ const emptyForm = (): Omit<Quote, 'id' | 'quoteNumber' | 'subtotal' | 'total' | 
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export const QuotesPage: React.FC = () => {
+ const confirm = useConfirm();
  const { currentUser } = useAppAuth();
 
  const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -349,7 +364,7 @@ export const QuotesPage: React.FC = () => {
 
  // ── Delete ───────────────────────────────────────────────────────────────────
  const deleteQuote = async (id: string) => {
- if (!confirm('Eliminar esta cotação permanentemente?')) return;
+ if (!(await confirm('Eliminar esta cotação permanentemente?', { variant: 'danger', confirmLabel: 'Eliminar' }))) return;
  setDeleting(id);
  await api.delete(`/quotes/${id}`);
  setQuotes(prev => prev.filter(q => q.id !== id));
@@ -387,7 +402,7 @@ export const QuotesPage: React.FC = () => {
  const issuer = currentUser ? { name: currentUser.name, role: currentUser.role } : undefined;
 
  const openQuote = (q: Quote, mode: 'print' | 'preview' | 'download') =>
- printQuoteDoc(q, taxConfig, taxConfig.logoUrl || `${window.location.origin}/logo.png`, mode, issuer);
+ printQuoteDoc(q, taxConfig, taxConfig.logoUrl || '', mode, issuer);
  const handlePrint = (q: Quote) => openQuote(q, 'print');
 
  // ── Filtered products for search ─────────────────────────────────────────────
@@ -421,20 +436,18 @@ export const QuotesPage: React.FC = () => {
  {/* ── Stats ── */}
  {stats && (
  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
- {[
- { label: 'Total', value: stats.total, sub: 'cotações' },
- { label: 'Rascunho', value: stats.rascunho, sub: 'por enviar' },
- { label: 'Enviadas', value: stats.enviada, sub: 'aguardando' },
- { label: 'Aceites', value: stats.aceite, sub: 'este mês' },
- { label: 'Convertidas', value: stats.convertida, sub: 'em vendas' },
- { label: 'Valor Mês', value: fmt(stats.total_mes), sub: 'total c/IVA', isMoney: true },
- ].map(s => (
- <div key={s.label} className="bg-surface-raised border border-border-default rounded-xl p-4">
- <p className="text-xs text-content-muted font-medium uppercase tracking-wider">{s.label}</p>
- <p className={`mt-1 font-semibold ${s.isMoney ? 'text-content-secondary text-base' : 'text-content-primary text-xl'}`}>{s.value}</p>
- <p className="text-xs text-content-muted mt-0.5">{s.sub}</p>
- </div>
- ))}
+ <KpiCard label="Total" value={stats.total} sub="cotações"
+ icon={<FileText className="w-4 h-4 text-blue-600" />} accent="bg-blue-50 dark:bg-blue-900/20" />
+ <KpiCard label="Rascunho" value={stats.rascunho} sub="por enviar"
+ icon={<Clock className="w-4 h-4 text-gray-600" />} accent="bg-gray-100 dark:bg-gray-800" />
+ <KpiCard label="Enviadas" value={stats.enviada} sub="aguardando"
+ icon={<Send className="w-4 h-4 text-orange-600" />} accent="bg-orange-50 dark:bg-orange-900/20" />
+ <KpiCard label="Aceites" value={stats.aceite} sub="este mês"
+ icon={<CheckCircle className="w-4 h-4 text-green-600" />} accent="bg-green-50 dark:bg-green-900/20" />
+ <KpiCard label="Convertidas" value={stats.convertida} sub="em vendas"
+ icon={<RefreshCw className="w-4 h-4 text-purple-600" />} accent="bg-purple-50 dark:bg-purple-900/20" />
+ <KpiCard label="Valor Mês" value={fmt(stats.total_mes)} sub="total c/IVA"
+ icon={<Wallet className="w-4 h-4 text-brand-600" />} accent="bg-brand-50 dark:bg-brand-900/20" />
  </div>
  )}
 

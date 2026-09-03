@@ -10,6 +10,8 @@ interface LabelPrintModalProps {
  onClose: () => void;
  /** Called after barcodes are auto-assigned so the parent can refresh its product list */
  onBarcodeAssigned?: () => void;
+ /** Render inline as a page card (no overlay/X, used when this is a full admin page) instead of a floating modal. */
+ embedded?: boolean;
 }
 
 interface LabelItem { product: Product; qty: number; }
@@ -180,7 +182,7 @@ window.onload = function() {
 }
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
-export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ products, preselected = [], open, onClose, onBarcodeAssigned }) => {
+export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ products, preselected = [], open, onClose, onBarcodeAssigned, embedded = false }) => {
  const [step, setStep] = useState<Step>('select');
  const [search, setSearch] = useState('');
  const [queue, setQueue] = useState<Map<string, LabelItem>>(() => {
@@ -279,23 +281,24 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ products, pres
  const activeFormat = BARCODE_FORMATS.find(f => f.id === selectedFormat);
  const activeSize = LABEL_SIZES.find(s => s.id === selectedSize);
 
- return (
- <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
- <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-
- <div className="relative bg-surface-raised rounded-2xl shadow-2xl w-full max-w-6xl max-h-[96vh] sm:max-h-[92vh] flex flex-col overflow-hidden">
+ const dialog = (
+ <div className={embedded
+ ? 'relative bg-surface-raised rounded-2xl border border-border-default shadow-sm w-full h-[calc(100vh-220px)] min-h-[520px] flex flex-col overflow-hidden'
+ : 'relative bg-surface-raised rounded-2xl shadow-2xl w-full max-w-6xl max-h-[96vh] sm:max-h-[92vh] flex flex-col overflow-hidden'}>
 
  {/* Header */}
  <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border-default shrink-0">
  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
  <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600 shrink-0" />
  <h2 className="text-base sm:text-lg font-semibold text-content-primary truncate">
- {step === 'select' ? 'Impressão de Etiquetas' : 'Formato do Código de Barras'}
+ {step === 'select' ? 'Selecionar Produtos' : 'Formato do Código de Barras'}
  </h2>
  </div>
+ {!embedded && (
  <button onClick={onClose} className="p-1.5 sm:p-2 rounded-xl text-content-muted hover:bg-surface-base transition-colors shrink-0">
  <X className="w-5 h-5" />
  </button>
+ )}
  </div>
 
  {/* ── STEP 1: Product selection ── */}
@@ -635,6 +638,14 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ products, pres
  </div>
  )}
  </div>
+ );
+
+ if (embedded) return dialog;
+
+ return (
+ <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+ <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+ {dialog}
  </div>
  );
 };

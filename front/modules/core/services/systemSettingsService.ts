@@ -43,6 +43,12 @@ export const getSystemSettings = async (): Promise<SystemSettings> => {
       ...(config.themePrimaryColor ? { primary_color: config.themePrimaryColor } : {}),
       ...(config.themeFont ? { theme_font: config.themeFont } : {}),
       ...(config.themeRadius ? { theme_radius: config.themeRadius } : {}),
+      // Identidade da empresa vinda da BD (tax_config) — permite reconfigurar
+      // o sistema para outra empresa sem tocar no código.
+      ...(config.companyName ? { company_name: config.companyName } : {}),
+      ...(config.companyEmail ? { company_email: config.companyEmail } : {}),
+      ...(config.companyPhone ? { company_phone: config.companyPhone } : {}),
+      ...(config.companyAddress ? { company_address: config.companyAddress } : {}),
     };
 
     localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: settings }));

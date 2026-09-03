@@ -74,12 +74,17 @@ const Politica = lazy(() => import('./modules/shop/pages/Politica'));
 const Contactos = lazy(() => import('./modules/shop/pages/Contactos'));
 // Novos módulos
 const HR            = lazy(() => import('./modules/hr/pages/HR').then(m => ({ default: m.HR })));
+const StaffIncentives = lazy(() => import('./modules/hr/pages/StaffIncentives').then(m => ({ default: m.StaffIncentives })));
+const AssistantSettings = lazy(() => import('./modules/admin/pages/AssistantSettings').then(m => ({ default: m.AssistantSettings })));
 const Projects      = lazy(() => import('./modules/projects/pages/Projects').then(m => ({ default: m.Projects })));
 const Helpdesk      = lazy(() => import('./modules/helpdesk/pages/Helpdesk').then(m => ({ default: m.Helpdesk })));
-const Timesheets    = lazy(() => import('./modules/timesheets/pages/Timesheets').then(m => ({ default: m.Timesheets })));
 const Messaging     = lazy(() => import('./modules/messaging/pages/Messaging').then(m => ({ default: m.Messaging })));
 const Subscriptions = lazy(() => import('./modules/subscriptions/pages/Subscriptions').then(m => ({ default: m.Subscriptions })));
 const Documents     = lazy(() => import('./modules/documents/pages/Documents').then(m => ({ default: m.Documents })));
+const ClinicDashboard = lazy(() => import('./modules/clinic/pages/ClinicDashboard').then(m => ({ default: m.ClinicDashboard })));
+const ClinicPatients  = lazy(() => import('./modules/clinic/pages/ClinicPatients').then(m => ({ default: m.ClinicPatients })));
+const ClinicAgenda    = lazy(() => import('./modules/clinic/pages/ClinicAgenda').then(m => ({ default: m.ClinicAgenda })));
+const ClinicProtocols = lazy(() => import('./modules/clinic/pages/ClinicProtocols').then(m => ({ default: m.ClinicProtocols })));
 
 // Services & Utils
 import { Lock, User as UserIcon, Loader2, Info, Eye, EyeOff } from 'lucide-react';
@@ -147,6 +152,7 @@ import { CompatibilityRedirect } from './components/CompatibilityRedirect';
 const PublicLayout = lazy(() => import('./components/layouts/PublicLayout').then(m => ({ default: m.PublicLayout })));
 const AdminLayout = lazy(() => import('./components/layouts/AdminLayout').then(m => ({ default: m.AdminLayout })));
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { PageSkeleton, ConnectionErrorState } from './modules/core/components/ui/Skeleton';
 import { ShopProvider } from './contexts/ShopContext';
 import { getAdminPath } from './modules/core/routes/adminRoutes';
 import { useAppAuth } from './modules/auth/hooks/useAppAuth';
@@ -171,7 +177,8 @@ const App = () => {
     handleLogin,
     handleLogout,
     setActivePage,
-    setIsShopMode
+    setIsShopMode,
+    sessionCheckError
   } = useAppAuth();
   const [darkMode, setDarkMode] = useState(true); // Default to Dark Mode
   const location = useRouterLocation();
@@ -188,6 +195,8 @@ const App = () => {
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [counts, setCounts] = useState<{ customers: number; orders: number; products: number; sales: number; purchases: number; suppliers: number } | null>(null);
 
   // Capturar código de afiliado do URL e persistir em localStorage para não se perder na navegação
@@ -195,6 +204,14 @@ const App = () => {
     const ref = new URLSearchParams(window.location.search).get('ref');
     if (ref) localStorage.setItem('affiliate_ref', ref);
   }, []);
+
+  // Avisar (sem forçar logout) quando a verificação de sessão falhou por não conseguir
+  // contactar o servidor — para não se confundir com "utilizador não autenticado".
+  useEffect(() => {
+    if (sessionCheckError) {
+      showToast('Não foi possível confirmar a sessão — servidor inacessível.', 'error');
+    }
+  }, [sessionCheckError, showToast]);
 
   // Initialize dark mode state from localStorage on mount
   useEffect(() => {
@@ -271,6 +288,7 @@ const App = () => {
   // Declarar loadData antes de ser usado nos useEffects
   const loadData = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const [p, c, o, s, pur, pr, sup, countsData] = await Promise.all([
         dataService.getProducts(),
@@ -290,8 +308,10 @@ const App = () => {
       setPurchaseRequests(pr);
       setSuppliers(sup);
       setCounts(countsData);
+      setHasLoadedOnce(true);
     } catch (e) {
       console.error("Failed to load data", e);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -464,19 +484,25 @@ const App = () => {
               <Route index element={
                 <ProtectedRoute user={currentUser} permission="dashboard.view">
                   <TrackedPage pagePath="/admin" pageTitle="Dashboard">
-                    <Dashboard
-                      orders={orders}
-                      customers={customers}
-                      sales={sales}
-                      products={products}
-                      purchases={purchases}
-                      purchaseRequests={purchaseRequests}
-                      counts={counts}
-                      onNavigate={(page) => {
-                        const route = getAdminPath(page);
-                        navigate(route);
-                      }}
-                    />
+                    {loadError && !hasLoadedOnce ? (
+                      <ConnectionErrorState onRetry={loadData} />
+                    ) : loading && !hasLoadedOnce ? (
+                      <PageSkeleton />
+                    ) : (
+                      <Dashboard
+                        orders={orders}
+                        customers={customers}
+                        sales={sales}
+                        products={products}
+                        purchases={purchases}
+                        purchaseRequests={purchaseRequests}
+                        counts={counts}
+                        onNavigate={(page) => {
+                          const route = getAdminPath(page);
+                          navigate(route);
+                        }}
+                      />
+                    )}
                   </TrackedPage>
                 </ProtectedRoute>
               } />
@@ -634,6 +660,13 @@ const App = () => {
                   </TrackedPage>
                 </ProtectedRoute>
               } />
+              <Route path="rh/metas" element={
+                <ProtectedRoute user={currentUser} permission="hr.view">
+                  <TrackedPage pagePath="/admin/rh/metas" pageTitle="Metas & Bónus">
+                    <StaffIncentives showToast={showToast} />
+                  </TrackedPage>
+                </ProtectedRoute>
+              } />
               <Route path="projectos" element={
                 <ProtectedRoute user={currentUser} permission="users.view">
                   <TrackedPage pagePath="/admin/projectos" pageTitle="Projectos">
@@ -648,13 +681,8 @@ const App = () => {
                   </TrackedPage>
                 </ProtectedRoute>
               } />
-              <Route path="timesheets" element={
-                <ProtectedRoute user={currentUser} permission="users.view">
-                  <TrackedPage pagePath="/admin/timesheets" pageTitle="Planilhas de Horas">
-                    <Timesheets showToast={showToast} />
-                  </TrackedPage>
-                </ProtectedRoute>
-              } />
+              {/* Planilhas de Horas passou a ser um separador dentro de Recursos Humanos */}
+              <Route path="timesheets" element={<Navigate to="/admin/rh" replace />} />
               <Route path="mensagens" element={
                 <ProtectedRoute user={currentUser} permission="users.view">
                   <TrackedPage pagePath="/admin/mensagens" pageTitle="Mensagens">
@@ -673,6 +701,41 @@ const App = () => {
                 <ProtectedRoute user={currentUser} permission="users.view">
                   <TrackedPage pagePath="/admin/documentos" pageTitle="Documentos">
                     <Documents showToast={showToast} />
+                  </TrackedPage>
+                </ProtectedRoute>
+              } />
+              <Route path="assistente" element={
+                <ProtectedRoute user={currentUser} permission="system.backup">
+                  <TrackedPage pagePath="/admin/assistente" pageTitle="Assistente IA">
+                    <AssistantSettings showToast={showToast} />
+                  </TrackedPage>
+                </ProtectedRoute>
+              } />
+              <Route path="clinica" element={
+                <ProtectedRoute user={currentUser} permission="clinic.view">
+                  <TrackedPage pagePath="/admin/clinica" pageTitle="Clínica">
+                    <ClinicDashboard showToast={showToast} />
+                  </TrackedPage>
+                </ProtectedRoute>
+              } />
+              <Route path="clinica/pacientes" element={
+                <ProtectedRoute user={currentUser} permission="clinic.view">
+                  <TrackedPage pagePath="/admin/clinica/pacientes" pageTitle="Clínica — Pacientes">
+                    <ClinicPatients showToast={showToast} />
+                  </TrackedPage>
+                </ProtectedRoute>
+              } />
+              <Route path="clinica/agenda" element={
+                <ProtectedRoute user={currentUser} permission="clinic.view">
+                  <TrackedPage pagePath="/admin/clinica/agenda" pageTitle="Clínica — Agenda">
+                    <ClinicAgenda showToast={showToast} />
+                  </TrackedPage>
+                </ProtectedRoute>
+              } />
+              <Route path="clinica/protocolos" element={
+                <ProtectedRoute user={currentUser} permission="clinic.view">
+                  <TrackedPage pagePath="/admin/clinica/protocolos" pageTitle="Clínica — Protocolos">
+                    <ClinicProtocols showToast={showToast} />
                   </TrackedPage>
                 </ProtectedRoute>
               } />

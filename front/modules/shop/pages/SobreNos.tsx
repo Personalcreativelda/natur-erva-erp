@@ -1,14 +1,23 @@
-﻿import React from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Leaf, Heart, Award, Users, Sprout, Shield } from 'lucide-react';
 import { PageHeroBanner } from '../components/PageHeroBanner';
+import { getSystemSettings } from '../../core/services/systemSettingsService';
 
 const SobreNos: React.FC = () => {
+  const [companyName, setCompanyName] = useState('a empresa');
+
+  useEffect(() => {
+    getSystemSettings().then(settings => {
+      if (settings.company_name) setCompanyName(settings.company_name);
+    }).catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-surface-base">
 
       <PageHeroBanner
         pageKey="sobre"
-        defaultTitle="Sobre a Naturerva"
+        defaultTitle={`Sobre a ${companyName}`}
         defaultSubtitle="Somos uma empresa moçambicana dedicada a levar produtos naturais e saudáveis até à sua casa, com qualidade, confiança e cuidado."
         defaultIcon={<Leaf className="w-7 h-7" />}
         defaultBgColor="#14532d"
@@ -21,7 +30,7 @@ const SobreNos: React.FC = () => {
             <div>
               <h2 className="text-2xl font-bold text-content-primary mb-4">A Nossa História</h2>
               <p className="text-content-muted leading-relaxed mb-4">
-                A Naturerva nasceu do desejo de oferecer alternativas naturais e saudáveis aos moçambicanos. Acreditamos que a natureza tem respostas para o nosso bem-estar e que todos merecem acesso a produtos de qualidade.
+                A {companyName} nasceu do desejo de oferecer alternativas naturais e saudáveis aos moçambicanos. Acreditamos que a natureza tem respostas para o nosso bem-estar e que todos merecem acesso a produtos de qualidade.
               </p>
               <p className="text-content-muted leading-relaxed">
                 Ao longo do nosso percurso, temos trabalhado em estreita colaboração com fornecedores de confiança para garantir que cada produto que chega até si é seguro, eficaz e produzido com respeito pelo ambiente.
@@ -83,7 +92,7 @@ const SobreNos: React.FC = () => {
           </div>
           <h2 className="text-2xl font-bold text-content-primary mb-4">A Nossa Equipa</h2>
           <p className="text-content-muted max-w-2xl mx-auto leading-relaxed">
-            A Naturerva é formada por pessoas apaixonadas por saúde natural, comprometidas em oferecer o melhor serviço e os melhores produtos. Estamos sempre disponíveis para ajudar e aconselhar os nossos clientes.
+            A {companyName} é formada por pessoas apaixonadas por saúde natural, comprometidas em oferecer o melhor serviço e os melhores produtos. Estamos sempre disponíveis para ajudar e aconselhar os nossos clientes.
           </p>
         </div>
       </section>

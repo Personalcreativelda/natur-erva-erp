@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
 import api from '../../core/services/apiClient';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 import {
   Headphones, Plus, Loader2, X, Pencil, Trash2, Send,
   AlertCircle, Clock, CheckCircle, Search, MessageCircle,
@@ -36,7 +38,7 @@ const inputCls = 'w-full px-3 py-2 text-sm rounded-lg border border-border-defau
 const labelCls = 'block text-xs font-medium text-content-secondary mb-1';
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
       <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-2xl animate-modal-enter">
         <div className="flex items-center justify-between p-5 border-b border-border-default">
@@ -45,11 +47,13 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
         </div>
         <div className="p-5 max-h-[80vh] overflow-y-auto">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
 export function Helpdesk({ showToast }: Props) {
+  const confirm = useConfirm();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -118,7 +122,7 @@ export function Helpdesk({ showToast }: Props) {
   };
 
   const deleteTicket = async (id: number) => {
-    if (!confirm('Eliminar ticket?')) return;
+    if (!(await confirm('Eliminar ticket?', { variant: 'danger', confirmLabel: 'Eliminar' }))) return;
     try { await api.delete(`/helpdesk/${id}`); showToast?.('Eliminado', 'success'); load(); setSelected(null); }
     catch { showToast?.('Erro', 'error'); }
   };

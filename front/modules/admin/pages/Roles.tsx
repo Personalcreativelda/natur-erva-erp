@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Role, Permission } from '../../core/types/types';
 import api from '../../core/services/apiClient';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 import { Search, Plus, Edit, Trash2, Shield } from 'lucide-react';
 import { normalizeForSearch } from '../../core/services/serviceUtils';
 import { PageShell } from '../../core/components/layout/PageShell';
@@ -9,6 +10,7 @@ export const Roles: React.FC<{
  currentUser?: any;
  showToast: (message: string, type: 'success' | 'error' | 'info', duration?: number) => void;
 }> = ({ currentUser, showToast }) => {
+ const confirm = useConfirm();
  const [roles, setRoles] = useState<Role[]>([]);
  const [permissions, setPermissions] = useState<Permission[]>([]);
  const [loading, setLoading] = useState(true);
@@ -110,7 +112,7 @@ export const Roles: React.FC<{
  showToast('Roles do sistema não podem ser apagados', 'error');
  return;
  }
- if (!confirm('Tem certeza que deseja apagar este role? Esta ação não pode ser desfeita.')) return;
+ if (!(await confirm('Esta ação não pode ser desfeita.', { title: 'Apagar este role?', variant: 'danger', confirmLabel: 'Apagar' }))) return;
 
  try {
  await api.delete(`/roles/${roleId}`);

@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { LanguageProvider } from './modules/core/contexts/LanguageContext';
 import { ToastProvider } from './modules/core/contexts/ToastContext';
+import { ConfirmProvider } from './modules/core/contexts/ConfirmContext';
 import { BrowserRouter } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
@@ -20,7 +21,9 @@ try {
         <BrowserRouter>
           <LanguageProvider>
             <ToastProvider>
-              <App />
+              <ConfirmProvider>
+                <App />
+              </ConfirmProvider>
             </ToastProvider>
           </LanguageProvider>
         </BrowserRouter>

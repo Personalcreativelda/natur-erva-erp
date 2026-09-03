@@ -28,7 +28,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
 
  useEffect(() => {
  // Check for saved email in localStorage
- const savedEmail = localStorage.getItem('naturerva_saved_email');
+ const savedEmail = localStorage.getItem('app_saved_email');
  if (savedEmail) {
  setIdentifier(savedEmail);
  setRememberMe(true);
@@ -42,9 +42,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
 
  try {
  if (rememberMe) {
- localStorage.setItem('naturerva_saved_email', identifier);
+ localStorage.setItem('app_saved_email', identifier);
  } else {
- localStorage.removeItem('naturerva_saved_email');
+ localStorage.removeItem('app_saved_email');
  }
 
  const { user, error: loginError } = await authService.login(identifier, password);

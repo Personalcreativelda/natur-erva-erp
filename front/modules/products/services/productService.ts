@@ -90,10 +90,8 @@ export const productService = {
   },
 
   async getProductsCount(): Promise<number> {
-    try {
-      const res = await api.get<{ count: number }>('/products/count');
-      return res.count;
-    } catch { return 0; }
+    const res = await api.get<{ count: number }>('/products/count');
+    return res.count;
   },
 
   async addProduct(product: Omit<Product, 'id'>): Promise<Product | null> {
@@ -158,9 +156,7 @@ export const productService = {
   // ── Categories ──────────────────────────────────────────────────────────────
 
   async getCategories(): Promise<any[]> {
-    try {
-      return await api.get<any[]>('/categories');
-    } catch { return []; }
+    return await api.get<any[]>('/categories');
   },
 
   async addCategory(category: { name: string; description?: string; color?: string; icon?: string; imageData?: string; isActive?: boolean }): Promise<any | null> {
@@ -196,18 +192,7 @@ export const productService = {
   // ── Units ────────────────────────────────────────────────────────────────────
 
   async getUnits(): Promise<ProductUnit[]> {
-    try {
-      return await api.get<ProductUnit[]>('/units');
-    } catch {
-      return [
-        { id: 'un', name: 'Unidade', abbreviation: 'un' },
-        { id: 'kg', name: 'Kilograma', abbreviation: 'kg' },
-        { id: 'g',  name: 'Grama',     abbreviation: 'g' },
-        { id: 'l',  name: 'Litro',     abbreviation: 'l' },
-        { id: 'ml', name: 'Mililitro', abbreviation: 'ml' },
-        { id: 'dz', name: 'Dúzia',     abbreviation: 'dz' },
-      ];
-    }
+    return await api.get<ProductUnit[]>('/units');
   },
 
   async addUnit(unit: { name: string; abbreviation: string; description?: string; isActive?: boolean }): Promise<any | null> {

@@ -6,6 +6,7 @@ import {
  Plus, CheckCircle, Calendar, Trash2, Star, TrendingUp, Package, User
 } from 'lucide-react';
 import { dataService } from '../../../core/services/dataService';
+import { useConfirm } from '../../../core/contexts/ConfirmContext';
 import { formatDateTimeLong, formatDateOnly, formatDateWithOptions, extractLocalDate } from '../../../core/utils/dateUtils';
 import { orderService } from '../../../sales/services/orderService';
 import { useMobile } from '../../../core/hooks/useMobile';
@@ -37,6 +38,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  onOrderClick,
  showToast
 }) => {
+ const confirm = useConfirm();
  const isMobile = useMobile(768);
  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'insights' | 'actions' | 'feedbacks'>('overview');
  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
@@ -957,7 +959,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  </button>
  <button
  onClick={async () => {
- if (confirm('Tem certeza que deseja apagar esta ação?')) {
+ if (await confirm('Tem certeza que deseja apagar esta ação?', { variant: 'danger', confirmLabel: 'Apagar' })) {
  const success = await dataService.deleteCustomerAction(action.id);
  if (success) {
  setCustomerActions(prev => prev.filter(a => a.id !== action.id));
@@ -1072,7 +1074,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  </button>
  <button
  onClick={async () => {
- if (confirm('Tem certeza que deseja apagar este feedback?')) {
+ if (await confirm('Tem certeza que deseja apagar este feedback?', { variant: 'danger', confirmLabel: 'Apagar' })) {
  const success = await dataService.deleteCustomerFeedback(feedback.id);
  if (success) {
  setCustomerFeedbacks(prev => prev.filter(f => f.id !== feedback.id));

@@ -2,6 +2,9 @@
 import { Send, Users, Mail, MessageCircle, Loader2, RefreshCw, ExternalLink, Paperclip, X as XIcon } from 'lucide-react';
 import api from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
+import { getSystemSettings } from '../../core/services/systemSettingsService';
+
+const DEFAULT_WA_MESSAGE = 'Olá {nome}! 🌿 Temos novidades especiais para si.';
 
 interface Customer {
  id: string;
@@ -44,10 +47,20 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
  const [sending, setSending] = useState(false);
 
  // WhatsApp form
- const [waMessage, setWaMessage] = useState('Olá {nome}! 🌿 Temos novidades especiais para si na NaturErva. Visite-nos em https://www.natur-erva.co.mz');
+ const [waMessage, setWaMessage] = useState(DEFAULT_WA_MESSAGE);
  const [waLinks, setWaLinks] = useState<WALink[]>([]);
  const [waResult, setWaResult] = useState<{ mode: string; sent?: number; failed?: number } | null>(null);
  const [generatingWA, setGeneratingWA] = useState(false);
+
+ useEffect(() => {
+ // Preencher o template com a empresa configurada, só se ainda não tiver sido editado
+ getSystemSettings().then(settings => {
+ if (!settings.company_name) return;
+ setWaMessage(prev => prev === DEFAULT_WA_MESSAGE
+ ? `Olá {nome}! 🌿 Temos novidades especiais para si na ${settings.company_name}.${settings.company_website ? ` Visite-nos em ${settings.company_website}` : ''}`
+ : prev);
+ }).catch(() => {});
+ }, []);
 
  useEffect(() => {
  api.get<Customer[]>('/marketing/customers')

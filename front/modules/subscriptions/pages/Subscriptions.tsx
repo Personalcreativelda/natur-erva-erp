@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
 import api from '../../core/services/apiClient';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 import { RefreshCw, Plus, Loader2, X, Pencil, Trash2, CreditCard } from 'lucide-react';
 import type { Toast } from '../../core/components/ui/Toast';
 
@@ -24,6 +26,7 @@ const labelCls = 'block text-xs font-medium text-content-secondary mb-1';
 const fmt = (n: number) => `MT ${Number(n||0).toFixed(2)}`;
 
 export function Subscriptions({ showToast }: Props) {
+  const confirm = useConfirm();
   const [tab, setTab] = useState<typeof TAB[keyof typeof TAB]>(TAB.SUBS);
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -101,7 +104,7 @@ export function Subscriptions({ showToast }: Props) {
   };
 
   const deletePlan = async (id: number) => {
-    if (!confirm('Eliminar plano?')) return;
+    if (!(await confirm('Eliminar plano?', { variant: 'danger', confirmLabel: 'Eliminar' }))) return;
     try { await api.delete(`/subscriptions/plans/${id}`); showToast?.('Eliminado', 'success'); load(); }
     catch { showToast?.('Erro', 'error'); }
   };
@@ -211,7 +214,7 @@ export function Subscriptions({ showToast }: Props) {
       </div>
 
       {/* Modal Nova Assinatura */}
-      {modal === 'sub' && (
+      {modal === 'sub' && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
           <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-md animate-modal-enter">
             <div className="flex items-center justify-between p-5 border-b border-border-default">
@@ -262,10 +265,11 @@ export function Subscriptions({ showToast }: Props) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {modal === 'plan' && (
+      {modal === 'plan' && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
           <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-md animate-modal-enter">
             <div className="flex items-center justify-between p-5 border-b border-border-default">
@@ -306,7 +310,8 @@ export function Subscriptions({ showToast }: Props) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </PageShell>
   );

@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Tag, Check, X, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
 import api from '../../core/services/apiClient';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 import { PageShell } from '../../core/components/layout/PageShell';
 
 interface Coupon {
@@ -35,6 +36,7 @@ const empty = (): Partial<Coupon> => ({
 export const Coupons: React.FC<{
  showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
 }> = ({ showToast }) => {
+ const confirm = useConfirm();
  const [coupons, setCoupons] = useState<Coupon[]>([]);
  const [loading, setLoading] = useState(true);
  const [showModal, setShowModal] = useState(false);
@@ -92,7 +94,7 @@ export const Coupons: React.FC<{
  };
 
  const handleDelete = async (id: string) => {
- if (!confirm('Apagar este cupão?')) return;
+ if (!(await confirm('Apagar este cupão?', { variant: 'danger', confirmLabel: 'Apagar' }))) return;
  setDeletingId(id);
  try {
  await api.delete(`/coupons/${id}`);

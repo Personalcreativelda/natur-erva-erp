@@ -128,8 +128,8 @@ export const loadCompanyLogo = async (): Promise<string | null> => {
 export const getCompanyInfo = async (): Promise<{ name: string; website: string; email?: string; phone?: string; address?: string }> => {
   if (cachedSettings) {
     return {
-      name: cachedSettings.company_name || 'Natur Erva',
-      website: cachedSettings.company_website || 'https://natur-erva.co.mz',
+      name: cachedSettings.company_name || '',
+      website: cachedSettings.company_website || '',
       email: cachedSettings.company_email,
       phone: cachedSettings.company_phone,
       address: cachedSettings.company_address,
@@ -138,10 +138,10 @@ export const getCompanyInfo = async (): Promise<{ name: string; website: string;
 
   const settings = await getSystemSettings();
   cachedSettings = settings;
-  
+
   return {
-    name: settings.company_name || 'Natur Erva',
-    website: settings.company_website || 'https://natur-erva.co.mz',
+    name: settings.company_name || '',
+    website: settings.company_website || '',
     email: settings.company_email,
     phone: settings.company_phone,
     address: settings.company_address,
@@ -266,10 +266,10 @@ export const addPDFFooter = (
   pdf.text(footerText, pdfWidth / 2, pdfHeight - 8, { align: 'center' });
 
   // Informações da empresa (opcional)
-  if (options?.showCompanyInfo) {
+  if (options?.showCompanyInfo && cachedSettings?.company_name) {
     pdf.setFontSize(7);
     pdf.setTextColor(150, 150, 150);
-    pdf.text('Natur Erva', margin, pdfHeight - 8);
+    pdf.text(cachedSettings.company_name, margin, pdfHeight - 8);
   }
 };
 

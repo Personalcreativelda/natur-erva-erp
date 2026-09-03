@@ -1,14 +1,15 @@
-﻿import React from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Shield, RefreshCw, Truck, Lock, AlertCircle } from 'lucide-react';
 import { PageHeroBanner } from '../components/PageHeroBanner';
+import { getSystemSettings } from '../../core/services/systemSettingsService';
 
-const sections = [
+const buildSections = (companyName: string) => [
   {
     icon: <Truck className="w-5 h-5" />,
     title: 'Política de Entrega',
     color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
     items: [
-      'As entregas são realizadas nas zonas cobertas pela Naturerva em Maputo e arredores.',
+      `As entregas são realizadas nas zonas cobertas pela ${companyName} em Maputo e arredores.`,
       'O prazo de entrega é de 1 a 3 dias úteis após confirmação do pagamento.',
       'A taxa de entrega varia conforme a zona e é indicada no momento do checkout.',
       'Entregas gratuitas poderão estar disponíveis mediante promoções ou valor mínimo de encomenda.',
@@ -45,15 +46,25 @@ const sections = [
     color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20',
     items: [
       'Os preços apresentados no site estão em Meticais (MT) e incluem todos os impostos aplicáveis.',
-      'A Naturerva reserva-se o direito de alterar os preços sem aviso prévio.',
+      `A ${companyName} reserva-se o direito de alterar os preços sem aviso prévio.`,
       'As imagens dos produtos são meramente ilustrativas e podem diferir ligeiramente do produto real.',
-      'A Naturerva não se responsabiliza por atrasos causados por fatores externos ao nosso controlo.',
+      `A ${companyName} não se responsabiliza por atrasos causados por fatores externos ao nosso controlo.`,
       'Para qualquer dúvida ou reclamação, entre em contacto connosco.',
     ],
   },
 ];
 
 const Politica: React.FC = () => {
+  const [companyName, setCompanyName] = useState('a empresa');
+
+  useEffect(() => {
+    getSystemSettings().then(settings => {
+      if (settings.company_name) setCompanyName(settings.company_name);
+    }).catch(() => {});
+  }, []);
+
+  const sections = buildSections(companyName);
+
   return (
     <div className="min-h-screen bg-surface-base">
 

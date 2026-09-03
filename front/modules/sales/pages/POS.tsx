@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Minus, ShoppingCart, CheckCircle, X, Printer, Store, LogOut, Clock, ScanLine, Smartphone, Wifi, ChevronLeft } from 'lucide-react';
 import api from '../../core/services/apiClient';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 import { orderService } from '../services/orderService';
 import { Product, OrderItem, OrderStatus } from '../../core/types/types';
 import type { Toast } from '../../core/components/ui/Toast';
@@ -88,7 +89,7 @@ const fmtDuration = (from: string) => {
  return mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
 };
 
-function printReceipt(r: SaleReceipt, vatRate = 16, logoUrl = `${window.location.origin}/logo.png`) {
+function printReceipt(r: SaleReceipt, vatRate = 16, logoUrl = '', companyName = '') {
  const vatMult = 1 + vatRate / 100;
  const baseIva = r.total / vatMult;
  const ivaAmt = r.total - baseIva;
@@ -101,7 +102,7 @@ function printReceipt(r: SaleReceipt, vatRate = 16, logoUrl = `${window.location
  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Recibo #${r.orderNumber}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:12px;width:80mm;margin:0 auto;padding:12px}.c{text-align:center}.b{font-weight:bold}.lg{font-size:15px}hr{border:none;border-top:1px dashed #000;margin:7px 0}table{width:100%;border-collapse:collapse}.totrow{font-weight:bold;font-size:13px}.iva{font-size:10px;color:#666}img.logo{display:block;margin:0 auto 6px;max-width:120px;max-height:60px;object-fit:contain}</style>
 </head><body>
-<div class="c"><img class="logo" src="${logoUrl}" alt="Logo" onerror="this.style.display='none'"><p class="b lg">NATUR ERVA</p><p>natural é saudável</p><p>${r.date}</p><p>Recibo #${r.orderNumber}</p>
+<div class="c">${logoUrl ? `<img class="logo" src="${logoUrl}" alt="Logo">` : ''}${companyName ? `<p class="b lg">${companyName.toUpperCase()}</p>` : ''}<p>${r.date}</p><p>Recibo #${r.orderNumber}</p>
 ${r.customerName !== 'Cliente POS' ? `<p>Cliente: ${r.customerName}</p>` : ''}</div>
 <hr><table>${rows}</table><hr>
 <table>
@@ -121,7 +122,7 @@ ${r.customerName !== 'Cliente POS' ? `<p>Cliente: ${r.customerName}</p>` : ''}</
  if (win) { win.document.write(html); win.document.close(); }
 }
 
-function printInvoice(r: SaleReceipt, tax: TaxConfig, invoiceNumber: string, logoUrl = `${window.location.origin}/logo.png`) {
+function printInvoice(r: SaleReceipt, tax: TaxConfig, invoiceNumber: string, logoUrl = '') {
  const vatMult = 1 + tax.vatRate / 100;
  const baseIva = r.total / vatMult;
  const ivaAmt = r.total - baseIva;
@@ -162,7 +163,7 @@ function printInvoice(r: SaleReceipt, tax: TaxConfig, invoiceNumber: string, log
 </style></head><body>
 <div class="header">
  <div style="display:flex;align-items:center;gap:14px">
- <img src="${logoUrl}" alt="Logo" onerror="this.style.display='none'" style="max-width:100px;max-height:60px;object-fit:contain;display:block">
+ ${logoUrl ? `<img src="${logoUrl}" alt="Logo" style="max-width:100px;max-height:60px;object-fit:contain;display:block">` : ''}
  <div>
  <div class="company">${tax.companyName}</div>
  <div style="font-size:11px;color:#666;margin-top:4px">NUIT: ${tax.companyNuit || '—'}</div>
@@ -220,7 +221,7 @@ function printInvoice(r: SaleReceipt, tax: TaxConfig, invoiceNumber: string, log
 }
 
 // ── Venda a Dinheiro (VD) ─────────────────────────────────────────────────────
-function printVD(r: SaleReceipt, tax: TaxConfig, vdNumber: string, logoUrl = `${window.location.origin}/logo.png`) {
+function printVD(r: SaleReceipt, tax: TaxConfig, vdNumber: string, logoUrl = '') {
  const vatMult = 1 + tax.vatRate / 100;
  const baseIva = r.total / vatMult;
  const ivaAmt = r.total - baseIva;
@@ -259,7 +260,7 @@ function printVD(r: SaleReceipt, tax: TaxConfig, vdNumber: string, logoUrl = `${
 </style></head><body>
 <div class="header">
  <div style="display:flex;align-items:center;gap:14px">
- <img src="${logoUrl}" alt="Logo" onerror="this.style.display='none'" style="max-width:90px;max-height:55px;object-fit:contain">
+ ${logoUrl ? `<img src="${logoUrl}" alt="Logo" style="max-width:90px;max-height:55px;object-fit:contain">` : ''}
  <div>
  <div class="company">${tax.companyName}</div>
  <div style="font-size:11px;color:#666;margin-top:3px">NUIT: ${tax.companyNuit || '—'}</div>
@@ -316,7 +317,7 @@ function printVD(r: SaleReceipt, tax: TaxConfig, vdNumber: string, logoUrl = `${
 }
 
 // ── Cotação ───────────────────────────────────────────────────────────────────
-function printCotacao(items: CartItem[], tax: TaxConfig, quoteNumber: string, logoUrl = `${window.location.origin}/logo.png`, customerName = '', validityDays = 15) {
+function printCotacao(items: CartItem[], tax: TaxConfig, quoteNumber: string, logoUrl = '', customerName = '', validityDays = 15) {
  const subtotal = items.reduce((s, c) => s + c.price * c.quantity, 0);
  const vatMult = 1 + tax.vatRate / 100;
  const baseIva = subtotal / vatMult;
@@ -366,7 +367,7 @@ function printCotacao(items: CartItem[], tax: TaxConfig, quoteNumber: string, lo
 </style></head><body>
 <div class="header">
  <div style="display:flex;align-items:center;gap:14px">
- <img src="${logoUrl}" alt="Logo" onerror="this.style.display='none'" style="max-width:90px;max-height:55px;object-fit:contain">
+ ${logoUrl ? `<img src="${logoUrl}" alt="Logo" style="max-width:90px;max-height:55px;object-fit:contain">` : ''}
  <div>
  <div class="company">${tax.companyName}</div>
  <div style="font-size:11px;color:#666;margin-top:3px">NUIT: ${tax.companyNuit || '—'}</div>
@@ -435,6 +436,7 @@ function printCotacao(items: CartItem[], tax: TaxConfig, quoteNumber: string, lo
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export const POS: React.FC<POSProps> = ({ showToast }) => {
+ const confirm = useConfirm();
  const navigate = useNavigate();
  // Session
  const [session, setSession] = useState<PosSession | null | 'loading'>('loading');
@@ -457,7 +459,7 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  const [done, setDone] = useState<SaleReceipt | null>(null);
  const [showScanner, setShowScanner] = useState(false);
  const [mobileCartOpen, setMobileCartOpen] = useState(false);
- const [taxConfig, setTaxConfig] = useState<TaxConfig>({ companyName: 'NaturErva', companyNuit: '', companyAddress: '', companyPhone: '', companyEmail: '', vatRate: 16, invoicePrefix: 'FACT' });
+ const [taxConfig, setTaxConfig] = useState<TaxConfig>({ companyName: '', companyNuit: '', companyAddress: '', companyPhone: '', companyEmail: '', vatRate: 16, invoicePrefix: 'FACT' });
  // Scanner remoto (telemóvel → computador)
  const [remoteSession, setRemoteSession] = useState<{ sessionId: string; url: string } | null>(null);
  const [showRemoteModal, setShowRemoteModal] = useState(false);
@@ -505,7 +507,7 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  try {
  const { getSystemSettings } = await import('../../core/services/systemSettingsService');
  const sys = await getSystemSettings();
- setTaxConfig({ ...c, logoUrl: sys.logo_light || sys.logo_dark || `${window.location.origin}/logo.png` });
+ setTaxConfig({ ...c, logoUrl: sys.logo_light || sys.logo_dark || c.logoUrl || '' });
  } catch {
  setTaxConfig(c);
  }
@@ -537,7 +539,7 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  };
 
  const handleCloseSession = async () => {
- if (!confirm('Confirmas o fecho da caixa?')) return;
+ if (!(await confirm('Confirmas o fecho da caixa?', { confirmLabel: 'Fechar Caixa' }))) return;
  setClosingSession(true);
  try {
  const report = await api.post<CloseReport>('/pos/session/close', {});
@@ -1127,7 +1129,7 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  <div className="px-5 pb-5 space-y-2">
  {/* Linha 1: Recibo + VD */}
  <div className="flex gap-2">
- <button onClick={() => printReceipt(done, taxConfig.vatRate, taxConfig.logoUrl)}
+ <button onClick={() => printReceipt(done, taxConfig.vatRate, taxConfig.logoUrl, taxConfig.companyName)}
  className="flex-1 flex items-center justify-center gap-1 py-2 border border-border-default text-content-secondary rounded-xl hover:bg-surface-base transition-colors text-xs font-medium">
  <Printer className="w-3.5 h-3.5" />Recibo
  </button>

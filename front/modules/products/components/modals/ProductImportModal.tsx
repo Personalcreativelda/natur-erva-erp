@@ -214,7 +214,7 @@ async function downloadTemplate() {
  const url = URL.createObjectURL(blob);
  const a = document.createElement('a');
  a.href = url;
- a.download = 'template_produtos_naturerva.xlsx';
+ a.download = 'template_produtos.xlsx';
  a.click();
  URL.revokeObjectURL(url);
 }

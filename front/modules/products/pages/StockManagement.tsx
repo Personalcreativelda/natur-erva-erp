@@ -1,6 +1,7 @@
 ﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Product, Order, Purchase, StockMovement, StockItem, OrderStatus, Sale, ProductVariant, StockAdjustment, StockAdjustmentReason, UserRole } from '../../core/types/types';
 import { normalizeForSearch } from '../../core/services/serviceUtils';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 import { getTodayDateString, getStockSnapshotDate, toDateStringInTimezone, formatDateTime, formatDateOnly } from '../../core/utils/dateUtils';
 import {
  Package,
@@ -95,6 +96,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
 }) => {
  // Hook para detectar mobile
  const isMobile = useMobile(768);
+ const confirm = useConfirm();
  const { currentUser } = useAppAuth();
  const isSuperAdmin = (currentUser as any)?.isSuperAdmin === true || currentUser?.role === UserRole.ADMIN;
 
@@ -248,7 +250,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  return;
  }
 
- if (!confirm(`Tem certeza que deseja remover ${selectedMovements.size} movimento(s)? Esta açéo néo pode ser desfeita.`)) {
+ if (!(await confirm(`Esta ação não pode ser desfeita.`, { title: `Remover ${selectedMovements.size} movimento(s)?`, variant: 'danger', confirmLabel: 'Remover' }))) {
  return;
  }
 
@@ -1165,8 +1167,8 @@ export const StockManagement: React.FC<StockManagementProps> = ({
 
  const handleRecalculateStock = async () => {
  if (recalcStockInProgress) return;
- const msg = 'Alinhar o stock da lista de produtos ao relatório (snapshot + movimentos)? As quantidades em product_variants serão atualizadas.';
- if (!confirm(msg)) return;
+ const msg = 'As quantidades em product_variants serão atualizadas.';
+ if (!(await confirm(msg, { title: 'Alinhar o stock da lista de produtos ao relatório (snapshot + movimentos)?', confirmLabel: 'Alinhar' }))) return;
  setRecalcStockInProgress(true);
  try {
  const result = await stockIntegrityService.fixStockDiscrepancies(
@@ -4250,7 +4252,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  </button>
  <button
  onClick={async () => {
- if (confirm('Tem certeza que deseja apagar este movimento?')) {
+ if (await confirm('Tem certeza que deseja apagar este movimento?', { variant: 'danger', confirmLabel: 'Apagar' })) {
  try {
  const success = await stockService.deleteStockMovement(movement.id);
  if (success) {

@@ -109,7 +109,6 @@ export interface Translations {
 
   // General UI
   ui: {
-    naturErva: string;
     crmManagement: string;
     systemTitle: string;
     admin: string;
@@ -315,9 +314,6 @@ export interface Translations {
   finance: {
     title: string;
     selectEntity: string;
-    naturErvaLoja: string;
-    naturErvaProducao: string;
-    naturErvaSabores: string;
     workingCapital: string;
     accountStatement: string;
     balanceSheet: string;
@@ -575,7 +571,6 @@ export const translations: Record<Language, Translations> = {
       notes: 'Observações',
     },
     ui: {
-      naturErva: 'Natur Erva',
       crmManagement: 'CRM Management',
       systemTitle: 'Sistema Integrado de Gestão',
       admin: 'Administrador',
@@ -834,9 +829,6 @@ export const translations: Record<Language, Translations> = {
     finance: {
       title: 'Finanças',
       selectEntity: 'Selecionar Entidade',
-      naturErvaLoja: 'Natur Erva Loja',
-      naturErvaProducao: 'Natur Erva Produção',
-      naturErvaSabores: 'Natur Erva Sabores',
       workingCapital: 'Fundo de Maneio',
       accountStatement: 'Extrato de Contas',
       balanceSheet: 'Balanço',
@@ -1089,7 +1081,6 @@ export const translations: Record<Language, Translations> = {
       notes: 'Notes',
     },
     ui: {
-      naturErva: 'Natur Erva',
       crmManagement: 'CRM Management',
       systemTitle: 'Integrated Management System',
       admin: 'Administrator',
@@ -1348,9 +1339,6 @@ export const translations: Record<Language, Translations> = {
     finance: {
       title: 'Finance',
       selectEntity: 'Select Entity',
-      naturErvaLoja: 'Natur Erva Shop',
-      naturErvaProducao: 'Natur Erva Production',
-      naturErvaSabores: 'Natur Erva Flavors',
       workingCapital: 'Working Capital',
       accountStatement: 'Account Statement',
       balanceSheet: 'Balance Sheet',
@@ -1514,7 +1502,6 @@ export const translations: Record<Language, Translations> = {
       createdAt: 'Siku ra Kutumbuluka',
     },
     ui: {
-      naturErva: 'Natur Erva',
       crmManagement: 'CRM Management',
       systemTitle: 'Sistema Integrado de Gestão',
       admin: 'Mufambisi',
@@ -1582,9 +1569,6 @@ export const translations: Record<Language, Translations> = {
     finance: {
       title: 'Timali',
       selectEntity: 'Hlawula Entidade',
-      naturErvaLoja: 'Natur Erva Shop',
-      naturErvaProducao: 'Natur Erva Production',
-      naturErvaSabores: 'Natur Erva Flavors',
       workingCapital: 'Mali yo Fambisa',
       accountStatement: 'Extrato ya Timali',
       balanceSheet: 'Balanço',

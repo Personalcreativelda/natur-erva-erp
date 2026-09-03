@@ -58,7 +58,7 @@ const getDeviceInfo = () => {
 };
 
 const getVisitorId = (): string => {
-  const storageKey = 'naturerva_visitor_id';
+  const storageKey = 'app_visitor_id';
   let visitorId = localStorage.getItem(storageKey);
   if (!visitorId) {
     visitorId = `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -68,8 +68,8 @@ const getVisitorId = (): string => {
 };
 
 const getSessionId = (): string => {
-  const storageKey = 'naturerva_session_id';
-  const sessionKey = 'naturerva_session_start';
+  const storageKey = 'app_session_id';
+  const sessionKey = 'app_session_start';
   let sessionId = sessionStorage.getItem(storageKey);
   const sessionStart = sessionStorage.getItem(sessionKey);
   const now = Date.now();

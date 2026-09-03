@@ -14,6 +14,8 @@ interface UseAppAuthReturn {
   handleLogout: () => void;
   setActivePage: (page: string) => void;
   setIsShopMode: (mode: boolean) => void;
+  /** true quando a verificação de sessão falhou por não conseguir contactar o servidor (não é "sem sessão"). */
+  sessionCheckError: boolean;
 }
 
 export const useAppAuth = (): UseAppAuthReturn => {
@@ -22,6 +24,7 @@ export const useAppAuth = (): UseAppAuthReturn => {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isShopMode, setIsShopMode] = useState(false);
   const [activePage, setActivePage] = useState('dashboard');
+  const [sessionCheckError, setSessionCheckError] = useState(false);
 
   const handleLogin = useCallback((user: User) => {
     setCurrentUser(user);
@@ -186,6 +189,7 @@ export const useAppAuth = (): UseAppAuthReturn => {
 
       // Verificar se há usuário logado primeiro
       const user = await authService.getCurrentUser();
+      setSessionCheckError(!user && authService.getLastAuthCheckError() === 'network');
 
       if (user) {
         // Se há usuário logado, verificar se é cliente
@@ -277,6 +281,7 @@ export const useAppAuth = (): UseAppAuthReturn => {
     handleLogin,
     handleLogout,
     setActivePage,
-    setIsShopMode
+    setIsShopMode,
+    sessionCheckError
   };
 };

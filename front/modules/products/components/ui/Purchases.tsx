@@ -565,7 +565,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
  const getInvoiceHtml = (purchase: Purchase): string => {
  const logoUrl = appSystemConfig.logo_light || appSystemConfig.logo_icon || '';
- const companyName = appSystemConfig.company_name || 'Quinta NICY';
+ const companyName = appSystemConfig.company_name || '';
  const primary = appSystemConfig.primary_color || '#35A754';
  const secondary = appSystemConfig.secondary_color || '#88E032';
  const systemName = appSystemConfig.system_name || '';
@@ -822,7 +822,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  };
 
  const downloadInvoicePDF = (purchase: Purchase) => {
- const companyName = appSystemConfig.company_name || 'Quinta NICY';
+ const companyName = appSystemConfig.company_name || '';
  const systemName = appSystemConfig.system_name || '';
  const supplierName = purchase.supplierName || purchase.supplierLocationName || 'Fornecedor não especificado';
  const supplierType = purchase.supplierLocationName ? 'Local Comercial' : 'Fornecedor Externo';

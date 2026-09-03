@@ -20,6 +20,10 @@ export interface AuthSession {
 
 // Cache do utilizador actual
 let currentUser: AuthUser | null = null;
+// Resultado da última verificação falhada de /auth/me — permite aos chamadores
+// distinguir "sem sessão" (401) de "servidor inacessível" (erro de rede), sem
+// mudar o contrato de retorno de getCurrentUser() para os restantes chamadores.
+let lastAuthCheckError: 'unauthorized' | 'network' | null = null;
 
 const mapUser = (raw: any): AuthUser => ({
   id: raw.id,
@@ -71,19 +75,34 @@ export const authService = {
    * Obter o utilizador actual (a partir do token JWT guardado)
    */
   async getCurrentUser(): Promise<AuthUser | null> {
-    if (currentUser) return currentUser;
+    if (currentUser) { lastAuthCheckError = null; return currentUser; }
     const token = getApiToken();
-    if (!token) return null;
+    if (!token) { lastAuthCheckError = null; return null; }
 
     try {
       const user = await api.get<any>('/auth/me');
       currentUser = mapUser(user);
+      lastAuthCheckError = null;
       return currentUser;
-    } catch {
-      setApiToken(null);
-      currentUser = null;
+    } catch (err: any) {
+      if (err?.status === 401) {
+        // Sessão realmente inválida/expirada — limpar
+        setApiToken(null);
+        currentUser = null;
+        lastAuthCheckError = 'unauthorized';
+      } else {
+        // Falha de rede/servidor: a sessão pode continuar válida — manter o token
+        // em vez de forçar logout, e assinalar para quem chamou que isto não foi
+        // um "não autenticado" genuíno.
+        lastAuthCheckError = 'network';
+      }
       return null;
     }
+  },
+
+  /** Resultado da última chamada a getCurrentUser() que devolveu null por falha. */
+  getLastAuthCheckError(): 'unauthorized' | 'network' | null {
+    return lastAuthCheckError;
   },
 
   /**

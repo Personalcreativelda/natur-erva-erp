@@ -8,9 +8,10 @@ import { GoogleLogin } from '@react-oauth/google';
 import { ForgotPasswordModal } from '../../core/components/modals/ForgotPasswordModal';
 import { SignUpModal } from '../../core/components/modals/SignUpModal';
 import { type User } from '../../core/types/types';
+import { getSystemSettings } from '../../core/services/systemSettingsService';
 
 // Rate limiting para prevenir brute force
-const RATE_LIMIT_KEY = 'quintanicy_login_attempts';
+const RATE_LIMIT_KEY = 'app_login_attempts';
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutos em milissegundos
 
@@ -94,10 +95,17 @@ export const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
     const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
     const [showSignUpModal, setShowSignUpModal] = useState(false);
     const [lockoutMessage, setLockoutMessage] = useState<string | null>(null);
+    const [companyName, setCompanyName] = useState('');
+
+    useEffect(() => {
+        getSystemSettings().then(settings => {
+            if (settings.company_name) setCompanyName(settings.company_name);
+        }).catch(() => {});
+    }, []);
 
     useEffect(() => {
         // Check for saved email in localStorage
-        const savedEmail = localStorage.getItem('quintanicy_saved_email');
+        const savedEmail = localStorage.getItem('app_saved_email');
         if (savedEmail) {
             setEmail(savedEmail);
             setRememberMe(true);
@@ -157,9 +165,9 @@ export const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
 
                 // Handle Remember Me
                 if (rememberMe) {
-                    localStorage.setItem('quintanicy_saved_email', sanitizedEmail);
+                    localStorage.setItem('app_saved_email', sanitizedEmail);
                 } else {
-                    localStorage.removeItem('quintanicy_saved_email');
+                    localStorage.removeItem('app_saved_email');
                 }
                 onLogin(user);
             } else {
@@ -210,7 +218,7 @@ export const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
                     <div className="mb-4 flex justify-center">
                         <Logo className="h-10" isDarkMode={document.documentElement.classList.contains('dark')} />
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.ui.quintaNicy}</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{companyName}</h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">{t.ui.systemTitle}</p>
                 </div>
 

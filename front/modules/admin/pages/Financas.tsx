@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, Loader2, FileText, TrendingUp, Receipt, Printer, Store, CheckCircle, XCircle, Clock, Upload, Image, Download, FileSpreadsheet } from 'lucide-react';
 import { PageShell } from '../../core/components/layout/PageShell';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 import api, { downloadBlob } from '../../core/services/apiClient';
 import { uploadService } from '../../../services/uploadService';
 import { invalidateLogoCache } from '../../core/services/systemSettingsService';
@@ -33,6 +34,7 @@ const thisMonth = () => {
 };
 
 export const Financas: React.FC<FinancasProps> = ({ showToast }) => {
+ const confirm = useConfirm();
  const [tab, setTab] = useState<'config' | 'report' | 'sessions' | 'export' | 'ar'>(TAB.CONFIG);
 
  type Session = { id: string; cashierName: string; openedAt: string; closedAt?: string; initialAmount: number; isOpen: boolean; totalSales: number; totalOrders: number; summary?: any };
@@ -135,7 +137,7 @@ export const Financas: React.FC<FinancasProps> = ({ showToast }) => {
  };
 
  const closeSession = async () => {
- if (!confirm('Fechar a sessão de caixa actual?')) return;
+ if (!(await confirm('Fechar a sessão de caixa actual?', { confirmLabel: 'Fechar' }))) return;
  try {
  await api.post('/pos/session/close', {});
  showToast?.('Sessão fechada', 'success');
@@ -170,7 +172,7 @@ export const Financas: React.FC<FinancasProps> = ({ showToast }) => {
  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Sessão de Caixa</title>
 <style>body{font-family:'Courier New',monospace;padding:20px;font-size:12px}h1{font-size:16px;text-align:center}hr{border:none;border-top:1px dashed #000;margin:8px 0}table{width:100%;border-collapse:collapse}td{padding:4px 0}.bold{font-weight:bold}.center{text-align:center}.right{text-align:right}</style></head><body>
 <h1>RELATÓRIO DE CAIXA</h1>
-<div class="center">${config.companyName || 'NaturErva'}</div><hr>
+<div class="center">${config.companyName || ''}</div><hr>
 <p>Caixa: <strong>${s.cashierName}</strong></p>
 <p>Abertura: ${fmtT(s.openedAt)}</p>
 ${s.closedAt ? `<p>Fecho: ${fmtT(s.closedAt)}</p>` : '<p>Estado: <strong>ABERTA</strong></p>'}
@@ -272,7 +274,7 @@ ${s.summary?.expectedCash !== undefined ? `<p class="bold">Fundo esperado em cai
  <div>
  <label className={labelCls}>Nome da Empresa *</label>
  <input value={config.companyName} onChange={e => setConfig(p => ({ ...p, companyName: e.target.value }))}
- className={inputCls} placeholder="NaturErva Lda." />
+ className={inputCls} placeholder="Ex: A Sua Empresa, Lda." />
  </div>
  <div>
  <label className={labelCls}>NUIT</label>

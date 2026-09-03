@@ -11,8 +11,55 @@ const C = {
 
 const MT = (n) => `${Number(n).toFixed(2)} MT`;
 
+// ── Logo (partilhado por todos os PDFs — faturas, recibos, recibos de vencimento) ──
+let logoCache = null; // { url, buffer, ts }
+const LOGO_CACHE_TTL = 5 * 60 * 1000;
+
+/** Descarrega o logótipo configurado em Finanças (tax_config.logo_url) e devolve um Buffer, ou null se não houver/falhar. */
+export async function loadLogoBuffer(logoUrl) {
+  if (!logoUrl) return null;
+  if (logoCache && logoCache.url === logoUrl && Date.now() - logoCache.ts < LOGO_CACHE_TTL) {
+    return logoCache.buffer;
+  }
+  try {
+    const res = await fetch(logoUrl);
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    logoCache = { url: logoUrl, buffer: buf, ts: Date.now() };
+    return buf;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Desenha o cabeçalho de marca partilhado por todos os documentos (logótipo + dados da
+ * empresa vindos de Finanças). Devolve o Y onde o conteúdo específico do documento deve começar.
+ */
+export function drawBrandHeader(pdf, taxConfig, logoBuf, { LM = 50 } = {}) {
+  let y = 50;
+  if (logoBuf) {
+    try {
+      pdf.image(logoBuf, LM, y, { fit: [110, 40] });
+      y += 46;
+    } catch {
+      pdf.fontSize(18).fillColor(C.primary).text(taxConfig.companyName || '', LM, y);
+      y += 24;
+    }
+  } else {
+    pdf.fontSize(18).fillColor(C.primary).text(taxConfig.companyName || '', LM, y);
+    y += 24;
+  }
+  pdf.fontSize(8).fillColor(C.muted);
+  if (taxConfig.companyNuit)    { pdf.text(`NUIT: ${taxConfig.companyNuit}`, LM, y); y += 10; }
+  if (taxConfig.companyAddress) { pdf.text(taxConfig.companyAddress, LM, y); y += 10; }
+  if (taxConfig.companyPhone)   { pdf.text(`Tel: ${taxConfig.companyPhone}`, LM, y); y += 10; }
+  return y;
+}
+
 /** Builds a professional A4 invoice / quote PDF. Returns a Buffer. */
 export async function generateDocumentPDF({ type, number, doc, taxConfig, items, totals, extra = {} }) {
+  const logoBuf = await loadLogoBuffer(taxConfig.logoUrl);
   return new Promise((resolve, reject) => {
     const pdf = new PDFDocument({ margin: 50, size: 'A4' });
     const chunks = [];
@@ -24,12 +71,8 @@ export async function generateDocumentPDF({ type, number, doc, taxConfig, items,
     const LM = 50;
 
     // ── Header ──────────────────────────────────────────────────────────────
-    pdf.fontSize(18).fillColor(C.primary).text(taxConfig.companyName || 'NaturErva', LM, 50);
-    pdf.fontSize(8).fillColor(C.muted);
-    if (taxConfig.companyNuit)    pdf.text(`NUIT: ${taxConfig.companyNuit}`);
-    if (taxConfig.companyAddress) pdf.text(taxConfig.companyAddress);
-    if (taxConfig.companyPhone)   pdf.text(`Tel: ${taxConfig.companyPhone}`);
-    if (taxConfig.companyEmail)   pdf.text(taxConfig.companyEmail);
+    drawBrandHeader(pdf, taxConfig, logoBuf, { LM });
+    if (taxConfig.companyEmail) pdf.fontSize(8).fillColor(C.muted).text(taxConfig.companyEmail);
 
     const typeLabel = { invoice: 'FATURA', quote: 'ORÇAMENTO', vd: 'VENDA A DINHEIRO', receipt: 'RECIBO' }[type] || 'DOCUMENTO';
     pdf.fontSize(22).fillColor(C.dark).text(typeLabel, LM, 50, { align: 'right', width: PW });
@@ -140,7 +183,7 @@ export async function generateDocumentPDF({ type, number, doc, taxConfig, items,
     pdf.moveTo(LM, FY).lineTo(LM + PW, FY).strokeColor(C.border).lineWidth(0.5).stroke();
     pdf.fontSize(6.5).fillColor(C.muted)
       .text(`${taxConfig.companyName} · NUIT: ${taxConfig.companyNuit} · ${taxConfig.companyAddress}`, LM, FY + 8, { align: 'center', width: PW })
-      .text('Documento gerado automaticamente pelo sistema NaturErva ERP', LM, FY + 20, { align: 'center', width: PW });
+      .text('Documento gerado automaticamente', LM, FY + 20, { align: 'center', width: PW });
 
     pdf.end();
   });
@@ -148,6 +191,7 @@ export async function generateDocumentPDF({ type, number, doc, taxConfig, items,
 
 /** Generates a POS session receipt. format: 'A4' | '80mm' */
 export async function generateReceiptPDF({ session, orders, taxConfig, format = 'A4' }) {
+  const logoBuf = await loadLogoBuffer(taxConfig.logoUrl);
   return new Promise((resolve, reject) => {
     const is80 = format === '80mm';
     const pageW = is80 ? 226.77 : 595.28;
@@ -163,7 +207,17 @@ export async function generateReceiptPDF({ session, orders, taxConfig, format = 
     const fs = (n) => pdf.fontSize(is80 ? n * 0.8 : n);
 
     // Header
-    fs(14).fillColor(C.primary).text(taxConfig.companyName || 'NaturErva', M, y, { align: 'center', width: UW }); y += is80 ? 16 : 22;
+    if (logoBuf) {
+      try {
+        const logoW = is80 ? 60 : 90;
+        pdf.image(logoBuf, M + (UW - logoW) / 2, y, { fit: [logoW, is80 ? 24 : 34] });
+        y += (is80 ? 24 : 34) + 6;
+      } catch {
+        fs(14).fillColor(C.primary).text(taxConfig.companyName || '', M, y, { align: 'center', width: UW }); y += is80 ? 16 : 22;
+      }
+    } else {
+      fs(14).fillColor(C.primary).text(taxConfig.companyName || '', M, y, { align: 'center', width: UW }); y += is80 ? 16 : 22;
+    }
     fs(8).fillColor(C.muted);
     if (taxConfig.companyNuit)  { pdf.text(`NUIT: ${taxConfig.companyNuit}`, M, y, { align: 'center', width: UW }); y += 11; }
     if (taxConfig.companyPhone) { pdf.text(`Tel: ${taxConfig.companyPhone}`, M, y, { align: 'center', width: UW }); y += 11; }
@@ -220,7 +274,7 @@ export async function generateReceiptPDF({ session, orders, taxConfig, format = 
     pdf.text(`Fundo inicial: ${MT(session.initialAmount || session.initial_amount || 0)}`, M, y, { width: UW }); y += 11;
     pdf.text(`Caixa esperada: ${MT(summary.expectedCash || 0)}`, M, y, { width: UW }); y += 20;
 
-    fs(7).fillColor(C.muted).text('NaturErva ERP — Obrigado!', M, y, { align: 'center', width: UW });
+    fs(7).fillColor(C.muted).text(taxConfig.companyName ? `${taxConfig.companyName} — Obrigado!` : 'Obrigado!', M, y, { align: 'center', width: UW });
     pdf.end();
   });
 }

@@ -108,6 +108,12 @@ const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     'messaging.view',
     'documents.view',
   ],
+  'CLINICA': [
+    'admin.access', 'dashboard.view',
+    'clinic.view', 'clinic.manage',
+    'customers.view',
+    'messaging.view',
+  ],
 };
 
 // Dado um array de role names, retorna as permissões combinadas do mapa local
@@ -186,6 +192,7 @@ const getAllPermissionsList = (): string[] => {
     'subscriptions.view', 'subscriptions.manage',
     'documents.view', 'documents.manage',
     'finance.view', 'finance.manage',
+    'clinic.view', 'clinic.manage',
   ];
 };
 
@@ -233,14 +240,15 @@ export const usePermissions = (user: User | null): UsePermissionsReturn => {
     setPermissions(localPerms);
     setIsLoading(false);
 
-    // Depois tentar enriquecer com permissões específicas da BD (best-effort)
+    // Depois substituir pelas permissões reais da BD — a BD é a fonte de verdade
+    // (o mapa local é só um placeholder otimista para o primeiro render; se um admin
+    // restringir um role em Roles/Permissões, essa restrição tem de se refletir aqui,
+    // por isso não se pode fazer união com o mapa local)
     try {
       const data = await api.get<{ roles: string[]; permissions: string[] }>('/auth/my-permissions');
       if (data?.permissions?.length) {
-        // Merge: local + BD, sem duplicados
-        const merged = Array.from(new Set([...localPerms, ...data.permissions]));
-        setPermissions(merged);
-        permissionsCache[user.id] = { permissions: merged, timestamp: Date.now() };
+        setPermissions(data.permissions);
+        permissionsCache[user.id] = { permissions: data.permissions, timestamp: Date.now() };
       } else {
         permissionsCache[user.id] = { permissions: localPerms, timestamp: Date.now() };
       }
@@ -284,10 +292,12 @@ export const usePermissions = (user: User | null): UsePermissionsReturn => {
       return permissionName !== 'users.delete' && permissionName !== 'system.backup';
     }
 
-    // Verificar no state carregado (local + BD)
-    if (permissions.includes(permissionName)) return true;
+    // Assim que o state tiver sido preenchido (BD ou, em último caso, o mapa local),
+    // ele é a única fonte de verdade — não se pode continuar a validar contra o mapa
+    // local depois disso, senão uma restrição feita em Roles/Permissões nunca surte efeito.
+    if (permissions.length > 0) return permissions.includes(permissionName);
 
-    // Fallback síncrono via mapa local (antes do state carregar)
+    // Só no instante inicial, antes do primeiro carregamento, usar o mapa local como estimativa
     const localPerms = getPermissionsFromRoles(userRoles);
     return localPerms.includes(permissionName);
   }, [user, permissions]);

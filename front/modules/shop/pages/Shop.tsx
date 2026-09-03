@@ -1006,7 +1006,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/30 to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex flex-col items-center justify-center p-8 relative z-10">
         <div className="max-w-md text-center space-y-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-content-primary">Natur Erva</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-content-primary">{settings?.company_name}</h1>
           <p className="text-content-muted">
             Inicie sessão para aceder à loja. Pode fazer login com Google ou criar uma conta.
           </p>
@@ -1064,7 +1064,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
                       Olá, {currentUser.name.split(' ')[0]}! 👋
                     </p>
                     <p className="text-white/90 text-xs sm:text-sm">
-                      Bem-vindo de volta à Natur Erva
+                      Bem-vindo de volta{settings?.company_name ? ` à ${settings.company_name}` : ''}
                     </p>
                   </div>
                 </div>

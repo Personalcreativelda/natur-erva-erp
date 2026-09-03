@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, ShoppingCart, Package, LogOut, Award, TrendingUp, Warehouse, ChevronLeft, ChevronRight, ChevronDown, ShoppingBag, Egg, UserCheck, Repeat, Truck, FileText, BarChart3, ArrowLeftRight, Wallet, Download, Activity, ArrowRight, Upload, Globe, CreditCard, Megaphone, Target, Share2, Eye, MapPin, Store, Image, Tv, List, Layers, Ruler, Tag, ClipboardCheck, Scale, AlertTriangle, Shield, Boxes, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, RefreshCw, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, Users, ShoppingCart, Package, LogOut, Award, TrendingUp, Warehouse, ChevronLeft, ChevronRight, ChevronDown, ShoppingBag, Egg, UserCheck, Repeat, Truck, FileText, BarChart3, ArrowLeftRight, Wallet, Download, Activity, ArrowRight, Upload, Globe, CreditCard, Megaphone, Target, Share2, Eye, MapPin, Store, Image, Tv, List, Layers, Ruler, Tag, ClipboardCheck, Scale, AlertTriangle, Shield, Boxes, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, FolderOpen, HeartPulse, Calendar, Pill, Bot } from 'lucide-react';
 import { User, UserRole } from '../../../core/types/types';
 import { useLanguage } from '../../../core/contexts/LanguageContext';
 
@@ -15,6 +15,7 @@ const ROLE_LABELS: Record<string, string> = {
  'AFILIADO': 'Afiliado',
  'STAFF': 'Staff',
  'CLIENTE': 'Cliente',
+ 'CLINICA': 'Equipa Clínica',
 };
 
 function getRoleLabel(user: User): string {
@@ -58,7 +59,18 @@ interface MenuItem {
  permission: string;
  path?: string;
  children?: SubMenuItem[];
+ group?: string;
 }
+
+// Rótulos das secções do menu (ordem de definição = ordem de exibição)
+const GROUP_LABELS: Record<string, string> = {
+ geral: 'Geral',
+ comercial: 'Comercial',
+ marketing: 'Marketing & CRM',
+ financas: 'Finanças',
+ gestao: 'Equipa & Gestão',
+ servicos: 'Serviços',
+};
 
 export const Sidebar: React.FC<SidebarProps> = ({
  currentUser,
@@ -175,13 +187,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
  { id: 'stock-management', children: [{ path: '/admin/stock' }, { path: '/admin/stock/alertas' }, { path: '/admin/stock/movimentos' }, { path: '/admin/stock/lotes' }, { path: '/admin/stock/auditoria' }, { path: '/admin/stock/ajustes' }] },
  { id: 'users', children: [{ path: '/admin/usuarios' }, { path: '/admin/usuarios/roles' }] },
  { id: 'financas', children: [{ path: '/admin/financas' }, { path: '/admin/faturas' }, { path: '/admin/contas-pagar' }, { path: '/admin/razao-geral' }] },
- { id: 'hr', children: [{ path: '/admin/rh' }] },
+ { id: 'hr', children: [{ path: '/admin/rh' }, { path: '/admin/rh/metas' }] },
  { id: 'projects', children: [{ path: '/admin/projectos' }] },
  { id: 'helpdesk', children: [{ path: '/admin/helpdesk' }] },
- { id: 'timesheets', children: [{ path: '/admin/timesheets' }] },
  { id: 'messaging', children: [{ path: '/admin/mensagens' }] },
- { id: 'subscriptions', children: [{ path: '/admin/assinaturas' }] },
  { id: 'documents', children: [{ path: '/admin/documentos' }] },
+ { id: 'clinic', children: [{ path: '/admin/clinica' }, { path: '/admin/clinica/pacientes' }, { path: '/admin/clinica/agenda' }, { path: '/admin/clinica/protocolos' }] },
  ];
 
  // Auto-expandir apenas o menu que contém a rota atual
@@ -236,14 +247,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
  });
  };
 
- // Estrutura do menu com submenus
+ // Estrutura do menu com submenus, organizada por secções (grupo -> ordem de exibição)
  const allMenuItems: MenuItem[] = [
- { id: 'dashboard', label: t.nav.dashboard, icon: LayoutDashboard, permission: 'dashboard.view' },
+ // ── Geral ──────────────────────────────────────────────────────────
+ { id: 'dashboard', label: t.nav.dashboard, icon: LayoutDashboard, permission: 'dashboard.view', group: 'geral' },
+ { id: 'tracking', label: t.nav.statistics, icon: Activity, permission: 'analytics.view', group: 'geral' },
+
+ // ── Comercial ──────────────────────────────────────────────────────
  {
  id: 'sales',
  label: t.nav.sales,
  icon: TrendingUp,
  permission: 'sales.view',
+ group: 'comercial',
  children: [
  { id: 'pos-sell', label: 'Vender', icon: CreditCard, path: '/admin/pos' },
  { id: 'caixa', label: 'Caixa', icon: Store, path: '/admin/caixa' },
@@ -258,6 +274,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
  label: t.nav.purchases,
  icon: ShoppingBag,
  permission: 'purchases.view',
+ group: 'comercial',
  children: [
  { id: 'purchases-list', label: 'Compras', icon: ShoppingBag, path: '/admin/compras' },
  { id: 'purchases-by-product', label: 'Por Produto', icon: Package, path: '/admin/compras/por-produto' },
@@ -270,6 +287,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
  label: t.nav.products,
  icon: Package,
  permission: 'products.view',
+ group: 'comercial',
  children: [
  { id: 'products-list', label: 'Produtos', icon: Package, path: '/admin/produtos' },
  { id: 'products-categories', label: 'Categorias', icon: Tag, path: '/admin/produtos/categorias' },
@@ -282,6 +300,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
  label: t.nav.stock,
  icon: BarChart3,
  permission: 'products.view',
+ group: 'comercial',
  children: [
  { id: 'stock-products', label: 'Produtos', icon: Package, path: '/admin/stock' },
  { id: 'stock-alerts', label: 'Alertas', icon: AlertTriangle, path: '/admin/stock/alertas' },
@@ -291,38 +310,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
  { id: 'stock-adjustments', label: 'Ajustes', icon: Scale, path: '/admin/stock/ajustes' },
  ]
  },
- {
- id: 'users',
- label: t.nav.users,
- icon: Users,
- permission: 'users.view',
- children: [
- { id: 'users-list', label: 'Usuários', icon: Users, path: '/admin/usuarios' },
- { id: 'users-roles', label: 'Gerir Roles', icon: Shield, path: '/admin/usuarios/roles' },
- ]
- },
- { id: 'financas', label: 'Finanças', icon: Wallet, permission: 'finance.view', children: [
+ { id: 'delivery-zones', label: 'Zonas de Entrega', icon: MapPin, permission: 'logistics.manage', group: 'comercial' },
+ { id: 'logistics', label: 'Logística', icon: Truck, permission: 'logistics.manage', group: 'comercial' },
+ { id: 'refunds', label: 'Reembolsos', icon: Repeat, permission: 'orders.view', group: 'comercial' },
+
+ // ── Marketing & CRM ────────────────────────────────────────────────
+ { id: 'marketing', label: 'Marketing', icon: Megaphone, permission: 'sales.view', group: 'marketing' },
+ { id: 'coupons', label: 'Cupões', icon: Tag, permission: 'sales.discount', group: 'marketing' },
+ { id: 'affiliates', label: 'Afiliados', icon: Share2, permission: 'users.view', group: 'marketing' },
+ { id: 'blog', label: 'Blog', icon: FileText, permission: 'media.view', group: 'marketing' },
+
+ // ── Finanças ───────────────────────────────────────────────────────
+ { id: 'financas', label: 'Finanças', icon: Wallet, permission: 'finance.view', group: 'financas', children: [
   { id: 'financas-iva', label: 'IVA / Configuração', icon: Wallet, path: '/admin/financas' },
   { id: 'invoices', label: 'Faturas', icon: ClipboardCheck, path: '/admin/faturas' },
   { id: 'ap', label: 'Contas a Pagar', icon: Building2, path: '/admin/contas-pagar' },
   { id: 'ledger', label: 'Razão Geral', icon: BookOpen, path: '/admin/razao-geral' },
  ] },
- { id: 'tracking', label: t.nav.statistics, icon: Activity, permission: 'analytics.view' },
- { id: 'logistics', label: 'Logística', icon: Truck, permission: 'logistics.manage' },
- { id: 'coupons', label: 'Cupões', icon: Tag, permission: 'sales.discount' },
- { id: 'refunds', label: 'Reembolsos', icon: Repeat, permission: 'orders.view' },
- { id: 'affiliates', label: 'Afiliados', icon: Share2, permission: 'users.view' },
- { id: 'marketing', label: 'Marketing', icon: Megaphone, permission: 'sales.view' },
- { id: 'blog', label: 'Blog', icon: FileText, permission: 'media.view' },
- { id: 'delivery-zones', label: 'Zonas de Entrega', icon: MapPin, permission: 'logistics.manage' },
- // Novos módulos
- { id: 'hr', label: 'Recursos Humanos', icon: UserCog, permission: 'hr.view', path: '/admin/rh' },
- { id: 'projects', label: 'Projectos', icon: FolderKanban, permission: 'projects.view', path: '/admin/projectos' },
- { id: 'helpdesk', label: 'Central de Ajuda', icon: Headphones, permission: 'helpdesk.view', path: '/admin/helpdesk' },
- { id: 'timesheets', label: 'Planilhas de Horas', icon: Clock, permission: 'timesheets.view', path: '/admin/timesheets' },
- { id: 'messaging', label: 'Mensagens', icon: MessageSquare, permission: 'messaging.view', path: '/admin/mensagens' },
- { id: 'subscriptions', label: 'Assinaturas', icon: RefreshCw, permission: 'subscriptions.view', path: '/admin/assinaturas' },
- { id: 'documents', label: 'Documentos', icon: FolderOpen, permission: 'documents.view', path: '/admin/documentos' },
+
+ // ── Equipa & Gestão ────────────────────────────────────────────────
+ {
+ id: 'users',
+ label: t.nav.users,
+ icon: Users,
+ permission: 'users.view',
+ group: 'gestao',
+ children: [
+ { id: 'users-list', label: 'Usuários', icon: Users, path: '/admin/usuarios' },
+ { id: 'users-roles', label: 'Gerir Roles', icon: Shield, path: '/admin/usuarios/roles' },
+ ]
+ },
+ {
+ id: 'hr', label: 'Recursos Humanos', icon: UserCog, permission: 'hr.view', group: 'gestao',
+ children: [
+  { id: 'hr-employees', label: 'Funcionários', icon: UserCog, path: '/admin/rh' },
+  { id: 'hr-incentives', label: 'Metas & Bónus', icon: Target, path: '/admin/rh/metas' },
+ ]
+ },
+ { id: 'projects', label: 'Projectos', icon: FolderKanban, permission: 'projects.view', path: '/admin/projectos', group: 'gestao' },
+ { id: 'helpdesk', label: 'Central de Ajuda', icon: Headphones, permission: 'helpdesk.view', path: '/admin/helpdesk', group: 'gestao' },
+ { id: 'messaging', label: 'Mensagens', icon: MessageSquare, permission: 'messaging.view', path: '/admin/mensagens', group: 'gestao' },
+ { id: 'documents', label: 'Documentos', icon: FolderOpen, permission: 'documents.view', path: '/admin/documentos', group: 'gestao' },
+ { id: 'assistant', label: 'Assistente IA', icon: Bot, permission: 'system.backup', path: '/admin/assistente', group: 'gestao' },
+
+ // ── Serviços ───────────────────────────────────────────────────────
+ {
+ id: 'clinic', label: 'Clínica', icon: HeartPulse, permission: 'clinic.view', group: 'servicos',
+ children: [
+  { id: 'clinic-dashboard', label: 'Visão Geral', icon: LayoutDashboard, path: '/admin/clinica' },
+  { id: 'clinic-patients', label: 'Pacientes', icon: Users, path: '/admin/clinica/pacientes' },
+  { id: 'clinic-agenda', label: 'Agenda', icon: Calendar, path: '/admin/clinica/agenda' },
+  { id: 'clinic-protocols', label: 'Planos de Tratamento', icon: Pill, path: '/admin/clinica/protocolos' },
+ ]
+ },
  ];
 
  // Filtrar itens baseado apenas nas permisséµes (sistema simplificado)
@@ -337,14 +377,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
  });
  }, [hasPermission, t, enabledModules]);
 
+ // IDs dos itens que iniciam uma nova secção (para desenhar o cabeçalho de grupo antes deles)
+ const groupStartIds = useMemo(() => {
+ const seen = new Set<string>();
+ const starts = new Set<string>();
+ filteredMenuItems.forEach(item => {
+ if (item.group && !seen.has(item.group)) {
+ seen.add(item.group);
+ starts.add(item.id);
+ }
+ });
+ return starts;
+ }, [filteredMenuItems]);
+
  // --- Visual helpers (CSS only, sem lógica) ---
  const activeItemStyle: React.CSSProperties = {
  background: 'color-mix(in srgb, var(--brand-600) 12%, transparent)',
  color: 'var(--brand-600)',
  fontWeight: 600,
  };
- // Separadores visuais antes destes grupos (apenas CSS)
- const GROUP_STARTERS = new Set(['sales', 'logistics']);
 
  return (
  <>
@@ -379,7 +430,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
  <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-2">
  {filteredMenuItems.map((item) => {
- const groupSeparator = null;
+ const isGroupStart = !!item.group && groupStartIds.has(item.id);
+ const groupSeparator = isGroupStart ? (
+ isOpen ? (
+ <div className={`px-3 ${item.id === filteredMenuItems[0]?.id ? 'pt-0' : 'pt-4'} pb-1.5`}>
+ <span className="text-[10px] font-semibold uppercase tracking-wider text-content-muted/70">
+ {GROUP_LABELS[item.group!] || item.group}
+ </span>
+ </div>
+ ) : (
+ item.id !== filteredMenuItems[0]?.id && (
+ <div className="mx-2 my-1.5 border-t border-border-default" />
+ )
+ )
+ ) : null;
  const Icon = item.icon;
  const hasChildren = item.children && item.children.length > 0;
  const isExpanded = expandedMenus[item.id];

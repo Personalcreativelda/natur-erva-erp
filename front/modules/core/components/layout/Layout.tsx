@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 
 import { User, UserRole } from '../../../core/types/types';
-import { Menu, X, LogOut, ChevronDown, User as UserIcon, Globe, LayoutDashboard, ShoppingCart, TrendingUp, Truck, Users, Package, ShoppingBag, BarChart3, Activity, FileText, ArrowLeftRight, Wallet, Repeat, Share2, Megaphone, Image, Tag, Ruler, List, ClipboardCheck, AlertTriangle, Scale, Shield, Boxes, Store, MapPin, CreditCard, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, RefreshCw, FolderOpen } from 'lucide-react';
+import { Menu, X, LogOut, ChevronDown, User as UserIcon, Globe, LayoutDashboard, ShoppingCart, TrendingUp, Truck, Users, Package, ShoppingBag, BarChart3, Activity, FileText, ArrowLeftRight, Wallet, Repeat, Share2, Megaphone, Image, Tag, Ruler, List, ClipboardCheck, AlertTriangle, Scale, Shield, Boxes, Store, MapPin, CreditCard, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, RefreshCw, FolderOpen, HeartPulse } from 'lucide-react';
 import { useLanguage } from '../../../core/contexts/LanguageContext';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
@@ -67,6 +67,7 @@ export const Layout: React.FC<LayoutProps> = ({
  { id: 'stock-management', children: [{ path: '/admin/stock' }, { path: '/admin/stock/alertas' }, { path: '/admin/stock/movimentos' }, { path: '/admin/stock/lotes' }, { path: '/admin/stock/auditoria' }, { path: '/admin/stock/ajustes' }] },
  { id: 'users', children: [{ path: '/admin/usuarios' }, { path: '/admin/usuarios/roles' }] },
  { id: 'financas', children: [{ path: '/admin/financas' }, { path: '/admin/faturas' }, { path: '/admin/contas-pagar' }, { path: '/admin/razao-geral' }] },
+ { id: 'clinic', children: [{ path: '/admin/clinica' }] },
  ];
 
  // Estado para controlar quais submenus estão expandidos no mobile
@@ -136,16 +137,32 @@ export const Layout: React.FC<LayoutProps> = ({
  icon: any;
  permission: string;
  children?: SubMenuItem[];
+ group?: string;
  }
 
- // Estrutura do menu com submenus (igual ao Sidebar)
+ // Rótulos das secções do menu (igual ao Sidebar)
+ const GROUP_LABELS: Record<string, string> = {
+ geral: 'Geral',
+ comercial: 'Comercial',
+ marketing: 'Marketing & CRM',
+ financas: 'Finanças',
+ gestao: 'Equipa & Gestão',
+ servicos: 'Serviços',
+ };
+
+ // Estrutura do menu com submenus, organizada por secções (igual ao Sidebar)
  const allMenuItems: MenuItem[] = [
- { id: 'dashboard', label: t.nav.dashboard, icon: LayoutDashboard, permission: 'dashboard.view' },
+ // ── Geral ──────────────────────────────────────────────────────────
+ { id: 'dashboard', label: t.nav.dashboard, icon: LayoutDashboard, permission: 'dashboard.view', group: 'geral' },
+ { id: 'tracking', label: t.nav.statistics, icon: Activity, permission: 'analytics.view', group: 'geral' },
+
+ // ── Comercial ──────────────────────────────────────────────────────
  {
  id: 'sales',
  label: t.nav.sales,
  icon: TrendingUp,
  permission: 'sales.view',
+ group: 'comercial',
  children: [
  { id: 'pos-sell', label: 'Vender', icon: CreditCard, path: '/admin/pos' },
  { id: 'caixa', label: 'Caixa', icon: Store, path: '/admin/caixa' },
@@ -161,6 +178,7 @@ export const Layout: React.FC<LayoutProps> = ({
  label: t.nav.purchases,
  icon: ShoppingBag,
  permission: 'purchases.view',
+ group: 'comercial',
  children: [
  { id: 'purchases-list', label: 'Compras', icon: ShoppingBag, path: '/admin/compras' },
  { id: 'purchases-by-product', label: 'Por Produto', icon: Package, path: '/admin/compras/por-produto' },
@@ -172,6 +190,7 @@ export const Layout: React.FC<LayoutProps> = ({
  label: t.nav.products,
  icon: Package,
  permission: 'products.view',
+ group: 'comercial',
  children: [
  { id: 'products-list', label: 'Produtos', icon: Package, path: '/admin/produtos' },
  { id: 'products-categories', label: 'Categorias', icon: Tag, path: '/admin/produtos/categorias' },
@@ -184,6 +203,7 @@ export const Layout: React.FC<LayoutProps> = ({
  label: t.nav.stock,
  icon: BarChart3,
  permission: 'products.view',
+ group: 'comercial',
  children: [
  { id: 'stock-products', label: 'Produtos', icon: Package, path: '/admin/stock' },
  { id: 'stock-alerts', label: 'Alertas', icon: AlertTriangle, path: '/admin/stock/alertas' },
@@ -193,39 +213,46 @@ export const Layout: React.FC<LayoutProps> = ({
  { id: 'stock-adjustments', label: 'Ajustes', icon: Scale, path: '/admin/stock/ajustes' },
  ]
  },
- { id: 'media', label: t.nav.gallery, icon: Image, permission: 'media.view' },
- {
- id: 'users',
- label: t.nav.users,
- icon: Users,
- permission: 'users.view',
- children: [
- { id: 'users-list', label: 'Usuários', icon: Users, path: '/admin/usuarios' },
- { id: 'users-roles', label: 'Gerir Roles', icon: Shield, path: '/admin/usuarios/roles' },
- ]
- },
- { id: 'financas', label: 'Finanças', icon: Wallet, permission: 'finance.view', children: [
+ { id: 'media', label: t.nav.gallery, icon: Image, permission: 'media.view', group: 'comercial' },
+ { id: 'delivery-zones', label: 'Zonas de Entrega', icon: MapPin, permission: 'logistics.manage', group: 'comercial' },
+ { id: 'logistics', label: 'Logística', icon: Truck, permission: 'logistics.manage', group: 'comercial' },
+ { id: 'refunds', label: 'Reembolsos', icon: Repeat, permission: 'orders.view', group: 'comercial' },
+
+ // ── Marketing & CRM ────────────────────────────────────────────────
+ { id: 'marketing', label: 'Marketing', icon: Megaphone, permission: 'sales.view', group: 'marketing' },
+ { id: 'coupons', label: 'Cupões', icon: Tag, permission: 'sales.discount', group: 'marketing' },
+ { id: 'affiliates', label: 'Afiliados', icon: Share2, permission: 'users.view', group: 'marketing' },
+ { id: 'blog', label: 'Blog', icon: FileText, permission: 'media.view', group: 'marketing' },
+
+ // ── Finanças ───────────────────────────────────────────────────────
+ { id: 'financas', label: 'Finanças', icon: Wallet, permission: 'finance.view', group: 'financas', children: [
   { id: 'financas-iva', label: 'IVA / Configuração', icon: Wallet, path: '/admin/financas' },
   { id: 'invoices', label: 'Faturas', icon: ClipboardCheck, path: '/admin/faturas' },
   { id: 'ap', label: 'Contas a Pagar', icon: Building2, path: '/admin/contas-pagar' },
   { id: 'ledger', label: 'Razão Geral', icon: BookOpen, path: '/admin/razao-geral' },
  ] },
- { id: 'tracking', label: t.nav.statistics, icon: Activity, permission: 'analytics.view' },
- { id: 'logistics', label: 'Logística', icon: Truck, permission: 'logistics.manage' },
- { id: 'coupons', label: 'Cupões', icon: Tag, permission: 'sales.discount' },
- { id: 'refunds', label: 'Reembolsos', icon: Repeat, permission: 'orders.view' },
- { id: 'affiliates', label: 'Afiliados', icon: Share2, permission: 'users.view' },
- { id: 'marketing', label: 'Marketing', icon: Megaphone, permission: 'sales.view' },
- { id: 'blog', label: 'Blog', icon: FileText, permission: 'media.view' },
- { id: 'delivery-zones', label: 'Zonas de Entrega', icon: MapPin, permission: 'logistics.manage' },
- // Novos módulos
- { id: 'hr', label: 'Recursos Humanos', icon: UserCog, permission: 'hr.view' },
- { id: 'projects', label: 'Projectos', icon: FolderKanban, permission: 'projects.view' },
- { id: 'helpdesk', label: 'Central de Ajuda', icon: Headphones, permission: 'helpdesk.view' },
- { id: 'timesheets', label: 'Planilhas de Horas', icon: Clock, permission: 'timesheets.view' },
- { id: 'messaging', label: 'Mensagens', icon: MessageSquare, permission: 'messaging.view' },
- { id: 'subscriptions', label: 'Assinaturas', icon: RefreshCw, permission: 'subscriptions.view' },
- { id: 'documents', label: 'Documentos', icon: FolderOpen, permission: 'documents.view' },
+
+ // ── Equipa & Gestão ────────────────────────────────────────────────
+ {
+ id: 'users',
+ label: t.nav.users,
+ icon: Users,
+ permission: 'users.view',
+ group: 'gestao',
+ children: [
+ { id: 'users-list', label: 'Usuários', icon: Users, path: '/admin/usuarios' },
+ { id: 'users-roles', label: 'Gerir Roles', icon: Shield, path: '/admin/usuarios/roles' },
+ ]
+ },
+ { id: 'hr', label: 'Recursos Humanos', icon: UserCog, permission: 'hr.view', group: 'gestao' },
+ { id: 'projects', label: 'Projectos', icon: FolderKanban, permission: 'projects.view', group: 'gestao' },
+ { id: 'helpdesk', label: 'Central de Ajuda', icon: Headphones, permission: 'helpdesk.view', group: 'gestao' },
+ { id: 'messaging', label: 'Mensagens', icon: MessageSquare, permission: 'messaging.view', group: 'gestao' },
+ { id: 'documents', label: 'Documentos', icon: FolderOpen, permission: 'documents.view', group: 'gestao' },
+
+ // ── Serviços ───────────────────────────────────────────────────────
+ { id: 'subscriptions', label: 'Assinaturas', icon: RefreshCw, permission: 'subscriptions.view', group: 'servicos' },
+ { id: 'clinic', label: 'Clínica', icon: HeartPulse, permission: 'clinic.view', group: 'servicos' },
  ];
 
  // State for enabled modules - using generic record logic like Sidebar
@@ -280,7 +307,6 @@ export const Layout: React.FC<LayoutProps> = ({
  'hr': 'hr',
  'projects': 'projects',
  'helpdesk': 'helpdesk',
- 'timesheets': 'timesheets',
  'messaging': 'messaging',
  'subscriptions': 'subscriptions',
  'documents': 'documents',
@@ -306,6 +332,19 @@ export const Layout: React.FC<LayoutProps> = ({
  return hasPermission(item.permission);
  });
  }, [hasPermission, t, enabledModules]);
+
+ // IDs dos itens que iniciam uma nova secção (igual ao Sidebar)
+ const groupStartIds = useMemo(() => {
+ const seen = new Set<string>();
+ const starts = new Set<string>();
+ filteredMenuItems.forEach(item => {
+ if (item.group && !seen.has(item.group)) {
+ seen.add(item.group);
+ starts.add(item.id);
+ }
+ });
+ return starts;
+ }, [filteredMenuItems]);
 
  const handleNavigate = (page: string) => {
  onNavigate(page);
@@ -518,9 +557,19 @@ export const Layout: React.FC<LayoutProps> = ({
  );
  const isActive = activePage === item.id || activePage.startsWith(item.id + '-') || isSubmenuActive;
 
+ const isGroupStart = !!item.group && groupStartIds.has(item.id);
+ const groupSeparator = isGroupStart && item.id !== filteredMenuItems[0]?.id ? (
+ <div className="px-4 pt-4 pb-1.5">
+ <span className="text-[10px] font-semibold uppercase tracking-wider text-content-muted/70">
+ {GROUP_LABELS[item.group!] || item.group}
+ </span>
+ </div>
+ ) : null;
+
  if (hasChildren) {
  return (
  <div key={item.id} className="space-y-1">
+ {groupSeparator}
  {/* Menu principal com seta de expansão */}
  <button
  onClick={() => toggleMobileMenuExpansion(item.id)}
@@ -576,8 +625,9 @@ export const Layout: React.FC<LayoutProps> = ({
 
  // Item sem submenus
  return (
+ <React.Fragment key={item.id}>
+ {groupSeparator}
  <button
- key={item.id}
  onClick={() => handleNavigate(item.id)}
  className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors text-sm font-medium touch-manipulation ${isActive
  ? 'bg-brand-600/10 dark:bg-brand-600/20 text-brand-700 dark:text-brand-300 '
@@ -587,6 +637,7 @@ export const Layout: React.FC<LayoutProps> = ({
  <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-brand-700 dark:text-brand-300 ' : 'text-content-muted'}`} />
  <span className="truncate">{item.label}</span>
  </button>
+ </React.Fragment>
  );
  })}
  </nav>

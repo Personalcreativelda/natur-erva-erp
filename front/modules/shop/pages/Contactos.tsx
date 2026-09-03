@@ -1,18 +1,34 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Phone, Mail, MapPin, Clock, MessageSquare, Send, Instagram, Facebook } from 'lucide-react';
 import { PageHeroBanner } from '../components/PageHeroBanner';
+import { getSystemSettings } from '../../core/services/systemSettingsService';
 
 const Contactos: React.FC = () => {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [sent, setSent] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+  const [companyPhone, setCompanyPhone] = useState('');
+  const [companyEmail, setCompanyEmail] = useState('');
+  const [companyAddress, setCompanyAddress] = useState('');
+
+  useEffect(() => {
+    getSystemSettings().then(settings => {
+      if (settings.company_name) setCompanyName(settings.company_name);
+      if (settings.company_phone) setCompanyPhone(settings.company_phone);
+      if (settings.company_email) setCompanyEmail(settings.company_email);
+      if (settings.company_address) setCompanyAddress(settings.company_address);
+    }).catch(() => {});
+  }, []);
+
+  const whatsappNumber = companyPhone.replace(/\D/g, '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Abre WhatsApp com a mensagem pré-preenchida
     const text = encodeURIComponent(
-      `Olá Naturerva!\n\nNome: ${form.name}\nEmail: ${form.email}\nTelefone: ${form.phone}\n\nMensagem:\n${form.message}`
+      `Olá${companyName ? ` ${companyName}` : ''}!\n\nNome: ${form.name}\nEmail: ${form.email}\nTelefone: ${form.phone}\n\nMensagem:\n${form.message}`
     );
-    window.open(`https://wa.me/258874209440?text=${text}`, '_blank');
+    window.open(`https://wa.me/${whatsappNumber}?text=${text}`, '_blank');
     setSent(true);
     setTimeout(() => setSent(false), 4000);
   };
@@ -36,27 +52,27 @@ const Contactos: React.FC = () => {
             <h2 className="text-xl font-bold text-content-primary mb-6">Informações de Contacto</h2>
 
             {[
-              {
+              ...(companyPhone ? [{
                 icon: <Phone className="w-5 h-5" />,
                 label: 'Telefone / WhatsApp',
-                value: '+258 84 420 9440',
-                href: 'https://wa.me/258874209440',
-                color: 'text-green-600 bg-green-59440 dark:bg-green-900/20',
-              },
-              {
+                value: companyPhone,
+                href: `https://wa.me/${whatsappNumber}`,
+                color: 'text-green-600 bg-green-50 dark:bg-green-900/20',
+              }] : []),
+              ...(companyEmail ? [{
                 icon: <Mail className="w-5 h-5" />,
                 label: 'Email',
-                value: 'info@naturerva.co.mz',
-                href: 'mailto:info@naturerva.co.mz',
+                value: companyEmail,
+                href: `mailto:${companyEmail}`,
                 color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
-              },
-              {
+              }] : []),
+              ...(companyAddress ? [{
                 icon: <MapPin className="w-5 h-5" />,
                 label: 'Localização',
-                value: 'Beira, Moçambique',
+                value: companyAddress,
                 href: undefined,
                 color: 'text-red-500 bg-red-50 dark:bg-red-900/20',
-              },
+              }] : []),
               {
                 icon: <Clock className="w-5 h-5" />,
                 label: 'Horário de Atendimento',

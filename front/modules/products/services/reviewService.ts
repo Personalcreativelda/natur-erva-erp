@@ -1,7 +1,9 @@
 /**
  * reviewService — REST API backend (product_reviews table).
  * GET endpoints are public; POST requires auth token.
- * Falls back to localStorage when backend is unreachable.
+ * Nunca inventa avaliações: se o servidor não responder, devolve vazio
+ * (leitura) ou propaga o erro (escrita) — não guarda nada só no browser
+ * fingindo que foi publicado na base de dados.
  */
 import api from '../../core/services/apiClient';
 
@@ -23,16 +25,6 @@ export interface RatingStats {
 const statsCache = new Map<string, { data: RatingStats; ts: number }>();
 const CACHE_TTL = 30_000;
 
-const STORAGE_KEY = 'naturerva_reviews';
-
-function getLocalReviews(): ProductReview[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-}
-
-function saveLocalReviews(reviews: ProductReview[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(reviews));
-}
-
 // ── Stats ────────────────────────────────────────────────────────────────────
 
 export async function getProductRating(productId: string): Promise<RatingStats> {
@@ -45,11 +37,7 @@ export async function getProductRating(productId: string): Promise<RatingStats> 
     statsCache.set(productId, { data: stats, ts: Date.now() });
     return stats;
   } catch {
-    // fallback to localStorage
-    const local = getLocalReviews().filter(r => r.product_id === productId);
-    if (!local.length) return { average: 0, total: 0 };
-    const avg = local.reduce((s, r) => s + r.rating, 0) / local.length;
-    return { average: Math.round(avg * 10) / 10, total: local.length };
+    return { average: 0, total: 0 };
   }
 }
 
@@ -60,7 +48,7 @@ export async function getProductReviews(productId: string): Promise<ProductRevie
     const data = await api.get<ProductReview[]>(`/reviews/product/${productId}`);
     return data || [];
   } catch {
-    return getLocalReviews().filter(r => r.product_id === productId);
+    return [];
   }
 }
 
@@ -69,50 +57,26 @@ export async function getProductReviews(productId: string): Promise<ProductRevie
 export async function getAllReviews(limit = 24): Promise<ProductReview[]> {
   try {
     const data = await api.get<ProductReview[]>(`/reviews?limit=${limit}`);
-    if (Array.isArray(data) && data.length > 0) return data;
-  } catch { /* fall through */ }
-
-  // localStorage fallback (shows reviews written on this device)
-  return getLocalReviews()
-    .filter(r => r.comment?.trim() && r.rating >= 4)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at))
-    .slice(0, limit);
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 }
 
 // ── Submit ────────────────────────────────────────────────────────────────────
 
+/** Lança erro se não conseguir gravar na base de dados — o chamador deve avisar o utilizador, nunca fingir sucesso. */
 export async function submitReview(
   productId: string,
   userName: string,
   rating: number,
   comment: string
 ): Promise<void> {
-  const review: ProductReview = {
-    id: crypto.randomUUID(),
+  await api.post('/reviews', {
     product_id: productId,
     user_name: userName.trim(),
     rating,
     comment: comment.trim(),
-    created_at: new Date().toISOString(),
-  };
-
-  let savedToBackend = false;
-  try {
-    await api.post('/reviews', {
-      product_id: productId,
-      user_name: userName.trim(),
-      rating,
-      comment: comment.trim(),
-    });
-    savedToBackend = true;
-  } catch { /* fall through */ }
-
-  if (!savedToBackend) {
-    // Save locally so the user sees their own review immediately
-    const reviews = getLocalReviews();
-    reviews.unshift(review);
-    saveLocalReviews(reviews);
-  }
-
+  });
   statsCache.delete(productId);
 }

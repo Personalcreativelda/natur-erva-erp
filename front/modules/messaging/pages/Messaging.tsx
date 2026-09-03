@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
 import api from '../../core/services/apiClient';
 import { MessageSquare, Plus, Loader2, X, Send, Users } from 'lucide-react';
@@ -169,7 +170,7 @@ export function Messaging({ showToast }: Props) {
       </div>
 
       {/* Modal nova conversa */}
-      {newConvModal && (
+      {newConvModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
           <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-sm animate-modal-enter">
             <div className="flex items-center justify-between p-5 border-b border-border-default">
@@ -204,7 +205,8 @@ export function Messaging({ showToast }: Props) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </PageShell>
   );

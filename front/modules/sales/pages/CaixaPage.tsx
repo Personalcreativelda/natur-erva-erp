@@ -1,11 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
  Store, Printer, Clock, Banknote, Smartphone,
- CreditCard, CheckCircle, RefreshCw, Download,
+ CreditCard, CheckCircle, RefreshCw, Download, Wallet, TrendingUp, ShoppingCart,
 } from 'lucide-react';
 import api, { downloadBlob } from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
 import type { Toast } from '../../core/components/ui/Toast';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
+
+function KpiCard({ label, value, sub, icon, accent }: { label: string; value: string | number; sub?: string; icon: React.ReactNode; accent: string }) {
+ return (
+ <div className="bg-surface-raised border border-border-default rounded-xl p-4 flex flex-col gap-2">
+ <div className="flex items-center justify-between">
+ <span className="text-xs font-semibold text-content-muted uppercase tracking-wide">{label}</span>
+ <span className={`p-2 rounded-lg ${accent}`}>{icon}</span>
+ </div>
+ <p className="text-xl font-bold text-content-primary">{value}</p>
+ {sub && <span className="text-xs text-content-muted">{sub}</span>}
+ </div>
+ );
+}
 
 interface CaixaPageProps {
  showToast?: (msg: string, type: Toast['type']) => void;
@@ -46,8 +60,8 @@ const fmtDuration = (from: string) => {
 function printCloseReport(
  s: PosSession,
  summary: CloseReport['summary'],
- companyName = 'NaturErva',
- logoUrl = `${window.location.origin}/logo.png`,
+ companyName = '',
+ logoUrl = '',
 ) {
  const f = (n: number) => `MT ${Number(n).toFixed(2)}`;
  const rows = summary.byMethod.map(m =>
@@ -56,7 +70,7 @@ function printCloseReport(
  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fecho de Caixa</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:12px;width:80mm;margin:0 auto;padding:12px}.c{text-align:center}.b{font-weight:bold}.lg{font-size:15px}hr{border:none;border-top:1px dashed #000;margin:7px 0}table{width:100%;border-collapse:collapse}td{padding:2px 0}img.logo{display:block;margin:0 auto 6px;max-width:110px;max-height:55px;object-fit:contain}</style>
 </head><body>
-<div class="c"><img class="logo" src="${logoUrl}" alt="" onerror="this.style.display='none'"><p class="b lg">${companyName}</p><p>FECHO DE CAIXA</p></div><hr>
+<div class="c">${logoUrl ? `<img class="logo" src="${logoUrl}" alt="">` : ''}<p class="b lg">${companyName}</p><p>FECHO DE CAIXA</p></div><hr>
 <p>Caixa: ${s.cashier_name}</p>
 <p>Abertura: ${new Date(s.opened_at).toLocaleString('pt-PT', { timeZone: TZ })}</p>
 <p>Fecho: ${s.closed_at ? new Date(s.closed_at).toLocaleString('pt-PT', { timeZone: TZ }) : '—'}</p>
@@ -76,6 +90,7 @@ function printCloseReport(
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
+ const confirm = useConfirm();
  const [tab, setTab] = useState<'atual' | 'anteriores'>('atual');
  const [session, setSession] = useState<PosSession | null | 'loading'>('loading');
  const [sessions, setSessions] = useState<SessionHistory[]>([]);
@@ -136,7 +151,7 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  };
 
  const handleClose = async () => {
- if (!confirm('Confirmas o fecho da caixa?')) return;
+ if (!(await confirm('Confirmas o fecho da caixa?', { confirmLabel: 'Fechar Caixa' }))) return;
  setClosing(true);
  try {
  const r = await api.post<CloseReport>('/pos/session/close', {});
@@ -153,7 +168,7 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  });
  const liveTotalSales = recentOrders.reduce((s, o) => s + Number(o.totalAmount), 0);
  const sess = session as PosSession | null;
- const logoUrl = taxConfig.logoUrl || `${window.location.origin}/logo.png`;
+ const logoUrl = taxConfig.logoUrl || '';
 
  // ── Loading ──────────────────────────────────────────────────────────────────
  if (session === 'loading') return (
@@ -301,8 +316,19 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  </div>
  )}
 
- {/* ── Tab: Caixa Atual — sessão aberta — 3 colunas ──────────────────── */}
+ {/* ── Tab: Caixa Atual — sessão aberta — KPIs + 3 colunas ────────────── */}
  {tab === 'atual' && sess && (
+ <div className="space-y-4 sm:space-y-6">
+ <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+ <KpiCard label="Saldo Inicial" value={fmt(sess.initial_amount)} sub="fundo de maneio"
+ icon={<Wallet className="w-4 h-4 text-blue-600" />} accent="bg-blue-50 dark:bg-blue-900/20" />
+ <KpiCard label="Total de Vendas" value={fmt(liveTotalSales)} sub={`${recentOrders.length} ${recentOrders.length === 1 ? 'venda' : 'vendas'}`}
+ icon={<TrendingUp className="w-4 h-4 text-green-600" />} accent="bg-green-50 dark:bg-green-900/20" />
+ <KpiCard label="Nº de Vendas" value={recentOrders.length} sub="nesta sessão"
+ icon={<ShoppingCart className="w-4 h-4 text-orange-600" />} accent="bg-orange-50 dark:bg-orange-900/20" />
+ <KpiCard label="Saldo Final (est.)" value={fmt(Number(sess.initial_amount) + liveTotalSales)} sub={`aberto há ${fmtDuration(sess.opened_at)}`}
+ icon={<Banknote className="w-4 h-4 text-brand-600" />} accent="bg-brand-50 dark:bg-brand-900/20" />
+ </div>
  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
  {/* Col 1: Resumo */}
@@ -440,6 +466,7 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  </div>
  </div>
 
+ </div>
  </div>
  )}
 

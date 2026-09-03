@@ -79,18 +79,23 @@ export const ADMIN_ROUTE_MAP: Record<string, string> = {
   'ledger': '/admin/razao-geral',
   // RH
   'hr': '/admin/rh',
+  'hr-incentives': '/admin/rh/metas',
   // Projectos
   'projects': '/admin/projectos',
   // Helpdesk
   'helpdesk': '/admin/helpdesk',
-  // Planilhas de Horas
-  'timesheets': '/admin/timesheets',
   // Mensagens
   'messaging': '/admin/mensagens',
   // Assinaturas
   'subscriptions': '/admin/assinaturas',
   // Documentos
   'documents': '/admin/documentos',
+  'assistant': '/admin/assistente',
+  // Clínica
+  'clinic': '/admin/clinica',
+  'clinic-patients': '/admin/clinica/pacientes',
+  'clinic-agenda': '/admin/clinica/agenda',
+  'clinic-protocols': '/admin/clinica/protocolos',
   // Perfil
   'profile': '/admin/perfis'
 };
@@ -182,6 +187,10 @@ export const getActivePageFromPath = (pathname: string): string => {
           'stock-audit': 'stock-management',
           'users-list': 'users',
           'users-roles': 'users',
+          'clinic-patients': 'clinic',
+          'clinic-agenda': 'clinic',
+          'clinic-protocols': 'clinic',
+          'hr-incentives': 'hr',
         };
         return parentMap[pageId] || pageId;
       }

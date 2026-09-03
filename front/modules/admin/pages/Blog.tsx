@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Edit2, Trash2, Eye, Globe, FileText, Image, X, Save, Loader2, Tag, RefreshCw } from 'lucide-react';
 import api from '../../core/services/apiClient';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 import { PageShell } from '../../core/components/layout/PageShell';
 import { RichTextEditor } from '../components/RichTextEditor';
 
@@ -22,6 +23,7 @@ interface BlogPost {
 const EMPTY_FORM = { title: '', summary: '', content: '', tags: '', status: 'draft' as const, coverImageData: '' };
 
 export const Blog: React.FC<{ showToast: (m: string, t: 'success' | 'error' | 'info') => void }> = ({ showToast }) => {
+ const confirm = useConfirm();
  const [posts, setPosts] = useState<BlogPost[]>([]);
  const [loading, setLoading] = useState(true);
  const [showForm, setShowForm] = useState(false);
@@ -98,7 +100,7 @@ export const Blog: React.FC<{ showToast: (m: string, t: 'success' | 'error' | 'i
  };
 
  const handleDelete = async (id: string) => {
- if (!confirm('Apagar este post?')) return;
+ if (!(await confirm('Apagar este post?', { variant: 'danger', confirmLabel: 'Apagar' }))) return;
  setDeletingId(id);
  try {
  await api.delete(`/blog/${id}`);

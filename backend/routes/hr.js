@@ -88,6 +88,8 @@ async function migrate() {
     updated_at        TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (period_id, employee_id)
   )`, 'payslips');
+  // Coluna adicionada depois da criação inicial da tabela em produção — auto-corrige em cada arranque
+  await run(`ALTER TABLE payslips ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`, 'payslips.updated_at');
 }
 migrate();
 
@@ -170,35 +172,53 @@ router.get('/employees/:id', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+const rateOrNull = (v) => (v === '' || v == null) ? null : Number(v);
+const strOrNull  = (v) => (v === '' || v == null) ? null : String(v).trim();
+
 router.post('/employees', authMiddleware, async (req, res) => {
   const { full_name, job_title, department_id, hire_date, contract_type, salary,
-          phone, email, nuit, emergency_contact, notes, avatar_url, profile_id } = req.body;
+          phone, email, nuit, emergency_contact, notes, avatar_url, profile_id,
+          inss_exempt, irps_exempt, inss_rate, irps_rate,
+          payment_method, bank_name, bank_nib, bank_account, mpesa_number, emola_number } = req.body;
   try {
     const { rows } = await pool.query(`
       INSERT INTO employees
         (full_name, job_title, department_id, hire_date, contract_type, salary,
-         phone, email, nuit, emergency_contact, notes, avatar_url, profile_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *
+         phone, email, nuit, emergency_contact, notes, avatar_url, profile_id,
+         inss_exempt, irps_exempt, inss_rate, irps_rate,
+         payment_method, bank_name, bank_nib, bank_account, mpesa_number, emola_number)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING *
     `, [full_name, job_title, department_id||null, hire_date||null, contract_type||'full_time',
         salary||0, phone||null, email||null, nuit||null, emergency_contact||null,
-        notes||null, avatar_url||null, profile_id||null]);
+        notes||null, avatar_url||null, profile_id||null,
+        !!inss_exempt, !!irps_exempt, rateOrNull(inss_rate), rateOrNull(irps_rate),
+        payment_method || 'bank', strOrNull(bank_name), strOrNull(bank_nib),
+        strOrNull(bank_account), strOrNull(mpesa_number), strOrNull(emola_number)]);
     res.status(201).json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 router.put('/employees/:id', authMiddleware, async (req, res) => {
   const { full_name, job_title, department_id, hire_date, contract_type, salary,
-          phone, email, nuit, emergency_contact, notes, avatar_url, status } = req.body;
+          phone, email, nuit, emergency_contact, notes, avatar_url, status,
+          inss_exempt, irps_exempt, inss_rate, irps_rate,
+          payment_method, bank_name, bank_nib, bank_account, mpesa_number, emola_number } = req.body;
   try {
     const { rows } = await pool.query(`
       UPDATE employees SET
         full_name=$1, job_title=$2, department_id=$3, hire_date=$4, contract_type=$5,
         salary=$6, phone=$7, email=$8, nuit=$9, emergency_contact=$10, notes=$11,
-        avatar_url=$12, status=$13, updated_at=NOW()
-      WHERE id=$14 RETURNING *
+        avatar_url=$12, status=$13, inss_exempt=$14, irps_exempt=$15, inss_rate=$16, irps_rate=$17,
+        payment_method=$18, bank_name=$19, bank_nib=$20, bank_account=$21,
+        mpesa_number=$22, emola_number=$23, updated_at=NOW()
+      WHERE id=$24 RETURNING *
     `, [full_name, job_title, department_id||null, hire_date||null, contract_type||'full_time',
         salary||0, phone||null, email||null, nuit||null, emergency_contact||null,
-        notes||null, avatar_url||null, status||'active', req.params.id]);
+        notes||null, avatar_url||null, status||'active',
+        !!inss_exempt, !!irps_exempt, rateOrNull(inss_rate), rateOrNull(irps_rate),
+        payment_method || 'bank', strOrNull(bank_name), strOrNull(bank_nib),
+        strOrNull(bank_account), strOrNull(mpesa_number), strOrNull(emola_number),
+        req.params.id]);
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -346,10 +366,12 @@ router.post('/payroll/:id/process', authMiddleware, async (req, res) => {
     const slips = [];
     for (const emp of emps.rows) {
       const gross = parseFloat(emp.salary) || 0;
-      const inssEmp  = Math.round(gross * 0.03 * 100) / 100;   // INSS funcionário 3%
-      const inssEmpr = Math.round(gross * 0.04 * 100) / 100;   // INSS entidade 4%
+      const inssRatePct = emp.inss_exempt ? 0 : (emp.inss_rate != null ? Number(emp.inss_rate) : 3); // taxa do funcionário: isento, personalizada ou 3% por omissão
+      const inssEmp  = Math.round(gross * inssRatePct / 100 * 100) / 100;
+      const inssEmpr = emp.inss_exempt ? 0 : Math.round(gross * 0.04 * 100) / 100;   // contribuição da entidade — fixa em 4%, só zera se isento
       const taxable  = gross - inssEmp;
-      const irps     = calcIRPS(taxable);
+      const irps     = emp.irps_exempt ? 0
+        : (emp.irps_rate != null ? Math.round(taxable * Number(emp.irps_rate) / 100 * 100) / 100 : calcIRPS(taxable)); // taxa manual ou tabela progressiva
       const net      = Math.round((gross - inssEmp - irps) * 100) / 100;
 
       await pool.query(`
@@ -379,6 +401,15 @@ router.get('/payroll/:id/payslips', authMiddleware, async (req, res) => {
       ORDER BY e.full_name
     `, [req.params.id]);
     res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Apagar um período (os recibos são removidos em cascata via FK)
+router.delete('/payroll/:id', authMiddleware, async (req, res) => {
+  try {
+    const { rowCount } = await pool.query(`DELETE FROM payroll_periods WHERE id=$1`, [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Período não encontrado' });
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

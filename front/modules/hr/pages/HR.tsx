@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
-import api from '../../core/services/apiClient';
+import api, { downloadBlob } from '../../core/services/apiClient';
 import {
   Users, Building2, FileText, Calendar, Plus, Pencil, Trash2,
   Loader2, Search, X, ChevronDown, Check, UserCheck, UserX, Clock,
-  DollarSign, Play, CheckCheck, ChevronRight, AlertCircle,
+  DollarSign, Play, CheckCheck, ChevronRight, AlertCircle, Printer, Download,
 } from 'lucide-react';
 import type { Toast } from '../../core/components/ui/Toast';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 interface Props { showToast?: (msg: string, type: Toast['type']) => void; }
 
@@ -14,6 +16,9 @@ type Employee = {
   id: number; full_name: string; job_title: string; department_name: string;
   department_id: number; hire_date: string; contract_type: string;
   salary: number; phone: string; email: string; status: string; avatar_url: string;
+  inss_exempt: boolean; irps_exempt: boolean; inss_rate: number | null; irps_rate: number | null;
+  payment_method: string; bank_name: string | null; bank_nib: string | null;
+  bank_account: string | null; mpesa_number: string | null; emola_number: string | null;
 };
 type Department = { id: number; name: string; description: string; manager_name: string; employee_count: number; };
 type Leave = {
@@ -21,8 +26,10 @@ type Leave = {
   end_date: string; days: number; reason: string; status: string;
 };
 type Stats = { total: number; active: number; on_leave: number; departments: number; pending_leaves: number; };
+type TimeEntry = { id: number; employee_name: string; project_name: string; task_title: string; date: string; hours: number; description: string; billable: boolean; };
+type Project = { id: number; name: string; };
 
-const TAB = { EMPLOYEES: 'employees', DEPARTMENTS: 'departments', LEAVES: 'leaves', PAYROLL: 'payroll' } as const;
+const TAB = { EMPLOYEES: 'employees', DEPARTMENTS: 'departments', LEAVES: 'leaves', PAYROLL: 'payroll', TIMESHEETS: 'timesheets' } as const;
 type Tab = typeof TAB[keyof typeof TAB];
 
 type PayrollPeriod = {
@@ -55,8 +62,28 @@ const STATUS_COLORS: Record<string, string> = {
 const inputCls = 'w-full px-3 py-2 text-sm rounded-lg border border-border-default bg-surface-base text-content-primary focus:outline-none focus:ring-2 focus:ring-brand-500';
 const labelCls = 'block text-xs font-medium text-content-secondary mb-1';
 
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+const EMPTY_EMP_FORM = {
+  full_name: '', job_title: '', department_id: '', hire_date: '', contract_type: 'full_time',
+  salary: '', phone: '', email: '', status: 'active', notes: '',
+  inss_exempt: false, irps_exempt: false, inss_rate: '', irps_rate: '',
+  payment_method: 'bank', bank_name: '', bank_nib: '', bank_account: '', mpesa_number: '', emola_number: '',
+};
+
+function KpiCard({ label, value, sub, icon, accent }: { label: string; value: string | number; sub?: string; icon: React.ReactNode; accent: string }) {
   return (
+    <div className="bg-surface-raised border border-border-default rounded-xl p-5 flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-content-muted uppercase tracking-wide">{label}</span>
+        <span className={`p-2 rounded-lg ${accent}`}>{icon}</span>
+      </div>
+      <p className="text-2xl font-bold text-content-primary">{value}</p>
+      {sub && <span className="text-xs text-content-muted">{sub}</span>}
+    </div>
+  );
+}
+
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
       <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-lg animate-modal-enter">
         <div className="flex items-center justify-between p-5 border-b border-border-default">
@@ -65,11 +92,13 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
         </div>
         <div className="p-5 max-h-[70vh] overflow-y-auto">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
 export function HR({ showToast }: Props) {
+  const confirm = useConfirm();
   const [tab, setTab] = useState<Tab>(TAB.EMPLOYEES);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -77,13 +106,18 @@ export function HR({ showToast }: Props) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
-  const [modal, setModal] = useState<'employee' | 'department' | 'leave' | null>(null);
+  const [modal, setModal] = useState<'employee' | 'department' | 'leave' | 'timesheet' | null>(null);
   const [editing, setEditing] = useState<any>(null);
   const [saving, setSaving] = useState(false);
 
-  const [empForm, setEmpForm] = useState({ full_name: '', job_title: '', department_id: '', hire_date: '', contract_type: 'full_time', salary: '', phone: '', email: '', status: 'active', notes: '' });
+  const [empForm, setEmpForm] = useState({ ...EMPTY_EMP_FORM });
   const [deptForm, setDeptForm] = useState({ name: '', description: '' });
   const [leaveForm, setLeaveForm] = useState({ employee_id: '', type: 'annual', start_date: '', end_date: '', days: '1', reason: '' });
+
+  // Timesheets state
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [tsProjects, setTsProjects] = useState<Project[]>([]);
+  const [tsForm, setTsForm] = useState({ employee_id: '', project_id: '', date: new Date().toISOString().slice(0,10), hours: '', description: '', billable: false });
 
   // Payroll state
   const [periods, setPeriods] = useState<PayrollPeriod[]>([]);
@@ -94,23 +128,43 @@ export function HR({ showToast }: Props) {
   const [periodModal, setPeriodModal] = useState(false);
   const [editingSlip, setEditingSlip] = useState<Payslip | null>(null);
   const [slipModal, setSlipModal] = useState(false);
+  const [printingSlipId, setPrintingSlipId] = useState<number | null>(null);
+  const [downloadingSheet, setDownloadingSheet] = useState<string | null>(null);
   const [periodForm, setPeriodForm] = useState({ period_name: '', start_date: '', end_date: '', notes: '' });
   const [slipForm, setSlipForm] = useState({ gross_salary: '', inss_employee: '', inss_employer: '', irps: '', other_deductions: '0', other_additions: '0', notes: '' });
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [e, d, l, s, pp] = await Promise.all([
+      const [e, d, l, s, pp, te, tp] = await Promise.all([
         api.get<Employee[]>('/hr/employees'),
         api.get<Department[]>('/hr/departments'),
         api.get<Leave[]>('/hr/leaves'),
         api.get<Stats>('/hr/stats'),
         api.get<PayrollPeriod[]>('/hr/payroll'),
+        api.get<TimeEntry[]>('/projects/timesheets'),
+        api.get<Project[]>('/projects'),
       ]);
       setEmployees(e); setDepartments(d); setLeaves(l); setStats(s); setPeriods(pp);
+      setTimeEntries(te); setTsProjects(tp);
     } catch { showToast?.('Erro ao carregar dados', 'error'); }
     finally { setLoading(false); }
   }, []);
+
+  const saveTimesheet = async () => {
+    setSaving(true);
+    try {
+      await api.post('/projects/timesheets', tsForm);
+      showToast?.('Registo guardado', 'success'); setModal(null); load();
+    } catch (e: any) { showToast?.(e.message || 'Erro', 'error'); }
+    finally { setSaving(false); }
+  };
+
+  const deleteTimesheet = async (id: number) => {
+    if (!(await confirm('Eliminar registo de horas?', { variant: 'danger', confirmLabel: 'Eliminar' }))) return;
+    try { await api.delete(`/projects/timesheets/${id}`); showToast?.('Eliminado', 'success'); load(); }
+    catch { showToast?.('Erro', 'error'); }
+  };
 
   const loadPayslips = useCallback(async (periodId: number) => {
     setLoadingPayslips(true);
@@ -131,7 +185,7 @@ export function HR({ showToast }: Props) {
   };
 
   const processPeriod = async (id: number) => {
-    if (!confirm('Processar folha de salários? Os valores serão calculados automaticamente para todos os funcionários activos.')) return;
+    if (!(await confirm('Os valores serão calculados automaticamente para todos os funcionários activos.', { title: 'Processar folha de salários?', confirmLabel: 'Processar' }))) return;
     setProcessingPayroll(true);
     try {
       const res = await api.post<{ processed: number }>(`/hr/payroll/${id}/process`, {});
@@ -143,7 +197,7 @@ export function HR({ showToast }: Props) {
   };
 
   const closePeriod = async (id: number) => {
-    if (!confirm('Fechar período? Esta ação não pode ser revertida.')) return;
+    if (!(await confirm('Esta ação não pode ser revertida.', { title: 'Fechar período?', variant: 'danger', confirmLabel: 'Fechar' }))) return;
     try {
       await api.put(`/hr/payroll/${id}/close`, {});
       showToast?.('Período fechado', 'success'); load();
@@ -177,6 +231,37 @@ export function HR({ showToast }: Props) {
     finally { setSaving(false); }
   };
 
+  const printSlip = async (slip: Payslip) => {
+    setPrintingSlipId(slip.id);
+    try {
+      await downloadBlob(`/pdf/payroll-slip/${slip.id}`, `recibo-vencimento-${slip.full_name.replace(/\s+/g, '-')}.pdf`);
+    } catch (e: any) { showToast?.(e.message || 'Erro ao gerar recibo', 'error'); }
+    finally { setPrintingSlipId(null); }
+  };
+
+  const downloadSheet = async (type: 'inss' | 'irps' | 'salarios', period?: PayrollPeriod) => {
+    const p = period || selectedPeriod;
+    if (!p) return;
+    const route = type === 'salarios' ? 'payroll-sheet' : `payroll-${type}`;
+    const key = `${type}-${p.id}`;
+    setDownloadingSheet(key);
+    try {
+      const slug = (p.period_name || String(p.id)).replace(/\s+/g, '-');
+      await downloadBlob(`/pdf/${route}/${p.id}`, `folha-${type}-${slug}.pdf`);
+    } catch (e: any) { showToast?.(e.message || 'Erro ao gerar folha', 'error'); }
+    finally { setDownloadingSheet(null); }
+  };
+
+  const deletePeriod = async (period: PayrollPeriod) => {
+    if (!(await confirm(`Todos os ${period.slip_count || 0} recibos deste período serão eliminados. Esta ação não pode ser revertida.`, { title: `Apagar o período "${period.period_name}"?`, variant: 'danger', confirmLabel: 'Apagar' }))) return;
+    try {
+      await api.delete(`/hr/payroll/${period.id}`);
+      showToast?.('Período eliminado', 'success');
+      if (selectedPeriod?.id === period.id) { setSelectedPeriod(null); setPayslips([]); }
+      load();
+    } catch (e: any) { showToast?.(e.message || 'Erro ao eliminar período', 'error'); }
+  };
+
   const markPaid = async (slipId: number) => {
     try {
       await api.put(`/hr/payroll/payslips/${slipId}/pay`, {});
@@ -189,7 +274,16 @@ export function HR({ showToast }: Props) {
 
   const openEdit = (type: 'employee' | 'department' | 'leave', item: any) => {
     setEditing(item);
-    if (type === 'employee') setEmpForm({ full_name: item.full_name, job_title: item.job_title||'', department_id: item.department_id||'', hire_date: item.hire_date?.slice(0,10)||'', contract_type: item.contract_type||'full_time', salary: item.salary||'', phone: item.phone||'', email: item.email||'', status: item.status||'active', notes: item.notes||'' });
+    if (type === 'employee') setEmpForm({
+      full_name: item.full_name, job_title: item.job_title||'', department_id: item.department_id||'',
+      hire_date: item.hire_date?.slice(0,10)||'', contract_type: item.contract_type||'full_time',
+      salary: item.salary||'', phone: item.phone||'', email: item.email||'', status: item.status||'active',
+      notes: item.notes||'', inss_exempt: !!item.inss_exempt, irps_exempt: !!item.irps_exempt,
+      inss_rate: item.inss_rate ?? '', irps_rate: item.irps_rate ?? '',
+      payment_method: item.payment_method || 'bank', bank_name: item.bank_name || '',
+      bank_nib: item.bank_nib || '', bank_account: item.bank_account || '',
+      mpesa_number: item.mpesa_number || '', emola_number: item.emola_number || '',
+    });
     if (type === 'department') setDeptForm({ name: item.name, description: item.description||'' });
     setModal(type);
   };
@@ -231,7 +325,7 @@ export function HR({ showToast }: Props) {
   };
 
   const deleteEmployee = async (id: number) => {
-    if (!confirm('Eliminar funcionário?')) return;
+    if (!(await confirm('Eliminar funcionário?', { variant: 'danger', confirmLabel: 'Eliminar' }))) return;
     try { await api.delete(`/hr/employees/${id}`); showToast?.('Eliminado', 'success'); load(); }
     catch { showToast?.('Erro', 'error'); }
   };
@@ -246,18 +340,27 @@ export function HR({ showToast }: Props) {
     { id: TAB.DEPARTMENTS, label: 'Departamentos', icon: Building2 },
     { id: TAB.LEAVES, label: 'Ausências', icon: Calendar },
     { id: TAB.PAYROLL, label: 'Salários', icon: DollarSign },
+    { id: TAB.TIMESHEETS, label: 'Horas', icon: Clock },
   ];
 
+  const totalHours = timeEntries.reduce((s, e) => s + Number(e.hours), 0);
+  const billableHours = timeEntries.filter(e => e.billable).reduce((s, e) => s + Number(e.hours), 0);
+
   return (
-    <PageShell title="Recursos Humanos" description="Gestão de funcionários, departamentos, ausências e salários"
+    <PageShell title="Recursos Humanos" description="Gestão de funcionários, departamentos, ausências, salários e horas"
       actions={
         tab === TAB.PAYROLL ? (
           <button onClick={() => { setPeriodForm({ period_name: '', start_date: '', end_date: '', notes: '' }); setPeriodModal(true); }}
             className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition-colors">
             <Plus className="w-4 h-4" /> Novo Período
           </button>
+        ) : tab === TAB.TIMESHEETS ? (
+          <button onClick={() => { setTsForm({ employee_id: '', project_id: '', date: new Date().toISOString().slice(0,10), hours: '', description: '', billable: false }); setModal('timesheet'); }}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition-colors">
+            <Plus className="w-4 h-4" /> Novo Registo
+          </button>
         ) : (
-          <button onClick={() => { setEditing(null); setEmpForm({ full_name:'', job_title:'', department_id:'', hire_date:'', contract_type:'full_time', salary:'', phone:'', email:'', status:'active', notes:'' }); setModal(tab === TAB.DEPARTMENTS ? 'department' : tab === TAB.LEAVES ? 'leave' : 'employee'); }}
+          <button onClick={() => { setEditing(null); setEmpForm({ ...EMPTY_EMP_FORM }); setModal(tab === TAB.DEPARTMENTS ? 'department' : tab === TAB.LEAVES ? 'leave' : 'employee'); }}
             className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition-colors">
             <Plus className="w-4 h-4" />
             {tab === TAB.DEPARTMENTS ? 'Novo Departamento' : tab === TAB.LEAVES ? 'Pedir Ausência' : 'Novo Funcionário'}
@@ -267,22 +370,17 @@ export function HR({ showToast }: Props) {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {[
-            { label: 'Total', value: stats.total, icon: Users, color: 'text-blue-600' },
-            { label: 'Activos', value: stats.active, icon: UserCheck, color: 'text-green-600' },
-            { label: 'Ausentes', value: stats.on_leave, icon: UserX, color: 'text-yellow-600' },
-            { label: 'Departamentos', value: stats.departments, icon: Building2, color: 'text-purple-600' },
-            { label: 'Pedidos Pendentes', value: stats.pending_leaves, icon: Clock, color: 'text-orange-600' },
-          ].map(s => (
-            <div key={s.label} className="bg-surface-raised rounded-xl border border-border-default p-4 flex items-center gap-3">
-              <s.icon className={`w-5 h-5 ${s.color} shrink-0`} />
-              <div>
-                <p className="text-xl font-bold text-content-primary">{s.value}</p>
-                <p className="text-xs text-content-muted">{s.label}</p>
-              </div>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <KpiCard label="Total" value={stats.total} sub="funcionários registados"
+            icon={<Users className="w-4 h-4 text-blue-600" />} accent="bg-blue-50 dark:bg-blue-900/20" />
+          <KpiCard label="Activos" value={stats.active} sub="em funções"
+            icon={<UserCheck className="w-4 h-4 text-green-600" />} accent="bg-green-50 dark:bg-green-900/20" />
+          <KpiCard label="Ausentes" value={stats.on_leave} sub="de férias ou licença"
+            icon={<UserX className="w-4 h-4 text-yellow-600" />} accent="bg-yellow-50 dark:bg-yellow-900/20" />
+          <KpiCard label="Departamentos" value={stats.departments} sub="unidades organizacionais"
+            icon={<Building2 className="w-4 h-4 text-purple-600" />} accent="bg-purple-50 dark:bg-purple-900/20" />
+          <KpiCard label="Pedidos Pendentes" value={stats.pending_leaves} sub="ausências por aprovar"
+            icon={<Clock className="w-4 h-4 text-orange-600" />} accent="bg-orange-50 dark:bg-orange-900/20" />
         </div>
       )}
 
@@ -390,6 +488,28 @@ export function HR({ showToast }: Props) {
                     <p className="text-xs text-content-muted">{selectedPeriod.start_date?.slice(0,10)} → {selectedPeriod.end_date?.slice(0,10)}</p>
                   </div>
                   <div className="ml-auto flex items-center gap-2">
+                    {payslips.length > 0 && (
+                      <>
+                        <button onClick={() => downloadSheet('salarios')} disabled={downloadingSheet !== null}
+                          className="flex items-center gap-1.5 px-3 py-1.5 border border-border-default text-content-secondary hover:bg-surface-overlay rounded-lg text-xs font-medium disabled:opacity-50"
+                          title="Folha de salários com dados bancários — para enviar ao banco">
+                          {downloadingSheet === `salarios-${selectedPeriod.id}` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          Folha Salários
+                        </button>
+                        <button onClick={() => downloadSheet('inss')} disabled={downloadingSheet !== null}
+                          className="flex items-center gap-1.5 px-3 py-1.5 border border-border-default text-content-secondary hover:bg-surface-overlay rounded-lg text-xs font-medium disabled:opacity-50"
+                          title="Descarregar folha de INSS do período">
+                          {downloadingSheet === `inss-${selectedPeriod.id}` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          Folha INSS
+                        </button>
+                        <button onClick={() => downloadSheet('irps')} disabled={downloadingSheet !== null}
+                          className="flex items-center gap-1.5 px-3 py-1.5 border border-border-default text-content-secondary hover:bg-surface-overlay rounded-lg text-xs font-medium disabled:opacity-50"
+                          title="Descarregar folha de IRPS do período">
+                          {downloadingSheet === `irps-${selectedPeriod.id}` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          Folha IRPS
+                        </button>
+                      </>
+                    )}
                     {selectedPeriod.status !== 'closed' && (
                       <>
                         <button onClick={() => processPeriod(selectedPeriod.id)} disabled={processingPayroll}
@@ -457,6 +577,10 @@ export function HR({ showToast }: Props) {
                             </td>
                             <td className="py-2.5 px-2">
                               <div className="flex gap-1">
+                                <button onClick={() => printSlip(slip)} disabled={printingSlipId === slip.id}
+                                  className="p-1 rounded hover:bg-surface-overlay text-content-muted hover:text-content-primary disabled:opacity-50" title="Imprimir / PDF">
+                                  {printingSlipId === slip.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+                                </button>
                                 <button onClick={() => openSlipEdit(slip)} className="p-1 rounded hover:bg-surface-overlay text-content-muted" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
@@ -501,11 +625,69 @@ export function HR({ showToast }: Props) {
                     }`}>
                       {pp.status === 'closed' ? 'Fechado' : pp.status === 'processing' ? 'Processado' : 'Rascunho'}
                     </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {(pp.slip_count || 0) > 0 && (
+                        <button onClick={e => { e.stopPropagation(); downloadSheet('salarios', pp); }} disabled={downloadingSheet !== null}
+                          className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted hover:text-content-primary disabled:opacity-50"
+                          title="Descarregar folha de salários (dados bancários para pagamento)">
+                          {downloadingSheet === `salarios-${pp.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                        </button>
+                      )}
+                      <button onClick={e => { e.stopPropagation(); deletePeriod(pp); }}
+                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600"
+                        title="Apagar período">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                     <ChevronRight className="w-4 h-4 text-content-muted shrink-0" />
                   </div>
                 ))}
               </div>
             )
+          ) : tab === TAB.TIMESHEETS ? (
+            /* ── TIMESHEETS ───────────────────────────────────────────────── */
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-surface-overlay rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-content-primary">{totalHours.toFixed(1)}h</p>
+                  <p className="text-xs text-content-muted">Total Horas</p>
+                </div>
+                <div className="bg-surface-overlay rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-green-600">{billableHours.toFixed(1)}h</p>
+                  <p className="text-xs text-content-muted">Horas Facturáveis</p>
+                </div>
+                <div className="bg-surface-overlay rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-brand-600">{timeEntries.length}</p>
+                  <p className="text-xs text-content-muted">Registos</p>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b border-border-default">
+                    {['Data', 'Funcionário', 'Projecto', 'Tarefa', 'Horas', 'Descrição', 'Fac.', ''].map(h => (
+                      <th key={h} className="text-left py-3 px-3 text-xs font-medium text-content-muted">{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>
+                    {timeEntries.map(e => (
+                      <tr key={e.id} className="border-b border-border-default/50 hover:bg-surface-overlay/50">
+                        <td className="py-3 px-3 text-content-secondary">{e.date?.slice(0,10)}</td>
+                        <td className="py-3 px-3 font-medium text-content-primary">{e.employee_name || '—'}</td>
+                        <td className="py-3 px-3 text-content-secondary">{e.project_name || '—'}</td>
+                        <td className="py-3 px-3 text-content-secondary">{e.task_title || '—'}</td>
+                        <td className="py-3 px-3 font-medium text-content-primary">{Number(e.hours).toFixed(1)}h</td>
+                        <td className="py-3 px-3 text-content-secondary max-w-xs truncate">{e.description || '—'}</td>
+                        <td className="py-3 px-3">{e.billable ? <span className="text-green-600 text-xs font-medium">Sim</span> : <span className="text-content-muted text-xs">Não</span>}</td>
+                        <td className="py-3 px-3">
+                          <button onClick={() => deleteTimesheet(e.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                        </td>
+                      </tr>
+                    ))}
+                    {timeEntries.length === 0 && <tr><td colSpan={8} className="py-12 text-center text-content-muted">Nenhum registo</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           ) : (
             <div className="space-y-3">
               {leaves.map(l => (
@@ -587,6 +769,76 @@ export function HR({ showToast }: Props) {
                 <label className={labelCls}>Email</label>
                 <input type="email" value={empForm.email} onChange={e => setEmpForm(p=>({...p,email:e.target.value}))} className={inputCls} />
               </div>
+            </div>
+            <div className="border border-border-default rounded-xl p-3 space-y-3">
+              <p className="text-xs font-semibold text-content-muted uppercase tracking-wide">Impostos e Descontos</p>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex items-center gap-2 text-sm text-content-secondary cursor-pointer">
+                  <input type="checkbox" checked={empForm.inss_exempt} onChange={e => setEmpForm(p=>({...p,inss_exempt:e.target.checked}))} className="rounded" />
+                  Isento de INSS
+                </label>
+                <label className="flex items-center gap-2 text-sm text-content-secondary cursor-pointer">
+                  <input type="checkbox" checked={empForm.irps_exempt} onChange={e => setEmpForm(p=>({...p,irps_exempt:e.target.checked}))} className="rounded" />
+                  Isento de IRPS
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Taxa de INSS (%)</label>
+                  <input type="number" step="0.1" min="0" max="100" placeholder="3.0 (padrão)"
+                    disabled={empForm.inss_exempt}
+                    value={empForm.inss_rate} onChange={e => setEmpForm(p=>({...p,inss_rate:e.target.value}))}
+                    className={`${inputCls} disabled:opacity-50 disabled:cursor-not-allowed`} />
+                </div>
+                <div>
+                  <label className={labelCls}>Taxa de IRPS (%)</label>
+                  <input type="number" step="0.1" min="0" max="100" placeholder="tabela (padrão)"
+                    disabled={empForm.irps_exempt}
+                    value={empForm.irps_rate} onChange={e => setEmpForm(p=>({...p,irps_rate:e.target.value}))}
+                    className={`${inputCls} disabled:opacity-50 disabled:cursor-not-allowed`} />
+                </div>
+              </div>
+              <p className="text-[11px] text-content-muted">Deixa em branco para usar o padrão: INSS 3% e IRPS pela tabela progressiva. A contribuição da entidade mantém-se em 4%.</p>
+            </div>
+            <div className="border border-border-default rounded-xl p-3 space-y-3">
+              <p className="text-xs font-semibold text-content-muted uppercase tracking-wide">Dados de Pagamento</p>
+              <div>
+                <label className={labelCls}>Método de Pagamento</label>
+                <select value={empForm.payment_method} onChange={e => setEmpForm(p=>({...p,payment_method:e.target.value}))} className={inputCls}>
+                  <option value="bank">Transferência Bancária</option>
+                  <option value="mpesa">M-Pesa</option>
+                  <option value="emola">e-Mola</option>
+                  <option value="cash">Numerário</option>
+                </select>
+              </div>
+              {empForm.payment_method === 'bank' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className={labelCls}>Banco</label>
+                    <input value={empForm.bank_name} onChange={e => setEmpForm(p=>({...p,bank_name:e.target.value}))} placeholder="Ex: BCI, Millennium BIM..." className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>NIB</label>
+                    <input value={empForm.bank_nib} onChange={e => setEmpForm(p=>({...p,bank_nib:e.target.value}))} className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Nº de Conta</label>
+                    <input value={empForm.bank_account} onChange={e => setEmpForm(p=>({...p,bank_account:e.target.value}))} className={inputCls} />
+                  </div>
+                </div>
+              )}
+              {empForm.payment_method === 'mpesa' && (
+                <div>
+                  <label className={labelCls}>Número M-Pesa</label>
+                  <input value={empForm.mpesa_number} onChange={e => setEmpForm(p=>({...p,mpesa_number:e.target.value}))} placeholder="+258 8X XXX XXXX" className={inputCls} />
+                </div>
+              )}
+              {empForm.payment_method === 'emola' && (
+                <div>
+                  <label className={labelCls}>Número e-Mola</label>
+                  <input value={empForm.emola_number} onChange={e => setEmpForm(p=>({...p,emola_number:e.target.value}))} placeholder="+258 8X XXX XXXX" className={inputCls} />
+                </div>
+              )}
             </div>
             <div>
               <label className={labelCls}>Notas</label>
@@ -671,6 +923,53 @@ export function HR({ showToast }: Props) {
           </div>
         </Modal>
       )}
+      {/* Modal Registo de Horas */}
+      {modal === 'timesheet' && (
+        <Modal title="Novo Registo de Horas" onClose={() => setModal(null)}>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Funcionário</label>
+                <select value={tsForm.employee_id} onChange={e => setTsForm(p=>({...p,employee_id:e.target.value}))} className={inputCls}>
+                  <option value="">Seleccionar…</option>
+                  {employees.map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Projecto</label>
+                <select value={tsForm.project_id} onChange={e => setTsForm(p=>({...p,project_id:e.target.value}))} className={inputCls}>
+                  <option value="">Nenhum</option>
+                  {tsProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Data</label>
+                <input type="date" value={tsForm.date} onChange={e => setTsForm(p=>({...p,date:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Horas *</label>
+                <input type="number" step="0.5" min="0.5" max="24" value={tsForm.hours} onChange={e => setTsForm(p=>({...p,hours:e.target.value}))} className={inputCls} />
+              </div>
+            </div>
+            <div>
+              <label className={labelCls}>Descrição</label>
+              <input value={tsForm.description} onChange={e => setTsForm(p=>({...p,description:e.target.value}))} className={inputCls} />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-content-secondary cursor-pointer">
+              <input type="checkbox" checked={tsForm.billable} onChange={e => setTsForm(p=>({...p,billable:e.target.checked}))} className="rounded" />
+              Facturável ao cliente
+            </label>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setModal(null)} className="px-4 py-2 text-sm border border-border-default rounded-lg text-content-secondary hover:bg-surface-overlay">Cancelar</button>
+              <button onClick={saveTimesheet} disabled={saving || !tsForm.hours}
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg disabled:opacity-50">
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />} Guardar
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* Modal Novo Período */}
       {periodModal && (
         <Modal title="Novo Período de Salários" onClose={() => setPeriodModal(false)}>

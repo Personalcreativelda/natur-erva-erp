@@ -2131,7 +2131,7 @@ export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, tot
  // ------------------------------------------------------------------
  const handlePrint = async (order: Order) => {
  // Carregar config fiscal (best-effort)
- let tax = { companyName: 'NaturErva', companyNuit: '', companyAddress: '', vatRate: 16 };
+ let tax = { companyName: '', companyNuit: '', companyAddress: '', vatRate: 16 };
  try {
  const apiMod = await import('../../core/services/apiClient');
  const cfg = await apiMod.default.get<typeof tax>('/tax/config');

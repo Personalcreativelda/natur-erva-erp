@@ -9,40 +9,45 @@ interface LogoProps {
  isDarkMode?: boolean; // Para determinar qual logo usar (light ou dark)
 }
 
-export const Logo: React.FC<LogoProps> = ({ 
- className = '', 
- width = 'auto', 
+const escapeXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/** Placeholder genérico (sem marca fixa no código) enquanto a empresa não configurar o seu próprio logótipo. */
+const buildPlaceholderLogo = (companyName: string, variant: 'full' | 'icon') => {
+ const name = escapeXml((companyName || 'Logo').trim());
+ if (variant === 'icon') {
+ const initials = escapeXml((companyName || 'L').trim().slice(0, 2).toUpperCase());
+ return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="14" fill="#059669"/><text x="32" y="41" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#ffffff" text-anchor="middle">${initials}</text></svg>`)}`;
+ }
+ return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="60"><text x="0" y="40" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#059669">${name}</text></svg>`)}`;
+};
+
+export const Logo: React.FC<LogoProps> = ({
+ className = '',
+ width = 'auto',
  height = 'auto',
  variant = 'full',
  isDarkMode = false
 }) => {
- // URLs padrão (fallback)
- const defaultFullLogoUrl = "/logo.png";
- const defaultIconLogoUrl = "/favicon.png";
-
- // Inicializar com URL padréo imediatamente para garantir que o logotipo apareça
- const [logoUrl, setLogoUrl] = useState<string>(
- variant === 'icon' ? defaultIconLogoUrl : defaultFullLogoUrl
- );
+ const [companyName, setCompanyName] = useState<string>('Logo');
+ // Inicializa com um placeholder genérico até o logótipo próprio da empresa (Finanças) carregar
+ const [logoUrl, setLogoUrl] = useState<string>(() => buildPlaceholderLogo('Logo', variant));
 
  useEffect(() => {
  const loadLogo = async () => {
  try {
  const settings = await getSystemSettings();
+ const name = settings.company_name || 'Logo';
+ if (settings.company_name) setCompanyName(settings.company_name);
+
+ let customLogo: string | undefined;
  if (variant === 'icon') {
- if (settings.logo_icon) setLogoUrl(settings.logo_icon);
+ customLogo = settings.logo_icon;
  } else {
- if (isDarkMode && settings.logo_dark) {
- setLogoUrl(settings.logo_dark);
- } else if (!isDarkMode && settings.logo_light) {
- setLogoUrl(settings.logo_light);
- } else {
- const customLogo = settings.logo_light || settings.logo_dark;
- if (customLogo) setLogoUrl(customLogo);
+ customLogo = (isDarkMode ? settings.logo_dark : settings.logo_light) || settings.logo_light || settings.logo_dark;
  }
- }
+ setLogoUrl(customLogo || buildPlaceholderLogo(name, variant));
  } catch {
- // silently use default
+ // silently keep the generic placeholder
  }
  };
 
@@ -52,9 +57,9 @@ export const Logo: React.FC<LogoProps> = ({
  }, [variant, isDarkMode]);
 
  return (
- <img 
+ <img
  src={logoUrl}
- alt={variant === 'icon' ? "Natur Erva Icon" : "Natur Erva Logo"} 
+ alt={variant === 'icon' ? `${companyName} Icon` : `${companyName} Logo`}
  className={`${className} object-contain`}
  width={width}
  height={height}
@@ -67,16 +72,10 @@ export const Logo: React.FC<LogoProps> = ({
  }}
  loading="lazy"
  onError={(e) => {
- // Tratar erro silenciosamente - sempre tentar usar URL padréo
+ // Se o logótipo configurado falhar a carregar (URL quebrada, etc.), cair para o placeholder genérico
  const target = e.target as HTMLImageElement;
- const fallbackUrl = variant === 'icon' ? defaultIconLogoUrl : defaultFullLogoUrl;
- 
- // Se néo for a URL padréo, tentar carregar a padréo
- if (target.src !== defaultFullLogoUrl && target.src !== defaultIconLogoUrl) {
- target.src = fallbackUrl;
- }
- // Se jé¡ for a URL padréo e ainda assim falhar, manter visé­vel (pode ser problema de rede)
- // Néo esconder a imagem para garantir que o logotipo sempre apareça
+ const placeholder = buildPlaceholderLogo(companyName, variant);
+ if (target.src !== placeholder) target.src = placeholder;
  }}
  />
  );

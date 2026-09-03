@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import { Calendar, Eye, Tag, Loader2, FileText } from 'lucide-react';
 import api from '../../core/services/apiClient';
+import { getSystemSettings } from '../../core/services/systemSettingsService';
 
 interface BlogPost {
   id: string; title: string; slug: string; summary?: string;
@@ -12,12 +13,16 @@ interface BlogPost {
 export const BlogPage: React.FC = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [companyName, setCompanyName] = useState('');
 
   useEffect(() => {
     api.get<BlogPost[]>('/blog')
       .then(data => setPosts(data.filter(p => p.status === 'published')))
       .catch(() => {})
       .finally(() => setLoading(false));
+    getSystemSettings().then(settings => {
+      if (settings.company_name) setCompanyName(settings.company_name);
+    }).catch(() => {});
   }, []);
 
   const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -26,7 +31,7 @@ export const BlogPage: React.FC = () => {
     <div className="min-h-screen bg-surface-base">
       <div className="max-w-5xl mx-auto px-4 py-12">
         <div className="mb-10">
-          <h1 className="text-4xl font-bold text-content-primary mb-2">Blog NaturErva</h1>
+          <h1 className="text-4xl font-bold text-content-primary mb-2">Blog{companyName ? ` ${companyName}` : ''}</h1>
           <p className="text-content-muted">Dicas de saúde, nutrição e bem-estar natural</p>
         </div>
 

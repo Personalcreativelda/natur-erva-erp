@@ -34,6 +34,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  const [newName, setNewName] = useState(currentUserName || '');
  const [submitting, setSubmitting] = useState(false);
  const [successMsg, setSuccessMsg] = useState(false);
+ const [submitError, setSubmitError] = useState<string | null>(null);
 
  const load = useCallback(async () => {
  setLoading(true);
@@ -62,13 +63,19 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  e.preventDefault();
  if (!newName.trim() || !newComment.trim() || newRating < 1) return;
  setSubmitting(true);
+ setSubmitError(null);
+ try {
  await submitReview(productId, newName.trim(), newRating, newComment.trim());
- setSubmitting(false);
  setSuccessMsg(true);
  setNewComment('');
  setNewRating(5);
  await load();
  setTimeout(() => setSuccessMsg(false), 3000);
+ } catch {
+ setSubmitError('Não foi possível enviar a avaliação. Verifica a tua ligação e tenta novamente.');
+ } finally {
+ setSubmitting(false);
+ }
  }
 
  const formatDate = (iso: string) =>
@@ -148,6 +155,11 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  {successMsg && (
  <div className="mb-3 text-sm text-green-700 bg-green-50 dark:bg-green-900/30 dark:text-green-400 px-4 py-2.5 rounded-lg">
  Obrigado pela sua avaliação!
+ </div>
+ )}
+ {submitError && (
+ <div className="mb-3 text-sm text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-400 px-4 py-2.5 rounded-lg">
+ {submitError}
  </div>
  )}
 

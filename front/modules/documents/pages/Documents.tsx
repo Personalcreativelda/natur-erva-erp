@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
 import api from '../../core/services/apiClient';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 import uploadService from '../../../services/uploadService';
 import {
   FolderOpen, File, Plus, Loader2, X, Trash2, Upload,
@@ -34,6 +36,7 @@ function mimeIcon(mime: string) {
 }
 
 export function Documents({ showToast }: Props) {
+  const confirm = useConfirm();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [currentFolder, setCurrentFolder] = useState<Folder | null>(null);
@@ -111,13 +114,13 @@ export function Documents({ showToast }: Props) {
   };
 
   const deleteDoc = async (id: number) => {
-    if (!confirm('Eliminar documento?')) return;
+    if (!(await confirm('Eliminar documento?', { variant: 'danger', confirmLabel: 'Eliminar' }))) return;
     try { await api.delete(`/docs/${id}`); showToast?.('Eliminado', 'success'); load(currentFolder?.id); }
     catch { showToast?.('Erro', 'error'); }
   };
 
   const deleteFolder = async (id: number) => {
-    if (!confirm('Eliminar pasta e todo o conteúdo?')) return;
+    if (!(await confirm('Eliminar pasta e todo o conteúdo?', { variant: 'danger', confirmLabel: 'Eliminar' }))) return;
     try { await api.delete(`/docs/folders/${id}`); showToast?.('Eliminado', 'success'); load(currentFolder?.id); }
     catch { showToast?.('Erro', 'error'); }
   };
@@ -223,7 +226,7 @@ export function Documents({ showToast }: Props) {
         </div>
       )}
 
-      {modal === 'folder' && (
+      {modal === 'folder' && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
           <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-sm animate-modal-enter">
             <div className="flex items-center justify-between p-5 border-b border-border-default">
@@ -244,7 +247,8 @@ export function Documents({ showToast }: Props) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </PageShell>
   );

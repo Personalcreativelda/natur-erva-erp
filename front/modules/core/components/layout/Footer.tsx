@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Instagram, Facebook, Phone, Mail, Leaf } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 import api from '../../../core/services/apiClient';
+import { getSystemSettings } from '../../services/systemSettingsService';
 
 interface Category {
  id: string;
@@ -16,11 +17,17 @@ interface FooterProps {
 
 const FooterComponent: React.FC<FooterProps> = ({ isShopMode = false }) => {
  const [categories, setCategories] = useState<Category[]>([]);
+ const [companyName, setCompanyName] = useState('');
+ const [companyEmail, setCompanyEmail] = useState('');
 
  useEffect(() => {
  api.get('/categories')
  .then((data: any) => setCategories((data || []).filter((c: Category) => c.isActive !== false)))
  .catch(() => {});
+ getSystemSettings().then(settings => {
+ if (settings.company_name) setCompanyName(settings.company_name);
+ if (settings.company_email) setCompanyEmail(settings.company_email);
+ }).catch(() => {});
  }, []);
 
  return (
@@ -93,10 +100,12 @@ const FooterComponent: React.FC<FooterProps> = ({ isShopMode = false }) => {
  <div>
  <h4 className="mb-4 font-semibold text-white text-sm uppercase tracking-wide">Contacto</h4>
  <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.55)' }}>Receba ofertas exclusivas e novidades</p>
- <a href="mailto:info@natur-erva.co.mz" className="flex items-center gap-2 text-sm hover:text-green-400 transition-colors mb-4" style={{ color: 'rgba(255,255,255,0.55)' }}>
+ {companyEmail && (
+ <a href={`mailto:${companyEmail}`} className="flex items-center gap-2 text-sm hover:text-green-400 transition-colors mb-4" style={{ color: 'rgba(255,255,255,0.55)' }}>
  <Mail className="h-4 w-4 text-green-500 flex-shrink-0" />
- info@natur-erva.co.mz
+ {companyEmail}
  </a>
+ )}
  <div className="flex gap-2">
  <input
  type="email"
@@ -112,7 +121,7 @@ const FooterComponent: React.FC<FooterProps> = ({ isShopMode = false }) => {
  </div>
 
  <div className="mt-10 pt-6 text-center text-xs" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}>
- © {new Date().getFullYear()} Natur Erva · Todos os direitos reservados
+ © {new Date().getFullYear()} {companyName} · Todos os direitos reservados
  </div>
  </div>
  </footer>

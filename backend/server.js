@@ -51,6 +51,9 @@ import helpdeskRoutes    from './routes/helpdesk.js';
 import messagesRoutes    from './routes/messages.js';
 import subscriptionsRoutes from './routes/subscriptions.js';
 import docmanagerRoutes  from './routes/docmanager.js';
+import clinicRoutes      from './routes/clinic.js';
+import incentivesRoutes  from './routes/incentives.js';
+import assistantRoutes   from './routes/assistant.js';
 
 const app = express();
 const PORT = process.env.PORT || 3060;
@@ -164,6 +167,9 @@ app.use('/api/helpdesk',      helpdeskRoutes);
 app.use('/api/messages',      messagesRoutes);
 app.use('/api/subscriptions', subscriptionsRoutes);
 app.use('/api/docs',          docmanagerRoutes);
+app.use('/api/clinic',        clinicRoutes);
+app.use('/api/incentives',    incentivesRoutes);
+app.use('/api/assistant',     assistantRoutes);
 
 // ── 404 ────────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
@@ -182,6 +188,14 @@ app.listen(PORT, async () => {
   console.log(`📦 API: http://localhost:${PORT}/api`);
   console.log(`❤️  Health: http://localhost:${PORT}/health`);
   console.log(`🗄️  DB: ${process.env.PG_HOST}:${process.env.PG_PORT}/${process.env.PG_DATABASE}`);
+
+  // ── Assistente WhatsApp — alerta de stock baixo ─────────────────────────────
+  try {
+    const { startStockAlertJob } = await import('./jobs/stockAlertJob.js');
+    startStockAlertJob();
+  } catch (err) {
+    console.error('[stockAlertJob] falha ao agendar:', err.message);
+  }
 
   // ── Teste de ligação ao MinIO ──────────────────────────────────────────────
   try {
