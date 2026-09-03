@@ -185,7 +185,7 @@ export function AssistantSettings({ showToast }: Props) {
               <div>
                 <label className={labelCls}>Modelo (opcional)</label>
                 <input value={llmModel} onChange={e => setLlmModel(e.target.value)}
-                  placeholder={llmProvider === 'openai' ? 'gpt-4o-mini' : llmProvider === 'gemini' ? 'gemini-2.0-flash' : 'claude-haiku-4-5-20251001'} className={inputCls} />
+                  placeholder={llmProvider === 'openai' ? 'gpt-4o-mini' : llmProvider === 'gemini' ? 'gemini-3.6-flash' : 'claude-haiku-4-5-20251001'} className={inputCls} />
                 <p className="text-xs text-content-muted mt-1">Deixe em branco para usar o modelo padrão.</p>
               </div>
             </div>

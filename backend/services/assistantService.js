@@ -198,7 +198,7 @@ async function runAnthropicLoop({ apiKey, model, systemPrompt, history, userMess
 // ─── LLM — Google Gemini ──────────────────────────────────────────────────────
 
 async function callGemini({ apiKey, model, systemPrompt, contents }) {
-  const mdl = model || 'gemini-2.0-flash';
+  const mdl = model || 'gemini-3.6-flash';
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mdl}:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
