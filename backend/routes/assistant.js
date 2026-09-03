@@ -99,18 +99,28 @@ router.post('/test-connection', authMiddleware, requireSuperAdmin, async (req, r
   }
 });
 
-// POST /api/assistant/webhook — recebe mensagens da Evolution API (sem authMiddleware; autenticado pelo segredo)
-// Nota: o formato exato do payload varia consoante a versão da Evolution API instalada;
-// esta extração cobre o formato mais comum (Baileys) e pode precisar de ajuste.
-router.post('/webhook', async (req, res) => {
+// POST /api/assistant/webhook/:secret — recebe mensagens da Evolution API (sem authMiddleware; autenticado pelo segredo no caminho)
+// Nota: o segredo vai no CAMINHO (não em query string) porque esta Evolution API acrescenta
+// o nome do evento no fim do URL configurado (ex: "/webhook?secret=X" vira "/webhook?secret=X/chats-update",
+// o que partia a query string) mesmo com "Webhook by Events" desligado na instância — um comportamento do
+// próprio servidor Evolution, fora do nosso controlo. Usar o segredo como segmento do caminho, com um
+// segmento de evento opcional a seguir, sobrevive a esse sufixo em qualquer dos casos.
+// Formato exato do payload varia consoante a versão da Evolution API instalada; esta extração cobre o
+// formato mais comum (Baileys) e pode precisar de ajuste.
+router.post('/webhook/:secret/:event?', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM assistant_config WHERE id = 1');
     const config = rows[0];
     if (!config || !config.is_enabled) return res.status(200).json({ ok: true });
 
-    const providedSecret = req.query.secret || req.headers['x-webhook-secret'];
+    const providedSecret = req.params.secret || req.headers['x-webhook-secret'];
     if (!providedSecret || providedSecret !== config.webhook_secret) {
       return res.status(401).json({ error: 'Segredo inválido' });
+    }
+
+    // Só nos interessam eventos de mensagem recebida — ignora chats-update, contacts-update, connection-update, etc.
+    if (req.params.event && !/messages?[-_]?upsert/i.test(req.params.event)) {
+      return res.status(200).json({ ok: true });
     }
 
     console.log('[assistant webhook] payload recebido:', JSON.stringify(req.body).slice(0, 2000));

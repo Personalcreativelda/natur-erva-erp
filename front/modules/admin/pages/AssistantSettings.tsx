@@ -91,7 +91,7 @@ export function AssistantSettings({ showToast }: Props) {
     setNewNumber('');
   };
 
-  const webhookUrl = `${API_BASE}/assistant/webhook?secret=${webhookSecret}`;
+  const webhookUrl = `${API_BASE}/assistant/webhook/${webhookSecret}`;
   const copyWebhook = () => {
     navigator.clipboard?.writeText(webhookUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
