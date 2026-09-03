@@ -113,6 +113,8 @@ router.post('/webhook', async (req, res) => {
       return res.status(401).json({ error: 'Segredo inválido' });
     }
 
+    console.log('[assistant webhook] payload recebido:', JSON.stringify(req.body).slice(0, 2000));
+
     const data = req.body?.data || req.body || {};
     const remoteJid = data?.key?.remoteJid || data?.remoteJid;
     const fromMe = data?.key?.fromMe;
@@ -123,9 +125,14 @@ router.post('/webhook', async (req, res) => {
 
     if (!remoteJid || fromMe || !text || typeof text !== 'string') return;
 
-    const phone = String(remoteJid).replace(/@.*/, '').replace(/\D/g, '');
+    // JIDs multi-device vêm como "<numero>:<deviceId>@s.whatsapp.net" — o deviceId tem de ser descartado
+    // antes de comparar com authorized_numbers, senão a comparação nunca bate certo.
+    const phone = String(remoteJid).split('@')[0].split(':')[0].replace(/\D/g, '');
     const authorized = (config.authorized_numbers || []).map(n => n.replace(/\D/g, ''));
-    if (!authorized.includes(phone)) return; // número não autorizado — ignora silenciosamente
+    if (!authorized.includes(phone)) {
+      console.log(`[assistant webhook] número não autorizado: "${phone}" (autorizados: ${authorized.join(', ')})`);
+      return; // número não autorizado — ignora silenciosamente
+    }
 
     handleIncomingMessage(config, phone, text).catch(err => console.error('[assistant webhook]', err));
   } catch (err) {
