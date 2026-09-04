@@ -40,17 +40,158 @@ const TOOLS = [
       required: ['orderNumber'],
     },
   },
+  {
+    name: 'get_clinic_summary',
+    description: 'Resumo da Clínica: pacientes ativos, consultas agendadas nos próximos 7 dias e planos de tratamento ativos por área.',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'get_hr_summary',
+    description: 'Resumo de Recursos Humanos: total de funcionários, ativos, de férias, departamentos e pedidos de férias pendentes.',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'get_pending_purchases',
+    description: 'Lista as compras a fornecedores ainda por concluir (pendentes, aprovação, encomendadas ou parcialmente recebidas).',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'get_quotes_summary',
+    description: 'Lista as cotações/orçamentos mais recentes, com estado (rascunho, enviada, aceite, convertida, expirada, rejeitada).',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'get_invoices_summary',
+    description: 'Resumo de faturas/recibos: total faturado, total pago, faturas vencidas e a lista das que estão pendentes ou vencidas.',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'get_logistics_summary',
+    description: 'Lista as encomendas com entrega em curso (confirmadas, em processamento ou a caminho).',
+    parameters: { type: 'object', properties: {} },
+  },
 ];
 
 async function getStockLevel({ productName }) {
   const { rows } = await pool.query(
-    `SELECT name, stock, min_stock FROM products WHERE name ILIKE $1 ORDER BY name LIMIT 5`,
+    `SELECT name, category, price, stock, min_stock, unit FROM products WHERE name ILIKE $1 ORDER BY name LIMIT 5`,
     [`%${productName}%`]
   );
   if (!rows.length) return { found: false, message: `Nenhum produto encontrado com o nome "${productName}".` };
   return {
     found: true,
-    products: rows.map(r => ({ name: r.name, stock: Number(r.stock), minStock: r.min_stock != null ? Number(r.min_stock) : null })),
+    products: rows.map(r => ({
+      name: r.name, category: r.category, price: Number(r.price),
+      stock: Number(r.stock), minStock: r.min_stock != null ? Number(r.min_stock) : null, unit: r.unit,
+    })),
+  };
+}
+
+async function getClinicSummary() {
+  const [patients, appointments, protocols, byArea] = await Promise.all([
+    pool.query(`SELECT COUNT(*) AS count FROM clinic_patients WHERE is_active = true`),
+    pool.query(`SELECT COUNT(*) AS count FROM clinic_appointments WHERE scheduled_at BETWEEN NOW() AND NOW() + INTERVAL '7 days' AND status IN ('agendado','confirmado')`),
+    pool.query(`SELECT COUNT(*) AS count FROM clinic_protocols WHERE status = 'ativo'`),
+    pool.query(`SELECT area, COUNT(*) AS count FROM clinic_protocols WHERE status = 'ativo' GROUP BY area`),
+  ]);
+  return {
+    activePatients: Number(patients.rows[0].count),
+    upcomingAppointments7d: Number(appointments.rows[0].count),
+    activeTreatmentPlans: Number(protocols.rows[0].count),
+    activePlansByArea: byArea.rows.map(r => ({ area: r.area, count: Number(r.count) })),
+  };
+}
+
+async function getHrSummary() {
+  const [total, active, onLeave, departments, pendingLeaves] = await Promise.all([
+    pool.query(`SELECT COUNT(*)::int AS n FROM employees`),
+    pool.query(`SELECT COUNT(*)::int AS n FROM employees WHERE status = 'active'`),
+    pool.query(`SELECT COUNT(*)::int AS n FROM employees WHERE status = 'on_leave'`),
+    pool.query(`SELECT COUNT(*)::int AS n FROM departments`),
+    pool.query(`SELECT COUNT(*)::int AS n FROM leave_requests WHERE status = 'pending'`),
+  ]);
+  return {
+    totalEmployees: total.rows[0].n,
+    activeEmployees: active.rows[0].n,
+    onLeaveEmployees: onLeave.rows[0].n,
+    departments: departments.rows[0].n,
+    pendingLeaveRequests: pendingLeaves.rows[0].n,
+  };
+}
+
+async function getPendingPurchases() {
+  const { rows } = await pool.query(
+    `SELECT id, supplier_name, total_amount, status, payment_status, COALESCE(date, order_date, created_at) AS order_date
+     FROM purchases
+     WHERE status IN ('pending','draft','pending_approval','approved','ordered','partially_received')
+     ORDER BY COALESCE(date, order_date, created_at) ASC LIMIT 20`
+  );
+  return {
+    count: rows.length,
+    purchases: rows.map(r => ({
+      supplierName: r.supplier_name, total: Number(r.total_amount), status: r.status,
+      paymentStatus: r.payment_status, orderDate: r.order_date,
+    })),
+  };
+}
+
+async function getQuotesSummary() {
+  const { rows } = await pool.query(
+    `SELECT quote_number, customer_name, total, status, valid_until, created_at
+     FROM quotes ORDER BY created_at DESC LIMIT 20`
+  );
+  return {
+    count: rows.length,
+    quotes: rows.map(r => ({
+      quoteNumber: r.quote_number, customerName: r.customer_name, total: Number(r.total),
+      status: r.status, validUntil: r.valid_until, createdAt: r.created_at,
+    })),
+  };
+}
+
+async function getInvoicesSummary() {
+  const { rows: statsRows } = await pool.query(
+    `SELECT
+       COUNT(*) FILTER (WHERE status != 'cancelled')::int AS total_count,
+       COALESCE(SUM(total_amount) FILTER (WHERE status != 'cancelled'), 0)::numeric AS total_invoiced,
+       COALESCE(SUM(total_amount) FILTER (WHERE status = 'paid'), 0)::numeric AS total_paid,
+       COUNT(*) FILTER (WHERE status = 'overdue' OR (status = 'issued' AND due_date < CURRENT_DATE))::int AS overdue_count,
+       COALESCE(SUM(total_amount - amount_paid) FILTER (WHERE status = 'overdue' OR (status = 'issued' AND due_date < CURRENT_DATE)), 0)::numeric AS overdue_amount
+     FROM invoices`
+  );
+  const { rows: pendingRows } = await pool.query(
+    `SELECT invoice_number, customer_name, total_amount, status, due_date
+     FROM invoices
+     WHERE status IN ('issued','partial','overdue')
+     ORDER BY due_date ASC NULLS LAST LIMIT 15`
+  );
+  const s = statsRows[0];
+  return {
+    totalCount: s.total_count,
+    totalInvoiced: Number(s.total_invoiced),
+    totalPaid: Number(s.total_paid),
+    overdueCount: s.overdue_count,
+    overdueAmount: Number(s.overdue_amount),
+    pending: pendingRows.map(r => ({
+      invoiceNumber: r.invoice_number, customerName: r.customer_name, total: Number(r.total_amount),
+      status: r.status, dueDate: r.due_date,
+    })),
+  };
+}
+
+async function getLogisticsSummary() {
+  const { rows } = await pool.query(
+    `SELECT order_number, tracking_code, status, delivery_zone_name, estimated_delivery_date, created_at
+     FROM orders
+     WHERE is_delivery = true AND status IN ('confirmed','processing','out_for_delivery')
+     ORDER BY created_at ASC LIMIT 20`
+  );
+  return {
+    count: rows.length,
+    deliveries: rows.map(r => ({
+      orderNumber: r.order_number, trackingCode: r.tracking_code, status: r.status,
+      deliveryZone: r.delivery_zone_name, estimatedDelivery: r.estimated_delivery_date, createdAt: r.created_at,
+    })),
   };
 }
 
@@ -110,6 +251,12 @@ const TOOL_IMPLS = {
   get_sales_summary: getSalesSummary,
   get_pending_orders: getPendingOrders,
   get_order_status: getOrderStatus,
+  get_clinic_summary: getClinicSummary,
+  get_hr_summary: getHrSummary,
+  get_pending_purchases: getPendingPurchases,
+  get_quotes_summary: getQuotesSummary,
+  get_invoices_summary: getInvoicesSummary,
+  get_logistics_summary: getLogisticsSummary,
 };
 
 async function runTool(name, args) {
@@ -263,7 +410,11 @@ export async function sendEvolutionMessage(config, phone, text) {
 
 // ─── Orquestração ─────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `Você é o assistente interno de gestão de uma loja/ecommerce, acessível apenas por WhatsApp a números autorizados pelo administrador. Responde sempre em português, de forma curta e direta — isto é uma conversa de WhatsApp, não um relatório formal. Usa sempre as ferramentas disponíveis para consultar dados reais do sistema; nunca inventes números ou estados de encomendas. Nesta fase só podes consultar informação (stock, vendas, encomendas) — não tens capacidade de alterar nada no sistema. Se te pedirem para executar uma ação (criar, editar, apagar, processar algo), explica claramente que ainda não tens essa capacidade.`;
+const SYSTEM_PROMPT = `Você é o assistente interno de gestão da Natur Erva (loja/ecommerce), acessível apenas por WhatsApp a números autorizados pelo administrador. Responde sempre em português, de forma curta e direta — isto é uma conversa de WhatsApp, não um relatório formal. Usa sempre as ferramentas disponíveis para consultar dados reais do sistema; nunca inventes números ou estados.
+
+Podes consultar: Stock e informação de produtos, resumo de Vendas, Encomendas (pendentes ou por número), Clínica (pacientes e planos de tratamento ativos), Recursos Humanos (funcionários e pedidos de férias), Compras (encomendas a fornecedores), Cotações, Faturas/Recibos (pagas, pendentes, vencidas) e Logística (entregas em curso).
+
+Nesta fase só podes consultar informação — não tens capacidade de criar, editar ou apagar nada no sistema. Se te pedirem para executar uma ação, explica claramente que ainda não tens essa capacidade.`;
 
 export async function handleIncomingMessage(config, phone, text) {
   const { rows: historyRows } = await pool.query(
