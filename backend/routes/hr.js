@@ -178,20 +178,21 @@ const strOrNull  = (v) => (v === '' || v == null) ? null : String(v).trim();
 router.post('/employees', authMiddleware, async (req, res) => {
   const { full_name, job_title, department_id, hire_date, contract_type, salary,
           phone, email, nuit, emergency_contact, notes, avatar_url, profile_id,
-          inss_exempt, irps_exempt, inss_rate, irps_rate,
+          inss_exempt, irps_exempt, inss_rate, irps_rate, dependents_count, inss_number, sexo, birth_date,
           payment_method, bank_name, bank_nib, bank_account, mpesa_number, emola_number } = req.body;
   try {
     const { rows } = await pool.query(`
       INSERT INTO employees
         (full_name, job_title, department_id, hire_date, contract_type, salary,
          phone, email, nuit, emergency_contact, notes, avatar_url, profile_id,
-         inss_exempt, irps_exempt, inss_rate, irps_rate,
+         inss_exempt, irps_exempt, inss_rate, irps_rate, dependents_count, inss_number, sexo, birth_date,
          payment_method, bank_name, bank_nib, bank_account, mpesa_number, emola_number)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING *
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) RETURNING *
     `, [full_name, job_title, department_id||null, hire_date||null, contract_type||'full_time',
         salary||0, phone||null, email||null, nuit||null, emergency_contact||null,
         notes||null, avatar_url||null, profile_id||null,
         !!inss_exempt, !!irps_exempt, rateOrNull(inss_rate), rateOrNull(irps_rate),
+        Number(dependents_count) || 0, strOrNull(inss_number), strOrNull(sexo), birth_date||null,
         payment_method || 'bank', strOrNull(bank_name), strOrNull(bank_nib),
         strOrNull(bank_account), strOrNull(mpesa_number), strOrNull(emola_number)]);
     res.status(201).json(rows[0]);
@@ -201,7 +202,7 @@ router.post('/employees', authMiddleware, async (req, res) => {
 router.put('/employees/:id', authMiddleware, async (req, res) => {
   const { full_name, job_title, department_id, hire_date, contract_type, salary,
           phone, email, nuit, emergency_contact, notes, avatar_url, status,
-          inss_exempt, irps_exempt, inss_rate, irps_rate,
+          inss_exempt, irps_exempt, inss_rate, irps_rate, dependents_count, inss_number, sexo, birth_date,
           payment_method, bank_name, bank_nib, bank_account, mpesa_number, emola_number } = req.body;
   try {
     const { rows } = await pool.query(`
@@ -209,13 +210,15 @@ router.put('/employees/:id', authMiddleware, async (req, res) => {
         full_name=$1, job_title=$2, department_id=$3, hire_date=$4, contract_type=$5,
         salary=$6, phone=$7, email=$8, nuit=$9, emergency_contact=$10, notes=$11,
         avatar_url=$12, status=$13, inss_exempt=$14, irps_exempt=$15, inss_rate=$16, irps_rate=$17,
-        payment_method=$18, bank_name=$19, bank_nib=$20, bank_account=$21,
-        mpesa_number=$22, emola_number=$23, updated_at=NOW()
-      WHERE id=$24 RETURNING *
+        dependents_count=$18, inss_number=$19, sexo=$20, birth_date=$21,
+        payment_method=$22, bank_name=$23, bank_nib=$24, bank_account=$25,
+        mpesa_number=$26, emola_number=$27, updated_at=NOW()
+      WHERE id=$28 RETURNING *
     `, [full_name, job_title, department_id||null, hire_date||null, contract_type||'full_time',
         salary||0, phone||null, email||null, nuit||null, emergency_contact||null,
         notes||null, avatar_url||null, status||'active',
         !!inss_exempt, !!irps_exempt, rateOrNull(inss_rate), rateOrNull(irps_rate),
+        Number(dependents_count) || 0, strOrNull(inss_number), strOrNull(sexo), birth_date||null,
         payment_method || 'bank', strOrNull(bank_name), strOrNull(bank_nib),
         strOrNull(bank_account), strOrNull(mpesa_number), strOrNull(emola_number),
         req.params.id]);
@@ -330,6 +333,32 @@ router.get('/payroll', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Configuração do Payroll (padrão Moçambique) ────────────────────────────────
+async function getPayrollConfig() {
+  const { rows } = await pool.query('SELECT * FROM payroll_config WHERE id = 1');
+  return rows[0];
+}
+
+router.get('/payroll-config', authMiddleware, async (req, res) => {
+  try { res.json(await getPayrollConfig()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.put('/payroll-config', authMiddleware, async (req, res) => {
+  const { year, normal_hours_month, hours_per_day, inss_employee_rate, inss_employer_rate,
+          overtime_50_rate, overtime_100_rate, night_work_rate, union_fee_rate } = req.body;
+  try {
+    const { rows } = await pool.query(`
+      UPDATE payroll_config SET
+        year=$1, normal_hours_month=$2, hours_per_day=$3, inss_employee_rate=$4, inss_employer_rate=$5,
+        overtime_50_rate=$6, overtime_100_rate=$7, night_work_rate=$8, union_fee_rate=$9, updated_at=NOW()
+      WHERE id = 1 RETURNING *
+    `, [year||2026, normal_hours_month||208, hours_per_day||8, inss_employee_rate??3, inss_employer_rate??4,
+        overtime_50_rate??50, overtime_100_rate??100, night_work_rate??25, union_fee_rate??0]);
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 router.post('/payroll', authMiddleware, async (req, res) => {
   const { period_name, start_date, end_date, notes } = req.body;
   try {
@@ -341,9 +370,9 @@ router.post('/payroll', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── Calcular IRPS Moçambique (tabela progressiva simplificada) ────────────────
+// ── Calcular IRPS Moçambique (tabela progressiva simplificada, 2024) ──────────
+// Mantida só como reserva enquanto a tabela oficial de 2026 (abaixo) não estiver completa.
 function calcIRPS(taxableIncome) {
-  // Valores em MZN — tabela IRPS 2024 (annual → monthly divide by 12)
   const annual = taxableIncome * 12;
   let irpsAnnual = 0;
   if (annual <= 42000)       irpsAnnual = 0;
@@ -355,6 +384,85 @@ function calcIRPS(taxableIncome) {
   return Math.round(irpsAnnual / 12 * 100) / 100;
 }
 
+// ── Calcular IRPS Moçambique 2026 (tabela oficial por escalão, mensal) ────────
+// Fórmula: IRPS = valorFixo[escalão][dependentes] + (base − limiteInferior[escalão]) × coeficiente[escalão]
+// ⚠️ TABELA INCOMPLETA — só o escalão 8 (0 dependentes) está confirmado (exemplo dado pelo
+// cliente: bruto 35.000 MT → IRPS 2.225 MT). Faltam os restantes escalões e as colunas de
+// valorFixo para 1/2/3+ dependentes. Preencher assim que o cliente enviar a tabela oficial completa.
+const IRPS_TABLE_2026 = [
+  // { escalao: 1, limiteInferior: 0, coeficiente: 0, valorFixo: [0, 0, 0, 0] },
+  { escalao: 8, limiteInferior: 32750, coeficiente: 0.20, valorFixo: [1775] },
+];
+
+function calcIRPS2026(monthlyBase, dependentsCount = 0) {
+  const sorted = [...IRPS_TABLE_2026].sort((a, b) => b.limiteInferior - a.limiteInferior);
+  const bracket = sorted.find(b => monthlyBase >= b.limiteInferior);
+  if (!bracket) {
+    throw new Error(`Tabela de IRPS 2026 incompleta: nenhum escalão definido para a base ${monthlyBase} MT. Complete IRPS_TABLE_2026 em backend/routes/hr.js.`);
+  }
+  const dep = Math.min(dependentsCount, bracket.valorFixo.length - 1);
+  const valorFixo = bracket.valorFixo[dep];
+  if (valorFixo === undefined) {
+    throw new Error(`Tabela de IRPS 2026 incompleta: escalão ${bracket.escalao} não tem valorFixo para ${dependentsCount} dependente(s).`);
+  }
+  const irps = valorFixo + (monthlyBase - bracket.limiteInferior) * bracket.coeficiente;
+  return Math.round(irps * 100) / 100;
+}
+
+// ── Motor de cálculo do recibo (padrão Moçambique — horas extra, nocturno, absentismo) ─
+// "Horas extra" (+50%/+100%) são horas fora do horário normal: pagas ao valor total da hora
+// já com o acréscimo (Lei 13/2023 art. 122). "Adicional nocturno" é só o suplemento de 25%
+// sobre horas já dentro do horário normal (por isso não leva a base da hora, só o acréscimo).
+function computeSlipAmounts(input, cfg) {
+  const base = Number(input.base_salary) || 0;
+  const hourlyRate = Number(cfg.normal_hours_month) > 0 ? base / Number(cfg.normal_hours_month) : 0;
+  const dailyRate = Number(cfg.hours_per_day) > 0 ? hourlyRate * Number(cfg.hours_per_day) : 0;
+
+  const overtimeAmount = round2(
+    (Number(input.overtime_hours_50) || 0)  * hourlyRate * (1 + Number(cfg.overtime_50_rate) / 100) +
+    (Number(input.overtime_hours_100) || 0) * hourlyRate * (1 + Number(cfg.overtime_100_rate) / 100)
+  );
+  const nightAmount = round2((Number(input.night_hours) || 0) * hourlyRate * (Number(cfg.night_work_rate) / 100));
+
+  const commissions   = Number(input.commissions) || 0;
+  const variableBonus = Number(input.variable_bonus) || 0;
+  const allowances     = Number(input.allowances) || 0;
+  const grossTotal = round2(base + commissions + variableBonus + allowances + overtimeAmount + nightAmount);
+
+  // Absentismo: horas injustificadas e atrasos descontam à hora; dias de falta não remunerada descontam ao dia.
+  // Horas de ausência justificada não descontam — servem só para o relatório de absentismo.
+  const absenceAmount = round2(
+    (Number(input.absence_days_unpaid) || 0) * dailyRate +
+    (Number(input.absence_hours_unjustified) || 0) * hourlyRate +
+    (Number(input.late_hours) || 0) * hourlyRate
+  );
+
+  const inssBase = input.inss_base !== undefined && input.inss_base !== '' ? (Number(input.inss_base) || 0) : grossTotal;
+  const inssRatePct = input.inss_exempt ? 0 : (input.inss_rate != null && input.inss_rate !== '' ? Number(input.inss_rate) : Number(cfg.inss_employee_rate));
+  const inssEmp  = round2(inssBase * inssRatePct / 100);
+  const inssEmpr = input.inss_exempt ? 0 : round2(inssBase * Number(cfg.inss_employer_rate) / 100);
+
+  const unionFee = round2(grossTotal * Number(cfg.union_fee_rate) / 100);
+
+  const otherDeductions = Number(input.other_deductions) || 0;
+  const otherAdditions  = Number(input.other_additions) || 0;
+  const advances        = Number(input.advances) || 0;
+
+  const irps = input.irps != null && input.irps !== '' ? Number(input.irps) : 0; // preenchido/confirmado à parte (ver calcIRPS2026)
+
+  const netSalary = round2(
+    grossTotal - inssEmp - irps - unionFee - otherDeductions - advances - absenceAmount + otherAdditions
+  );
+  const employerCost = round2(grossTotal + inssEmpr);
+
+  return {
+    base_salary: base, gross_salary: grossTotal, inss_base: inssBase, inss_employee: inssEmp, inss_employer: inssEmpr,
+    overtime_amount: overtimeAmount, night_amount: nightAmount, union_fee: unionFee, absence_amount: absenceAmount,
+    employer_cost: employerCost, net_salary: netSalary,
+  };
+}
+function round2(n) { return Math.round(n * 100) / 100; }
+
 // Processar: gerar payslips para todos os funcionários activos
 router.post('/payroll/:id/process', authMiddleware, async (req, res) => {
   try {
@@ -362,29 +470,43 @@ router.post('/payroll/:id/process', authMiddleware, async (req, res) => {
     if (!period.rows.length) return res.status(404).json({ error: 'Período não encontrado' });
     if (period.rows[0].status === 'closed') return res.status(400).json({ error: 'Período já fechado' });
 
+    const cfg = await getPayrollConfig();
     const emps = await pool.query(`SELECT * FROM employees WHERE status='active'`);
     const slips = [];
+    const failed = [];
     for (const emp of emps.rows) {
-      const gross = parseFloat(emp.salary) || 0;
-      const inssRatePct = emp.inss_exempt ? 0 : (emp.inss_rate != null ? Number(emp.inss_rate) : 3); // taxa do funcionário: isento, personalizada ou 3% por omissão
-      const inssEmp  = Math.round(gross * inssRatePct / 100 * 100) / 100;
-      const inssEmpr = emp.inss_exempt ? 0 : Math.round(gross * 0.04 * 100) / 100;   // contribuição da entidade — fixa em 4%, só zera se isento
-      const taxable  = gross - inssEmp;
-      const irps     = emp.irps_exempt ? 0
-        : (emp.irps_rate != null ? Math.round(taxable * Number(emp.irps_rate) / 100 * 100) / 100 : calcIRPS(taxable)); // taxa manual ou tabela progressiva
-      const net      = Math.round((gross - inssEmp - irps) * 100) / 100;
+      try {
+        const base = parseFloat(emp.salary) || 0;
+        // A tabela oficial 2026 aplica-se directamente ao salário (confirmado pelo exemplo do
+        // cliente: 35.000 bruto, escalão 8, excesso = 35.000 − 32.750 — não é bruto menos INSS).
+        const irps = emp.irps_exempt ? 0
+          : (emp.irps_rate != null ? Math.round(base * Number(emp.irps_rate) / 100 * 100) / 100 : calcIRPS2026(base, emp.dependents_count || 0));
 
-      await pool.query(`
-        INSERT INTO payslips (period_id, employee_id, gross_salary, inss_employee, inss_employer, irps, net_salary)
-        VALUES ($1,$2,$3,$4,$5,$6,$7)
-        ON CONFLICT (period_id, employee_id) DO UPDATE
-          SET gross_salary=$3, inss_employee=$4, inss_employer=$5, irps=$6, net_salary=$7, updated_at=NOW()
-        RETURNING *
-      `, [req.params.id, emp.id, gross, inssEmp, inssEmpr, irps, net]);
-      slips.push({ employee: emp.full_name, gross, inssEmp, irps, net });
+        const a = computeSlipAmounts({
+          base_salary: base, commissions: 0, variable_bonus: 0, allowances: 0,
+          overtime_hours_50: 0, overtime_hours_100: 0, night_hours: 0,
+          inss_exempt: emp.inss_exempt, inss_rate: emp.inss_rate,
+          absence_days_unpaid: 0, absence_hours_unjustified: 0, late_hours: 0,
+          other_deductions: 0, other_additions: 0, advances: 0, irps,
+        }, cfg);
+
+        await pool.query(`
+          INSERT INTO payslips (period_id, employee_id, base_salary, gross_salary, inss_base, inss_employee, inss_employer, irps, overtime_amount, night_amount, union_fee, absence_amount, employer_cost, net_salary)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          ON CONFLICT (period_id, employee_id) DO UPDATE
+            SET base_salary=$3, gross_salary=$4, inss_base=$5, inss_employee=$6, inss_employer=$7, irps=$8,
+                overtime_amount=$9, night_amount=$10, union_fee=$11, absence_amount=$12, employer_cost=$13, net_salary=$14, updated_at=NOW()
+          RETURNING *
+        `, [req.params.id, emp.id, a.base_salary, a.gross_salary, a.inss_base, a.inss_employee, a.inss_employer, irps,
+            a.overtime_amount, a.night_amount, a.union_fee, a.absence_amount, a.employer_cost, a.net_salary]);
+        slips.push({ employee: emp.full_name, gross: a.gross_salary, inssEmp: a.inss_employee, irps, net: a.net_salary });
+      } catch (empErr) {
+        // Não aborta o lote todo — regista quem falhou (ex: tabela de IRPS incompleta para o escalão) e continua os restantes.
+        failed.push({ employee: emp.full_name, error: empErr.message });
+      }
     }
     await pool.query(`UPDATE payroll_periods SET status='processing', updated_at=NOW() WHERE id=$1`, [req.params.id]);
-    res.json({ processed: slips.length, slips });
+    res.json({ processed: slips.length, slips, failed });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -413,22 +535,46 @@ router.delete('/payroll/:id', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Ajuste manual de um payslip
+// Ajuste manual de um payslip — recalcula tudo (horas extra, nocturno, absentismo, INSS) ao padrão MZ
 router.put('/payroll/payslips/:slipId', authMiddleware, async (req, res) => {
-  const { gross_salary, inss_employee, inss_employer, irps, other_deductions, other_additions, notes } = req.body;
+  const b = req.body;
+  const num = (v, d = 0) => (v != null && v !== '' ? Number(v) : d);
   try {
-    const gross  = parseFloat(gross_salary) || 0;
-    const inssE  = parseFloat(inss_employee) || 0;
-    const irpsV  = parseFloat(irps) || 0;
-    const dedOth = parseFloat(other_deductions) || 0;
-    const addOth = parseFloat(other_additions) || 0;
-    const net    = Math.round((gross - inssE - irpsV - dedOth + addOth) * 100) / 100;
+    const cfg = await getPayrollConfig();
+    // A taxa/isenção de INSS vem sempre do funcionário (não do formulário do recibo), para não
+    // desfazer por acidente uma configuração personalizada ao editar horas/comissões do mês.
+    const { rows: empRows } = await pool.query(
+      `SELECT e.inss_exempt, e.inss_rate FROM payslips ps JOIN employees e ON e.id = ps.employee_id WHERE ps.id = $1`,
+      [req.params.slipId]
+    );
+    if (!empRows.length) return res.status(404).json({ error: 'Recibo não encontrado' });
+    const emp = empRows[0];
+
+    const a = computeSlipAmounts({
+      base_salary: num(b.base_salary), commissions: num(b.commissions), variable_bonus: num(b.variable_bonus), allowances: num(b.allowances),
+      overtime_hours_50: num(b.overtime_hours_50), overtime_hours_100: num(b.overtime_hours_100), night_hours: num(b.night_hours),
+      inss_base: b.inss_base, inss_rate: emp.inss_rate, inss_exempt: emp.inss_exempt,
+      absence_days_unpaid: num(b.absence_days_unpaid), absence_hours_unjustified: num(b.absence_hours_unjustified), late_hours: num(b.late_hours),
+      other_deductions: num(b.other_deductions), other_additions: num(b.other_additions), advances: num(b.advances),
+      irps: b.irps,
+    }, cfg);
+
     const { rows } = await pool.query(`
       UPDATE payslips SET
-        gross_salary=$1, inss_employee=$2, inss_employer=$3, irps=$4,
-        other_deductions=$5, other_additions=$6, net_salary=$7, notes=$8, updated_at=NOW()
-      WHERE id=$9 RETURNING *
-    `, [gross, inssE, parseFloat(inss_employer)||0, irpsV, dedOth, addOth, net, notes||null, req.params.slipId]);
+        base_salary=$1, gross_salary=$2, commissions=$3, variable_bonus=$4, allowances=$5,
+        overtime_hours_50=$6, overtime_hours_100=$7, night_hours=$8, overtime_amount=$9, night_amount=$10,
+        inss_base=$11, inss_employee=$12, inss_employer=$13, irps=$14, union_fee=$15,
+        other_deductions=$16, other_additions=$17, advances=$18,
+        absence_hours_justified=$19, absence_hours_unjustified=$20, absence_days_unpaid=$21, late_hours=$22, absence_amount=$23,
+        employer_cost=$24, worked_days=$25, net_salary=$26, notes=$27, updated_at=NOW()
+      WHERE id=$28 RETURNING *
+    `, [a.base_salary, a.gross_salary, num(b.commissions), num(b.variable_bonus), num(b.allowances),
+        num(b.overtime_hours_50), num(b.overtime_hours_100), num(b.night_hours), a.overtime_amount, a.night_amount,
+        a.inss_base, a.inss_employee, a.inss_employer, num(b.irps), a.union_fee,
+        num(b.other_deductions), num(b.other_additions), num(b.advances),
+        num(b.absence_hours_justified), num(b.absence_hours_unjustified), num(b.absence_days_unpaid), num(b.late_hours), a.absence_amount,
+        a.employer_cost, b.worked_days != null && b.worked_days !== '' ? Number(b.worked_days) : null,
+        a.net_salary, b.notes || null, req.params.slipId]);
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

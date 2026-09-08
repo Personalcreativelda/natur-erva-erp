@@ -5,7 +5,7 @@ import api, { downloadBlob } from '../../core/services/apiClient';
 import {
   Users, Building2, FileText, Calendar, Plus, Pencil, Trash2,
   Loader2, Search, X, ChevronDown, Check, UserCheck, UserX, Clock,
-  DollarSign, Play, CheckCheck, ChevronRight, AlertCircle, Printer, Download,
+  DollarSign, Play, CheckCheck, ChevronRight, AlertCircle, Printer, Download, Settings,
 } from 'lucide-react';
 import type { Toast } from '../../core/components/ui/Toast';
 import { useConfirm } from '../../core/contexts/ConfirmContext';
@@ -17,6 +17,7 @@ type Employee = {
   department_id: number; hire_date: string; contract_type: string;
   salary: number; phone: string; email: string; status: string; avatar_url: string;
   inss_exempt: boolean; irps_exempt: boolean; inss_rate: number | null; irps_rate: number | null;
+  dependents_count: number; inss_number: string | null; sexo: string | null; birth_date: string | null;
   payment_method: string; bank_name: string | null; bank_nib: string | null;
   bank_account: string | null; mpesa_number: string | null; emola_number: string | null;
 };
@@ -38,9 +39,14 @@ type PayrollPeriod = {
 };
 type Payslip = {
   id: number; employee_id: number; full_name: string; job_title: string;
-  department_name: string; gross_salary: number; inss_employee: number;
+  department_name: string; base_salary: number; gross_salary: number; inss_base: number | null; inss_employee: number;
   inss_employer: number; irps: number; other_deductions: number; other_additions: number;
-  net_salary: number; status: string; notes: string;
+  commissions: number; variable_bonus: number; allowances: number;
+  overtime_hours_50: number; overtime_hours_100: number; night_hours: number;
+  overtime_amount: number; night_amount: number; union_fee: number; advances: number;
+  absence_hours_justified: number; absence_hours_unjustified: number; absence_days_unpaid: number; late_hours: number; absence_amount: number;
+  employer_cost: number;
+  worked_days: number | null; net_salary: number; status: string; notes: string;
 };
 
 const CONTRACT_LABELS: Record<string, string> = {
@@ -66,6 +72,7 @@ const EMPTY_EMP_FORM = {
   full_name: '', job_title: '', department_id: '', hire_date: '', contract_type: 'full_time',
   salary: '', phone: '', email: '', status: 'active', notes: '',
   inss_exempt: false, irps_exempt: false, inss_rate: '', irps_rate: '',
+  dependents_count: '0', inss_number: '', sexo: '', birth_date: '',
   payment_method: 'bank', bank_name: '', bank_nib: '', bank_account: '', mpesa_number: '', emola_number: '',
 };
 
@@ -82,10 +89,10 @@ function KpiCard({ label, value, sub, icon, accent }: { label: string; value: st
   );
 }
 
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: React.ReactNode; wide?: boolean }) {
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
-      <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-lg animate-modal-enter">
+      <div className={`bg-surface-raised rounded-2xl shadow-xl w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} animate-modal-enter`}>
         <div className="flex items-center justify-between p-5 border-b border-border-default">
           <h3 className="font-semibold text-content-primary">{title}</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
@@ -130,8 +137,21 @@ export function HR({ showToast }: Props) {
   const [slipModal, setSlipModal] = useState(false);
   const [printingSlipId, setPrintingSlipId] = useState<number | null>(null);
   const [downloadingSheet, setDownloadingSheet] = useState<string | null>(null);
+  const [configModal, setConfigModal] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [configForm, setConfigForm] = useState({
+    year: '2026', normal_hours_month: '208', hours_per_day: '8',
+    inss_employee_rate: '3', inss_employer_rate: '4',
+    overtime_50_rate: '50', overtime_100_rate: '100', night_work_rate: '25', union_fee_rate: '0',
+  });
   const [periodForm, setPeriodForm] = useState({ period_name: '', start_date: '', end_date: '', notes: '' });
-  const [slipForm, setSlipForm] = useState({ gross_salary: '', inss_employee: '', inss_employer: '', irps: '', other_deductions: '0', other_additions: '0', notes: '' });
+  const [slipForm, setSlipForm] = useState({
+    base_salary: '', commissions: '0', variable_bonus: '0', allowances: '0',
+    overtime_hours_50: '0', overtime_hours_100: '0', night_hours: '0',
+    inss_base: '', irps: '', other_deductions: '0', other_additions: '0', advances: '0',
+    absence_hours_justified: '0', absence_hours_unjustified: '0', absence_days_unpaid: '0', late_hours: '0',
+    worked_days: '', notes: '',
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -188,8 +208,12 @@ export function HR({ showToast }: Props) {
     if (!(await confirm('Os valores serão calculados automaticamente para todos os funcionários activos.', { title: 'Processar folha de salários?', confirmLabel: 'Processar' }))) return;
     setProcessingPayroll(true);
     try {
-      const res = await api.post<{ processed: number }>(`/hr/payroll/${id}/process`, {});
-      showToast?.(`${res.processed} recibos gerados`, 'success');
+      const res = await api.post<{ processed: number; failed?: { employee: string; error: string }[] }>(`/hr/payroll/${id}/process`, {});
+      if (res.failed?.length) {
+        showToast?.(`${res.processed} recibos gerados. ${res.failed.length} falharam: ${res.failed.map(f => f.employee).join(', ')} (tabela de IRPS incompleta para o escalão salarial deles)`, 'error');
+      } else {
+        showToast?.(`${res.processed} recibos gerados`, 'success');
+      }
       await loadPayslips(id);
       load();
     } catch (e: any) { showToast?.(e.message || 'Erro', 'error'); }
@@ -208,12 +232,19 @@ export function HR({ showToast }: Props) {
   const openSlipEdit = (slip: Payslip) => {
     setEditingSlip(slip);
     setSlipForm({
-      gross_salary: String(slip.gross_salary),
-      inss_employee: String(slip.inss_employee),
-      inss_employer: String(slip.inss_employer),
+      base_salary: String(slip.base_salary ?? slip.gross_salary),
+      commissions: String(slip.commissions || 0), variable_bonus: String(slip.variable_bonus || 0), allowances: String(slip.allowances || 0),
+      overtime_hours_50: String(slip.overtime_hours_50 || 0), overtime_hours_100: String(slip.overtime_hours_100 || 0), night_hours: String(slip.night_hours || 0),
+      inss_base: slip.inss_base != null ? String(slip.inss_base) : '',
       irps: String(slip.irps),
       other_deductions: String(slip.other_deductions || 0),
       other_additions: String(slip.other_additions || 0),
+      advances: String(slip.advances || 0),
+      absence_hours_justified: String(slip.absence_hours_justified || 0),
+      absence_hours_unjustified: String(slip.absence_hours_unjustified || 0),
+      absence_days_unpaid: String(slip.absence_days_unpaid || 0),
+      late_hours: String(slip.late_hours || 0),
+      worked_days: slip.worked_days != null ? String(slip.worked_days) : '',
       notes: slip.notes || '',
     });
     setSlipModal(true);
@@ -231,25 +262,70 @@ export function HR({ showToast }: Props) {
     finally { setSaving(false); }
   };
 
+  const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'xlsx'>('pdf');
+
   const printSlip = async (slip: Payslip) => {
     setPrintingSlipId(slip.id);
     try {
-      await downloadBlob(`/pdf/payroll-slip/${slip.id}`, `recibo-vencimento-${slip.full_name.replace(/\s+/g, '-')}.pdf`);
+      const q = downloadFormat === 'xlsx' ? '?format=xlsx' : '';
+      await downloadBlob(`/pdf/payroll-slip/${slip.id}${q}`, `recibo-vencimento-${slip.full_name.replace(/\s+/g, '-')}.${downloadFormat}`);
     } catch (e: any) { showToast?.(e.message || 'Erro ao gerar recibo', 'error'); }
     finally { setPrintingSlipId(null); }
   };
 
-  const downloadSheet = async (type: 'inss' | 'irps' | 'salarios', period?: PayrollPeriod) => {
+  const openConfig = async () => {
+    try {
+      const c = await api.get<Record<string, any>>('/hr/payroll-config');
+      setConfigForm({
+        year: String(c.year ?? 2026), normal_hours_month: String(c.normal_hours_month ?? 208), hours_per_day: String(c.hours_per_day ?? 8),
+        inss_employee_rate: String(c.inss_employee_rate ?? 3), inss_employer_rate: String(c.inss_employer_rate ?? 4),
+        overtime_50_rate: String(c.overtime_50_rate ?? 50), overtime_100_rate: String(c.overtime_100_rate ?? 100),
+        night_work_rate: String(c.night_work_rate ?? 25), union_fee_rate: String(c.union_fee_rate ?? 0),
+      });
+      setConfigModal(true);
+    } catch (e: any) { showToast?.(e.message || 'Erro ao carregar configuração', 'error'); }
+  };
+
+  const saveConfig = async () => {
+    setSavingConfig(true);
+    try {
+      await api.put('/hr/payroll-config', {
+        year: Number(configForm.year), normal_hours_month: Number(configForm.normal_hours_month), hours_per_day: Number(configForm.hours_per_day),
+        inss_employee_rate: Number(configForm.inss_employee_rate), inss_employer_rate: Number(configForm.inss_employer_rate),
+        overtime_50_rate: Number(configForm.overtime_50_rate), overtime_100_rate: Number(configForm.overtime_100_rate),
+        night_work_rate: Number(configForm.night_work_rate), union_fee_rate: Number(configForm.union_fee_rate),
+      });
+      showToast?.('Configuração do payroll actualizada', 'success');
+      setConfigModal(false);
+    } catch (e: any) { showToast?.(e.message || 'Erro ao guardar configuração', 'error'); }
+    finally { setSavingConfig(false); }
+  };
+
+  const downloadSheet = async (type: 'inss' | 'irps' | 'salarios' | 'resumo' | 'nominal', period?: PayrollPeriod) => {
     const p = period || selectedPeriod;
     if (!p) return;
-    const route = type === 'salarios' ? 'payroll-sheet' : `payroll-${type}`;
+    const route = type === 'salarios' ? 'payroll-sheet' : type === 'resumo' ? 'payroll-summary'
+      : type === 'nominal' ? 'payroll-nominal-roll' : `payroll-${type}`;
     const key = `${type}-${p.id}`;
     setDownloadingSheet(key);
     try {
       const slug = (p.period_name || String(p.id)).replace(/\s+/g, '-');
-      await downloadBlob(`/pdf/${route}/${p.id}`, `folha-${type}-${slug}.pdf`);
+      const q = downloadFormat === 'xlsx' ? '?format=xlsx' : '';
+      await downloadBlob(`/pdf/${route}/${p.id}${q}`, `folha-${type}-${slug}.${downloadFormat}`);
     } catch (e: any) { showToast?.(e.message || 'Erro ao gerar folha', 'error'); }
     finally { setDownloadingSheet(null); }
+  };
+
+  const [annualYear, setAnnualYear] = useState(String(new Date().getFullYear()));
+  const [downloadingAnnual, setDownloadingAnnual] = useState<string | null>(null);
+  const downloadAnnual = async (type: '20h' | 'conferencia') => {
+    const route = type === '20h' ? 'payroll-annual-20h' : 'payroll-annual-conference';
+    setDownloadingAnnual(type);
+    try {
+      const q = downloadFormat === 'xlsx' ? '?format=xlsx' : '';
+      await downloadBlob(`/pdf/${route}/${annualYear}${q}`, `${type === '20h' ? 'modelo-20h' : 'conferencia-irps'}-${annualYear}.${downloadFormat}`);
+    } catch (e: any) { showToast?.(e.message || 'Erro ao gerar mapa anual', 'error'); }
+    finally { setDownloadingAnnual(null); }
   };
 
   const deletePeriod = async (period: PayrollPeriod) => {
@@ -280,6 +356,8 @@ export function HR({ showToast }: Props) {
       salary: item.salary||'', phone: item.phone||'', email: item.email||'', status: item.status||'active',
       notes: item.notes||'', inss_exempt: !!item.inss_exempt, irps_exempt: !!item.irps_exempt,
       inss_rate: item.inss_rate ?? '', irps_rate: item.irps_rate ?? '',
+      dependents_count: String(item.dependents_count ?? 0), inss_number: item.inss_number || '',
+      sexo: item.sexo || '', birth_date: item.birth_date?.slice(0,10) || '',
       payment_method: item.payment_method || 'bank', bank_name: item.bank_name || '',
       bank_nib: item.bank_nib || '', bank_account: item.bank_account || '',
       mpesa_number: item.mpesa_number || '', emola_number: item.emola_number || '',
@@ -350,10 +428,16 @@ export function HR({ showToast }: Props) {
     <PageShell title="Recursos Humanos" description="Gestão de funcionários, departamentos, ausências, salários e horas"
       actions={
         tab === TAB.PAYROLL ? (
-          <button onClick={() => { setPeriodForm({ period_name: '', start_date: '', end_date: '', notes: '' }); setPeriodModal(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition-colors">
-            <Plus className="w-4 h-4" /> Novo Período
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={openConfig}
+              className="flex items-center gap-2 px-4 py-2 border border-border-default text-content-secondary hover:bg-surface-overlay rounded-xl text-sm font-medium transition-colors">
+              <Settings className="w-4 h-4" /> Configuração
+            </button>
+            <button onClick={() => { setPeriodForm({ period_name: '', start_date: '', end_date: '', notes: '' }); setPeriodModal(true); }}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition-colors">
+              <Plus className="w-4 h-4" /> Novo Período
+            </button>
+          </div>
         ) : tab === TAB.TIMESHEETS ? (
           <button onClick={() => { setTsForm({ employee_id: '', project_id: '', date: new Date().toISOString().slice(0,10), hours: '', description: '', billable: false }); setModal('timesheet'); }}
             className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition-colors">
@@ -488,6 +572,16 @@ export function HR({ showToast }: Props) {
                     <p className="text-xs text-content-muted">{selectedPeriod.start_date?.slice(0,10)} → {selectedPeriod.end_date?.slice(0,10)}</p>
                   </div>
                   <div className="ml-auto flex items-center gap-2">
+                    <div className="flex border border-border-default rounded-lg p-0.5 bg-surface-base">
+                      <button onClick={() => setDownloadFormat('pdf')}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${downloadFormat === 'pdf' ? 'bg-brand-600 text-white' : 'text-content-secondary hover:bg-surface-overlay'}`}>
+                        PDF
+                      </button>
+                      <button onClick={() => setDownloadFormat('xlsx')}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${downloadFormat === 'xlsx' ? 'bg-brand-600 text-white' : 'text-content-secondary hover:bg-surface-overlay'}`}>
+                        Excel
+                      </button>
+                    </div>
                     {payslips.length > 0 && (
                       <>
                         <button onClick={() => downloadSheet('salarios')} disabled={downloadingSheet !== null}
@@ -496,11 +590,23 @@ export function HR({ showToast }: Props) {
                           {downloadingSheet === `salarios-${selectedPeriod.id}` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                           Folha Salários
                         </button>
+                        <button onClick={() => downloadSheet('nominal')} disabled={downloadingSheet !== null}
+                          className="flex items-center gap-1.5 px-3 py-1.5 border border-border-default text-content-secondary hover:bg-surface-overlay rounded-lg text-xs font-medium disabled:opacity-50"
+                          title="Folha de Relação Nominal de Trabalhadores (modelo oficial)">
+                          {downloadingSheet === `nominal-${selectedPeriod.id}` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          Relação Nominal
+                        </button>
                         <button onClick={() => downloadSheet('inss')} disabled={downloadingSheet !== null}
                           className="flex items-center gap-1.5 px-3 py-1.5 border border-border-default text-content-secondary hover:bg-surface-overlay rounded-lg text-xs font-medium disabled:opacity-50"
                           title="Descarregar folha de INSS do período">
                           {downloadingSheet === `inss-${selectedPeriod.id}` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                           Folha INSS
+                        </button>
+                        <button onClick={() => downloadSheet('resumo')} disabled={downloadingSheet !== null}
+                          className="flex items-center gap-1.5 px-3 py-1.5 border border-border-default text-content-secondary hover:bg-surface-overlay rounded-lg text-xs font-medium disabled:opacity-50"
+                          title="Resumo do processamento salarial do período">
+                          {downloadingSheet === `resumo-${selectedPeriod.id}` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          Resumo
                         </button>
                         <button onClick={() => downloadSheet('irps')} disabled={downloadingSheet !== null}
                           className="flex items-center gap-1.5 px-3 py-1.5 border border-border-default text-content-secondary hover:bg-surface-overlay rounded-lg text-xs font-medium disabled:opacity-50"
@@ -601,6 +707,30 @@ export function HR({ showToast }: Props) {
             ) : (
               /* Lista de períodos */
               <div className="space-y-3">
+                <div className="flex items-center gap-2 flex-wrap bg-surface-overlay/40 rounded-xl p-3">
+                  <span className="text-xs font-medium text-content-secondary">Mapas anuais (Modelo 20H):</span>
+                  <input type="number" value={annualYear} onChange={e => setAnnualYear(e.target.value)} className={inputCls + ' w-24'} />
+                  <div className="flex border border-border-default rounded-lg p-0.5 bg-surface-base">
+                    <button onClick={() => setDownloadFormat('pdf')}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${downloadFormat === 'pdf' ? 'bg-brand-600 text-white' : 'text-content-secondary hover:bg-surface-overlay'}`}>
+                      PDF
+                    </button>
+                    <button onClick={() => setDownloadFormat('xlsx')}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${downloadFormat === 'xlsx' ? 'bg-brand-600 text-white' : 'text-content-secondary hover:bg-surface-overlay'}`}>
+                      Excel
+                    </button>
+                  </div>
+                  <button onClick={() => downloadAnnual('conferencia')} disabled={downloadingAnnual !== null}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-border-default text-content-secondary hover:bg-surface-overlay rounded-lg text-xs font-medium disabled:opacity-50">
+                    {downloadingAnnual === 'conferencia' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                    Conferência Jan–Dez
+                  </button>
+                  <button onClick={() => downloadAnnual('20h')} disabled={downloadingAnnual !== null}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-border-default text-content-secondary hover:bg-surface-overlay rounded-lg text-xs font-medium disabled:opacity-50">
+                    {downloadingAnnual === '20h' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                    Modelo 20H
+                  </button>
+                </div>
                 {periods.length === 0 && (
                   <p className="text-center py-12 text-content-muted">Nenhum período criado. Clique em "Novo Período" para começar.</p>
                 )}
@@ -744,6 +874,18 @@ export function HR({ showToast }: Props) {
                 <input type="date" value={empForm.hire_date} onChange={e => setEmpForm(p=>({...p,hire_date:e.target.value}))} className={inputCls} />
               </div>
               <div>
+                <label className={labelCls}>Sexo</label>
+                <select value={empForm.sexo} onChange={e => setEmpForm(p=>({...p,sexo:e.target.value}))} className={inputCls}>
+                  <option value="">—</option>
+                  <option value="F">Feminino</option>
+                  <option value="M">Masculino</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Data de Nascimento</label>
+                <input type="date" value={empForm.birth_date} onChange={e => setEmpForm(p=>({...p,birth_date:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
                 <label className={labelCls}>Tipo de Contrato</label>
                 <select value={empForm.contract_type} onChange={e => setEmpForm(p=>({...p,contract_type:e.target.value}))} className={inputCls}>
                   {Object.entries(CONTRACT_LABELS).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
@@ -797,8 +939,17 @@ export function HR({ showToast }: Props) {
                     value={empForm.irps_rate} onChange={e => setEmpForm(p=>({...p,irps_rate:e.target.value}))}
                     className={`${inputCls} disabled:opacity-50 disabled:cursor-not-allowed`} />
                 </div>
+                <div>
+                  <label className={labelCls}>N.º de dependentes</label>
+                  <input type="number" step="1" min="0" value={empForm.dependents_count}
+                    onChange={e => setEmpForm(p=>({...p,dependents_count:e.target.value}))} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>N.º INSS</label>
+                  <input value={empForm.inss_number} onChange={e => setEmpForm(p=>({...p,inss_number:e.target.value}))} className={inputCls} />
+                </div>
               </div>
-              <p className="text-[11px] text-content-muted">Deixa em branco para usar o padrão: INSS 3% e IRPS pela tabela progressiva. A contribuição da entidade mantém-se em 4%.</p>
+              <p className="text-[11px] text-content-muted">Deixa a taxa em branco para usar o padrão: INSS 3% e IRPS pela tabela oficial 2026 (por escalão e n.º de dependentes). A contribuição da entidade mantém-se em 4%.</p>
             </div>
             <div className="border border-border-default rounded-xl p-3 space-y-3">
               <p className="text-xs font-semibold text-content-muted uppercase tracking-wide">Dados de Pagamento</p>
@@ -970,6 +1121,61 @@ export function HR({ showToast }: Props) {
         </Modal>
       )}
 
+      {/* Modal Configuração do Payroll */}
+      {configModal && (
+        <Modal title="Configuração do Payroll — Moçambique" onClose={() => setConfigModal(false)}>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Ano</label>
+                <input type="number" value={configForm.year} onChange={e => setConfigForm(p=>({...p,year:e.target.value}))} className={inputCls} />
+              </div>
+              <div />
+              <div>
+                <label className={labelCls}>Horas normais/mês</label>
+                <input type="number" step="0.5" value={configForm.normal_hours_month} onChange={e => setConfigForm(p=>({...p,normal_hours_month:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Horas por dia</label>
+                <input type="number" step="0.5" value={configForm.hours_per_day} onChange={e => setConfigForm(p=>({...p,hours_per_day:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>INSS trabalhador (%)</label>
+                <input type="number" step="0.1" value={configForm.inss_employee_rate} onChange={e => setConfigForm(p=>({...p,inss_employee_rate:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>INSS empregador (%)</label>
+                <input type="number" step="0.1" value={configForm.inss_employer_rate} onChange={e => setConfigForm(p=>({...p,inss_employer_rate:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>HE até 24h — acréscimo (%)</label>
+                <input type="number" step="1" value={configForm.overtime_50_rate} onChange={e => setConfigForm(p=>({...p,overtime_50_rate:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>HE nocturna/além limite (%)</label>
+                <input type="number" step="1" value={configForm.overtime_100_rate} onChange={e => setConfigForm(p=>({...p,overtime_100_rate:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Trabalho nocturno — acréscimo (%)</label>
+                <input type="number" step="1" value={configForm.night_work_rate} onChange={e => setConfigForm(p=>({...p,night_work_rate:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Taxa sindical padrão (%)</label>
+                <input type="number" step="0.1" value={configForm.union_fee_rate} onChange={e => setConfigForm(p=>({...p,union_fee_rate:e.target.value}))} className={inputCls} />
+              </div>
+            </div>
+            <p className="text-[11px] text-content-muted">Acréscimos de horas extra e trabalho nocturno ao abrigo da Lei do Trabalho 13/2023, art. 122.</p>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setConfigModal(false)} className="px-4 py-2 text-sm border border-border-default rounded-lg text-content-secondary hover:bg-surface-overlay">Cancelar</button>
+              <button onClick={saveConfig} disabled={savingConfig}
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg disabled:opacity-50">
+                {savingConfig && <Loader2 className="w-4 h-4 animate-spin" />} Guardar
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* Modal Novo Período */}
       {periodModal && (
         <Modal title="Novo Período de Salários" onClose={() => setPeriodModal(false)}>
@@ -1005,39 +1211,94 @@ export function HR({ showToast }: Props) {
 
       {/* Modal Editar Recibo */}
       {slipModal && editingSlip && (
-        <Modal title={`Editar Recibo — ${editingSlip.full_name}`} onClose={() => { setSlipModal(false); setEditingSlip(null); }}>
+        <Modal title={`Editar Recibo — ${editingSlip.full_name}`} onClose={() => { setSlipModal(false); setEditingSlip(null); }} wide>
           <div className="space-y-4">
+            <p className="text-xs font-semibold text-content-muted uppercase tracking-wide">Remuneração</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>Salário Bruto (MT)</label>
-                <input type="number" step="0.01" value={slipForm.gross_salary} onChange={e => setSlipForm(p=>({...p,gross_salary:e.target.value}))} className={inputCls} />
+                <label className={labelCls}>Salário Fixo (MT)</label>
+                <input type="number" step="0.01" value={slipForm.base_salary} onChange={e => setSlipForm(p=>({...p,base_salary:e.target.value}))} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>INSS Funcionário (3%)</label>
-                <input type="number" step="0.01" value={slipForm.inss_employee} onChange={e => setSlipForm(p=>({...p,inss_employee:e.target.value}))} className={inputCls} />
+                <label className={labelCls}>Dias Trabalhados</label>
+                <input type="number" step="1" min="0" value={slipForm.worked_days} onChange={e => setSlipForm(p=>({...p,worked_days:e.target.value}))} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>INSS Entidade (4%)</label>
-                <input type="number" step="0.01" value={slipForm.inss_employer} onChange={e => setSlipForm(p=>({...p,inss_employer:e.target.value}))} className={inputCls} />
+                <label className={labelCls}>Comissões (MT)</label>
+                <input type="number" step="0.01" value={slipForm.commissions} onChange={e => setSlipForm(p=>({...p,commissions:e.target.value}))} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>IRPS</label>
+                <label className={labelCls}>Variável/Bónus (MT)</label>
+                <input type="number" step="0.01" value={slipForm.variable_bonus} onChange={e => setSlipForm(p=>({...p,variable_bonus:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Subsídios/Abonos (MT)</label>
+                <input type="number" step="0.01" value={slipForm.allowances} onChange={e => setSlipForm(p=>({...p,allowances:e.target.value}))} className={inputCls} />
+              </div>
+              <div />
+              <div>
+                <label className={labelCls}>Horas Extra +50% (h)</label>
+                <input type="number" step="0.5" min="0" value={slipForm.overtime_hours_50} onChange={e => setSlipForm(p=>({...p,overtime_hours_50:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Horas Extra +100% (h)</label>
+                <input type="number" step="0.5" min="0" value={slipForm.overtime_hours_100} onChange={e => setSlipForm(p=>({...p,overtime_hours_100:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Horas Nocturnas +25% (h)</label>
+                <input type="number" step="0.5" min="0" value={slipForm.night_hours} onChange={e => setSlipForm(p=>({...p,night_hours:e.target.value}))} className={inputCls} />
+              </div>
+            </div>
+
+            <p className="text-xs font-semibold text-content-muted uppercase tracking-wide pt-2">Absentismo</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Dias de Falta Não Remunerada</label>
+                <input type="number" step="0.5" min="0" value={slipForm.absence_days_unpaid} onChange={e => setSlipForm(p=>({...p,absence_days_unpaid:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Horas Ausência Injustificada</label>
+                <input type="number" step="0.5" min="0" value={slipForm.absence_hours_unjustified} onChange={e => setSlipForm(p=>({...p,absence_hours_unjustified:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Atrasos (h)</label>
+                <input type="number" step="0.5" min="0" value={slipForm.late_hours} onChange={e => setSlipForm(p=>({...p,late_hours:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Horas Ausência Justificada</label>
+                <input type="number" step="0.5" min="0" value={slipForm.absence_hours_justified} onChange={e => setSlipForm(p=>({...p,absence_hours_justified:e.target.value}))} className={inputCls} />
+                <p className="text-[11px] text-content-muted mt-0.5">Não desconta — só para o relatório de absentismo.</p>
+              </div>
+            </div>
+
+            <p className="text-xs font-semibold text-content-muted uppercase tracking-wide pt-2">Impostos e Outros Descontos</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Base Contributiva INSS (MT)</label>
+                <input type="number" step="0.01" placeholder="= bruto total (padrão)" value={slipForm.inss_base} onChange={e => setSlipForm(p=>({...p,inss_base:e.target.value}))} className={inputCls} />
+                <p className="text-[11px] text-content-muted mt-0.5">INSS (3%/4%) recalculado automaticamente sobre esta base ao guardar.</p>
+              </div>
+              <div>
+                <label className={labelCls}>IRPS (MT)</label>
                 <input type="number" step="0.01" value={slipForm.irps} onChange={e => setSlipForm(p=>({...p,irps:e.target.value}))} className={inputCls} />
+                <p className="text-[11px] text-content-muted mt-0.5">A tabela 2026 ainda está incompleta — confirma/ajusta manualmente aqui.</p>
               </div>
               <div>
-                <label className={labelCls}>Outras Deduções</label>
+                <label className={labelCls}>Adiantamentos (MT)</label>
+                <input type="number" step="0.01" value={slipForm.advances} onChange={e => setSlipForm(p=>({...p,advances:e.target.value}))} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Outras Deduções (MT)</label>
                 <input type="number" step="0.01" value={slipForm.other_deductions} onChange={e => setSlipForm(p=>({...p,other_deductions:e.target.value}))} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Outros Adicionais</label>
+                <label className={labelCls}>Outros Adicionais (MT)</label>
                 <input type="number" step="0.01" value={slipForm.other_additions} onChange={e => setSlipForm(p=>({...p,other_additions:e.target.value}))} className={inputCls} />
               </div>
             </div>
+
             <div className="bg-surface-overlay rounded-lg p-3 text-sm">
-              <span className="text-content-muted">Salário Líquido estimado: </span>
-              <span className="font-bold text-green-700 dark:text-green-400">
-                MT {Math.max(0, (parseFloat(slipForm.gross_salary)||0) - (parseFloat(slipForm.inss_employee)||0) - (parseFloat(slipForm.irps)||0) - (parseFloat(slipForm.other_deductions)||0) + (parseFloat(slipForm.other_additions)||0)).toFixed(2)}
-              </span>
+              <span className="text-content-muted">Taxa sindical, horas extra, nocturno, INSS, absentismo e líquido são recalculados automaticamente ao guardar (parâmetros em Configuração do Payroll).</span>
             </div>
             <div>
               <label className={labelCls}>Notas</label>

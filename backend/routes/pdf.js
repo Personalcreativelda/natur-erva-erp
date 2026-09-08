@@ -354,19 +354,57 @@ router.get('/payroll-slip/:id', authMiddleware, async (req, res) => {
     const tax = await getTax();
     const logoBuf = await loadLogoBuffer(tax.logoUrl);
 
+    const base       = Number(s.base_salary || s.gross_salary || 0);
+    const commissions = Number(s.commissions || 0);
+    const variableBonus = Number(s.variable_bonus || 0);
+    const allowances  = Number(s.allowances || 0);
+    const overtimeAmt = Number(s.overtime_amount || 0);
+    const nightAmt    = Number(s.night_amount || 0);
     const gross      = Number(s.gross_salary || 0);
     const inss       = Number(s.inss_employee || 0);
     const irps       = Number(s.irps || 0);
+    const unionFee   = Number(s.union_fee || 0);
     const otherDed   = Number(s.other_deductions || 0);
+    const advances   = Number(s.advances || 0);
+    const absenceAmt = Number(s.absence_amount || 0);
     const otherAdd   = Number(s.other_additions || 0);
     const net        = Number(s.net_salary || 0);
-    const totalDed   = inss + irps + otherDed;
+    const totalDed   = inss + irps + unionFee + otherDed + advances + absenceAmt;
 
     // Percentagens a descontar (para exibição nas rubricas)
     const inssPct    = s.inss_exempt ? 0 : (s.inss_rate != null ? Number(s.inss_rate) : 3);
-    const inssLabel  = s.inss_exempt ? 'INSS (isento)' : `INSS Funcionário (${inssPct}%)`;
+    const inssLabel  = s.inss_exempt ? 'INSS (isento)' : `INSS (${inssPct}%)`;
     const irpsLabel  = s.irps_exempt ? 'IRPS (isento)'
-      : (s.irps_rate != null ? `IRPS (${Number(s.irps_rate)}%)` : 'IRPS (tabela progressiva)');
+      : (s.irps_rate != null ? `IRPS (${Number(s.irps_rate)}%)` : 'IRPS (tabela 2026)');
+
+    if (req.query.format === 'xlsx') {
+      const ExcelJS = (await import('exceljs')).default;
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('Recibo');
+      ws.addRow(['RECIBO DE SALÁRIO', '', '', s.period_name || '']);
+      ws.addRow([]);
+      ws.addRow(['Nome', s.full_name || '—']);
+      ws.addRow(['Cargo', s.job_title || '—']);
+      ws.addRow(['Departamento', s.department_name || '—']);
+      ws.addRow(['Período', s.period_name || '—']);
+      ws.addRow([]);
+      const headRow = ws.addRow(['REMUNERAÇÕES', 'MT', 'DESCONTOS', 'MT']);
+      headRow.eachCell(cell => { cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF059669' } }; });
+      const remRows = [['Salário fixo', base], ['Comissões', commissions], ['Variável/Bónus', variableBonus], ['Subsídios/Abonos', allowances], ['Horas extra', overtimeAmt], ['Adicional nocturno', nightAmt]].filter(([, v]) => v);
+      const dedRows = [['Absentismo', absenceAmt], [inssLabel, inss], [irpsLabel, irps], unionFee ? ['Taxa sindical', unionFee] : null, otherDed ? ['Outros descontos', otherDed] : null, advances ? ['Adiantamentos', advances] : null].filter(Boolean);
+      const maxRows = Math.max(remRows.length, dedRows.length);
+      for (let i = 0; i < maxRows; i++) {
+        ws.addRow([remRows[i]?.[0] ?? '', remRows[i]?.[1] ?? '', dedRows[i]?.[0] ?? '', dedRows[i]?.[1] ?? '']);
+      }
+      ws.addRow([]);
+      ws.addRow(['Bruto', gross, 'Total Descontos', totalDed]);
+      if (otherAdd) ws.addRow(['Outros Adicionais', otherAdd]);
+      const netRow = ws.addRow(['LÍQUIDO A RECEBER', '', '', net]);
+      netRow.font = { bold: true };
+      ws.getColumn(1).width = 22; ws.getColumn(2).width = 14; ws.getColumn(3).width = 22; ws.getColumn(4).width = 14;
+      const buf = await wb.xlsx.writeBuffer();
+      return sendXlsx(res, buf, `recibo-vencimento-${(s.full_name || 'funcionario').replace(/\s+/g, '-')}-${s.period_name || s.id}.xlsx`);
+    }
 
     const { default: PDFDocument } = await import('pdfkit');
     const pdf = new PDFDocument({ margin: 50, size: 'A4' });
@@ -408,32 +446,60 @@ router.get('/payroll-slip/:id', authMiddleware, async (req, res) => {
       y += 12;
       y += 12;
 
-      // Tabela de rubricas
-      pdf.rect(LM, y, PW, 18).fillColor('#059669').fill();
+      // Tabela de rubricas — duas colunas, ao formato do "Recibo de Salário — Modelo" oficial
+      const colW = (PW - 12) / 2;
+      const remX = LM;
+      const dedX = LM + colW + 12;
+
+      pdf.rect(remX, y, colW, 18).fillColor('#059669').fill();
+      pdf.rect(dedX, y, colW, 18).fillColor('#059669').fill();
       pdf.fontSize(8).fillColor('#ffffff');
-      pdf.text('DESCRIÇÃO', LM + 8, y + 5, { width: PW - 130 });
-      pdf.text('VALOR (MT)', LM + PW - 100, y + 5, { width: 92, align: 'right' });
+      pdf.text('REMUNERAÇÕES', remX + 6, y + 5, { width: colW - 90 });
+      pdf.text('MT', remX + colW - 80, y + 5, { width: 74, align: 'right' });
+      pdf.text('DESCONTOS', dedX + 6, y + 5, { width: colW - 90 });
+      pdf.text('MT', dedX + colW - 80, y + 5, { width: 74, align: 'right' });
       y += 18;
+      const tableTop = y;
 
-      const row = (label, value, opts = {}) => {
-        if (opts.shaded) { pdf.rect(LM, y, PW, 16).fillColor('#f9fafb').fill(); }
-        pdf.fontSize(8.5).fillColor(opts.color || '#1d1d1f').font(opts.bold ? 'Helvetica-Bold' : 'Helvetica');
-        pdf.text(label, LM + 8, y + 4, { width: PW - 130 });
-        pdf.text(value, LM + PW - 100, y + 4, { width: 92, align: 'right' });
-        pdf.font('Helvetica');
-        y += 16;
+      const remRows = [
+        ['Salário fixo', base],
+        ['Comissões', commissions],
+        ['Variável/Bónus', variableBonus],
+        ['Subsídios/Abonos', allowances],
+        ['Horas extra', overtimeAmt],
+        ['Adicional nocturno', nightAmt],
+      ].filter(([, v]) => v);
+      const dedRows = [
+        ['Absentismo', absenceAmt],
+        [inssLabel, inss],
+        [irpsLabel, irps],
+        unionFee ? ['Taxa sindical', unionFee] : null,
+        otherDed ? ['Outros descontos', otherDed] : null,
+        advances ? ['Adiantamentos', advances] : null,
+      ].filter(Boolean).filter(([, v]) => v || v === 0);
+
+      const rowH = 15;
+      const drawCol = (x, rows) => {
+        let ry = tableTop;
+        rows.forEach(([label, value], i) => {
+          if (i % 2 === 1) pdf.rect(x, ry, colW, rowH).fillColor('#f9fafb').fill();
+          pdf.fontSize(8).fillColor('#1d1d1f');
+          pdf.text(label, x + 6, ry + 3.5, { width: colW - 90 });
+          pdf.text(Number(value).toFixed(2), x + colW - 80, ry + 3.5, { width: 74, align: 'right' });
+          ry += rowH;
+        });
+        return ry;
       };
+      const remBottom = drawCol(remX, remRows);
+      const dedBottom = drawCol(dedX, dedRows);
+      y = Math.max(remBottom, dedBottom) + 4;
 
-      row('Salário Bruto', gross.toFixed(2), { shaded: true, bold: true });
-      row(inssLabel, `-${inss.toFixed(2)}`, { color: '#dc2626' });
-      row(irpsLabel, `-${irps.toFixed(2)}`, { color: '#dc2626', shaded: true });
-      if (otherDed) row('Outras Deduções', `-${otherDed.toFixed(2)}`, { color: '#dc2626' });
-      if (otherAdd) row('Outros Adicionais', `+${otherAdd.toFixed(2)}`, { color: '#059669', shaded: !!otherDed });
-
-      y += 4;
       pdf.moveTo(LM, y).lineTo(LM + PW, y).strokeColor('#d2d2d7').lineWidth(0.5).stroke();
-      y += 8;
-      pdf.fontSize(8).fillColor('#6e6e73').text(`Total de Deduções: ${totalDed.toFixed(2)} MT`, LM, y);
+      y += 6;
+      pdf.fontSize(8).font('Helvetica-Bold').fillColor('#1d1d1f').text(`Bruto: ${gross.toFixed(2)} MT`, remX, y);
+      pdf.text(`Total Descontos: ${totalDed.toFixed(2)} MT`, dedX, y);
+      pdf.font('Helvetica');
+      if (otherAdd) { y += 14; pdf.fontSize(8).fillColor('#059669').text(`Outros Adicionais: +${otherAdd.toFixed(2)} MT`, remX, y); }
       y += 20;
 
       // Líquido a receber — destaque
@@ -488,6 +554,78 @@ router.get('/payroll-slip/:id', authMiddleware, async (req, res) => {
   } catch (err) { console.error('[PDF/payroll-slip]', err); res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/pdf/payroll-summary/:periodId — Resumo do Processamento Salarial
+router.get('/payroll-summary/:periodId', authMiddleware, async (req, res) => {
+  try {
+    const { rows: periods } = await pool.query('SELECT * FROM payroll_periods WHERE id = $1', [req.params.periodId]);
+    if (!periods.length) return res.status(404).json({ error: 'Período não encontrado' });
+    const period = periods[0];
+    const { rows: slips } = await pool.query('SELECT * FROM payslips WHERE period_id = $1', [req.params.periodId]);
+    const tax = await getTax();
+    const logoBuf = await loadLogoBuffer(tax.logoUrl);
+
+    const sum = (fn) => slips.reduce((t, s) => t + fn(s), 0);
+    const indicators = [
+      ['Salário fixo total', sum(s => Number(s.base_salary || 0))],
+      ['Variável + comissões', sum(s => Number(s.commissions || 0) + Number(s.variable_bonus || 0))],
+      ['Subsídios/abonos', sum(s => Number(s.allowances || 0))],
+      ['Horas extra + adicional nocturno', sum(s => Number(s.overtime_amount || 0) + Number(s.night_amount || 0))],
+      ['Bruto total', sum(s => Number(s.gross_salary || 0))],
+      ['INSS trabalhador', sum(s => Number(s.inss_employee || 0))],
+      ['INSS empregador', sum(s => Number(s.inss_employer || 0))],
+      ['IRPS', sum(s => Number(s.irps || 0))],
+      ['Taxa sindical', sum(s => Number(s.union_fee || 0))],
+      ['Absentismo (descontado)', sum(s => Number(s.absence_amount || 0))],
+      ['Adiantamentos', sum(s => Number(s.advances || 0))],
+      ['Líquido total a pagar', sum(s => Number(s.net_salary || 0))],
+      ['Custo total para a empresa', sum(s => Number(s.employer_cost || 0))],
+    ];
+
+    if (req.query.format === 'xlsx') {
+      const columns = [
+        { label: 'Indicador', value: r => r[0] },
+        { label: 'Valor (MT)', align: 'right', value: r => Number(r[1]).toFixed(2) },
+      ];
+      const buf = await buildSheetXLSX({ title: 'Resumo do Processamento Salarial', subtitle: period.period_name, rows: indicators, columns, sheetName: 'Resumo' });
+      return sendXlsx(res, buf, `resumo-salarial-${safeFileName(period.period_name)}.xlsx`);
+    }
+
+    const { default: PDFDocument } = await import('pdfkit');
+    const pdf = new PDFDocument({ margin: 50, size: 'A4' });
+    const chunks = [];
+    pdf.on('data', c => chunks.push(c));
+    await new Promise((ok, err) => {
+      pdf.on('end', ok);
+      pdf.on('error', err);
+      const PW = pdf.page.width - 100;
+      const LM = 50;
+      const headerBottom = drawBrandHeader(pdf, tax, logoBuf, { LM });
+      pdf.fontSize(16).fillColor('#1d1d1f').text('RESUMO DO PROCESSAMENTO SALARIAL', LM, 50, { align: 'right', width: PW });
+      pdf.fontSize(9).fillColor('#6e6e73').text(period.period_name || '', LM, 72, { align: 'right', width: PW });
+      pdf.text(`${slips.length} funcionário${slips.length !== 1 ? 's' : ''} processado${slips.length !== 1 ? 's' : ''}`, LM, 86, { align: 'right', width: PW });
+      const dividerY = Math.max(115, headerBottom + 6);
+      pdf.moveTo(LM, dividerY).lineTo(LM + PW, dividerY).strokeColor('#d2d2d7').lineWidth(1).stroke();
+
+      let y = dividerY + 20;
+      indicators.forEach(([label, value], i) => {
+        if (i % 2 === 1) pdf.rect(LM, y, PW, 22).fillColor('#f9fafb').fill();
+        pdf.fontSize(9.5).fillColor('#1d1d1f').text(label, LM + 8, y + 6, { width: PW - 160 });
+        pdf.font('Helvetica-Bold').text(`${Number(value).toFixed(2)} MT`, LM + PW - 140, y + 6, { width: 132, align: 'right' });
+        pdf.font('Helvetica');
+        y += 22;
+      });
+
+      const FY = pdf.page.height - 48;
+      pdf.moveTo(LM, FY).lineTo(LM + PW, FY).strokeColor('#d2d2d7').lineWidth(0.5).stroke();
+      pdf.fontSize(6.5).fillColor('#6e6e73')
+        .text(`Gerado em ${new Date().toLocaleString('pt-MZ')}${tax.companyName ? ` · ${tax.companyName}` : ''}${tax.companyNuit ? ` NUIT: ${tax.companyNuit}` : ''}`, LM, FY + 8, { align: 'center', width: PW });
+      pdf.end();
+    });
+
+    send(res, Buffer.concat(chunks), `resumo-salarial-${safeFileName(period.period_name)}.pdf`);
+  } catch (err) { console.error('[PDF/payroll-summary]', err); res.status(500).json({ error: err.message }); }
+});
+
 // ── Folhas de INSS / IRPS por período ─────────────────────────────────────────
 
 const safeFileName = (s) =>
@@ -498,11 +636,15 @@ async function getPeriodSheetData(periodId) {
   const { rows: periods } = await pool.query('SELECT * FROM payroll_periods WHERE id = $1', [periodId]);
   if (!periods.length) return null;
   const { rows: slips } = await pool.query(
-    `SELECT ps.gross_salary, ps.inss_employee, ps.inss_employer, ps.irps, ps.net_salary,
+    `SELECT ps.base_salary, ps.allowances, ps.other_deductions, ps.gross_salary, ps.inss_base, ps.inss_employee, ps.inss_employer, ps.irps, ps.net_salary,
+            ps.worked_days, ps.status AS slip_status, ps.notes AS slip_notes,
             e.full_name, e.nuit, e.inss_exempt, e.irps_exempt, e.inss_rate, e.irps_rate,
+            e.inss_number, e.hire_date, e.job_title, e.dependents_count, e.sexo, e.birth_date, e.contract_type,
+            d.name AS department_name,
             e.payment_method, e.bank_name, e.bank_nib, e.bank_account, e.mpesa_number, e.emola_number
      FROM payslips ps
      JOIN employees e ON e.id = ps.employee_id
+     LEFT JOIN departments d ON d.id = e.department_id
      WHERE ps.period_id = $1
      ORDER BY e.full_name`,
     [periodId]
@@ -514,10 +656,10 @@ async function getPeriodSheetData(periodId) {
  * Gera uma folha tabular (INSS ou IRPS) no mesmo padrão visual dos restantes documentos.
  * columns: [{ label, width (fração de PW), align?, value(slip) }]; totals: idem por coluna (ou null).
  */
-async function buildSheetPDF({ title, period, slips, tax, columns, totalsRow }) {
+async function buildSheetPDF({ title, period, slips, tax, columns, totalsRow, landscape }) {
   const logoBuf = await loadLogoBuffer(tax.logoUrl);
   const { default: PDFDocument } = await import('pdfkit');
-  const pdf = new PDFDocument({ margin: 50, size: 'A4' });
+  const pdf = new PDFDocument({ margin: 50, size: 'A4', layout: landscape ? 'landscape' : 'portrait' });
   const chunks = [];
   pdf.on('data', c => chunks.push(c));
 
@@ -557,16 +699,16 @@ async function buildSheetPDF({ title, period, slips, tax, columns, totalsRow }) 
     drawHeadRow();
 
     let alt = false;
-    for (const slip of slips) {
+    slips.forEach((slip, idx) => {
       if (y > pdf.page.height - 90) { pdf.addPage(); y = 50; drawHeadRow(); alt = false; }
       if (alt) pdf.rect(LM, y, PW, 16).fillColor('#f9fafb').fill();
       alt = !alt;
       pdf.fontSize(7.5).fillColor('#1d1d1f');
       columns.forEach((col, i) => {
-        pdf.text(String(col.value(slip)), xs[i] + 4, y + 4, { width: PW * col.width - 8, align: col.align || 'left', ellipsis: true });
+        pdf.text(String(col.value(slip, idx)), xs[i] + 4, y + 4, { width: PW * col.width - 8, align: col.align || 'left', ellipsis: true });
       });
       y += 16;
-    }
+    });
 
     // Totais
     y += 4;
@@ -593,7 +735,278 @@ async function buildSheetPDF({ title, period, slips, tax, columns, totalsRow }) 
   return Buffer.concat(chunks);
 }
 
-// GET /api/pdf/payroll-inss/:periodId — folha de INSS do período
+/**
+ * Gera a mesma folha tabular em Excel (.xlsx), reaproveitando as mesmas `columns`
+ * (label + value(slip,i)) e `totalsRow` usadas no PDF — só muda o motor de saída.
+ * Colunas marcadas align:'right' são tratadas como numéricas (convertidas de volta a número).
+ */
+async function buildSheetXLSX({ title, subtitle, rows, columns, totalsRow, sheetName }) {
+  const ExcelJS = (await import('exceljs')).default;
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet(sheetName || 'Folha');
+
+  const toCell = (col, raw) => {
+    if (col.align !== 'right') return raw;
+    const n = Number(String(raw).replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(n) ? n : raw;
+  };
+
+  ws.addRow([title]);
+  if (subtitle) ws.addRow([subtitle]);
+  ws.addRow([]);
+  const headerRow = ws.addRow(columns.map(c => c.label));
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF059669' } };
+  });
+
+  rows.forEach((r, i) => {
+    ws.addRow(columns.map(col => toCell(col, col.value(r, i))));
+  });
+
+  if (totalsRow) {
+    const tr = ws.addRow(totalsRow.map((v, i) => v == null ? '' : toCell(columns[i], v)));
+    tr.eachCell(cell => { cell.font = { bold: true }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFe5e7eb' } }; });
+  }
+
+  columns.forEach((c, i) => { ws.getColumn(i + 1).width = Math.max(10, c.label.length + 2); });
+  return wb.xlsx.writeBuffer();
+}
+
+const sendXlsx = (res, buf, filename) => {
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(buf);
+};
+
+const SLIP_STATUS_LABELS = { pending: 'Pendente', paid: 'Pago' };
+const CONTRACT_LABELS = { full_time: 'Tempo Inteiro', part_time: 'Meio Período', intern: 'Estagiário', contractor: 'Prestador' };
+
+// GET /api/pdf/payroll-nominal-roll/:periodId — Folha de Relação Nominal de Trabalhadores (modelo oficial)
+router.get('/payroll-nominal-roll/:periodId', authMiddleware, async (req, res) => {
+  try {
+    const data = await getPeriodSheetData(req.params.periodId);
+    if (!data) return res.status(404).json({ error: 'Período não encontrado' });
+    const { period, slips } = data;
+    const tax = await getTax();
+
+    const columns = [
+      { label: 'N.º',           width: 0.02,  value: (s, i) => String(i + 1) },
+      { label: 'NOME COMPLETO', width: 0.165, value: s => s.full_name || '—' },
+      { label: 'NUIT',          width: 0.065, value: s => s.nuit || '—' },
+      { label: 'N.º INSS',      width: 0.055, value: s => s.inss_number || '—' },
+      { label: 'SEXO',          width: 0.025, value: s => s.sexo || '—' },
+      { label: 'DATA NASC.',    width: 0.05,  value: s => s.birth_date ? new Date(s.birth_date).toLocaleDateString('pt-MZ') : '—' },
+      { label: 'DATA ADMISSÃO', width: 0.05,  value: s => s.hire_date ? new Date(s.hire_date).toLocaleDateString('pt-MZ') : '—' },
+      { label: 'DEPARTAMENTO',  width: 0.065, value: s => s.department_name || '—' },
+      { label: 'FUNÇÃO/CARGO',  width: 0.065, value: s => s.job_title || '—' },
+      { label: 'TIPO CONTRATO', width: 0.055, value: s => CONTRACT_LABELS[s.contract_type] || s.contract_type || '—' },
+      { label: 'SAL. BASE',     width: 0.06,  align: 'right', value: s => Number(s.base_salary || 0).toFixed(2) },
+      { label: 'SUBSÍDIOS',     width: 0.05,  align: 'right', value: s => Number(s.allowances || 0).toFixed(2) },
+      { label: 'SAL. BRUTO',    width: 0.06,  align: 'right', value: s => Number(s.gross_salary || 0).toFixed(2) },
+      { label: 'INSS 3%',       width: 0.055, align: 'right', value: s => Number(s.inss_employee || 0).toFixed(2) },
+      { label: 'IRPS',          width: 0.055, align: 'right', value: s => Number(s.irps || 0).toFixed(2) },
+      { label: 'OUTROS DESC.',  width: 0.045, align: 'right', value: s => Number(s.other_deductions || 0).toFixed(2) },
+      { label: 'SAL. LÍQUIDO',  width: 0.06,  align: 'right', value: s => Number(s.net_salary || 0).toFixed(2) },
+    ];
+    const totalsRow = ['TOTAIS', null, null, null, null, null, null, null, null, null,
+      slips.reduce((t, s) => t + Number(s.base_salary || 0), 0).toFixed(2),
+      slips.reduce((t, s) => t + Number(s.allowances || 0), 0).toFixed(2),
+      slips.reduce((t, s) => t + Number(s.gross_salary || 0), 0).toFixed(2),
+      slips.reduce((t, s) => t + Number(s.inss_employee || 0), 0).toFixed(2),
+      slips.reduce((t, s) => t + Number(s.irps || 0), 0).toFixed(2),
+      slips.reduce((t, s) => t + Number(s.other_deductions || 0), 0).toFixed(2),
+      slips.reduce((t, s) => t + Number(s.net_salary || 0), 0).toFixed(2),
+    ];
+
+    if (req.query.format === 'xlsx') {
+      const buf = await buildSheetXLSX({ title: 'Folha de Relação Nominal de Trabalhadores', subtitle: period.period_name, rows: slips, columns, totalsRow, sheetName: 'Relação Nominal' });
+      return sendXlsx(res, buf, `folha-relacao-nominal-${safeFileName(period.period_name)}.xlsx`);
+    }
+    const buf = await buildSheetPDF({ title: 'FOLHA DE RELAÇÃO NOMINAL DE TRABALHADORES', period, slips, tax, landscape: true, columns, totalsRow });
+    send(res, buf, `folha-relacao-nominal-${safeFileName(period.period_name)}.pdf`);
+  } catch (err) { console.error('[PDF/payroll-nominal-roll]', err); res.status(500).json({ error: err.message }); }
+});
+
+// Todos os recibos do ano (via a data de início do período), por funcionário
+async function getAnnualPayslips(year) {
+  const { rows } = await pool.query(
+    `SELECT ps.gross_salary, ps.irps, ps.employee_id, EXTRACT(MONTH FROM pp.start_date)::int AS month,
+            e.full_name, e.nuit
+     FROM payslips ps
+     JOIN employees e ON e.id = ps.employee_id
+     JOIN payroll_periods pp ON pp.id = ps.period_id
+     WHERE EXTRACT(YEAR FROM pp.start_date) = $1
+     ORDER BY e.full_name, pp.start_date`,
+    [year]
+  );
+  return rows;
+}
+
+// GET /api/pdf/payroll-annual-20h/:year — Modelo 20H (Mapa Anual de Retenções na Fonte)
+router.get('/payroll-annual-20h/:year', authMiddleware, async (req, res) => {
+  try {
+    const year = parseInt(req.params.year, 10);
+    const rows = await getAnnualPayslips(year);
+    const tax = await getTax();
+    const logoBuf = await loadLogoBuffer(tax.logoUrl);
+
+    const byEmployee = new Map();
+    for (const r of rows) {
+      if (!byEmployee.has(r.employee_id)) byEmployee.set(r.employee_id, { full_name: r.full_name, nuit: r.nuit, gross: 0, irps: 0, months: 0 });
+      const e = byEmployee.get(r.employee_id);
+      e.gross += Number(r.gross_salary || 0);
+      e.irps  += Number(r.irps || 0);
+      e.months += 1;
+    }
+    const employeesArr = Array.from(byEmployee.values());
+
+    const columns = [
+      { label: 'N.º',                width: 0.03,  value: (_, i) => String(i + 1) },
+      { label: 'NUIT BENEFICIÁRIO',  width: 0.12,  value: e => e.nuit || '—' },
+      { label: 'NOME',               width: 0.2,   value: e => e.full_name || '—' },
+      { label: 'TIPO DE RENDIMENTO', width: 0.15,  value: () => 'Trabalho Dependente' },
+      { label: 'RENDIMENTO BRUTO ANUAL', width: 0.12, align: 'right', value: e => e.gross.toFixed(2) },
+      { label: 'VALOR SUJEITO A RETENÇÃO', width: 0.12, align: 'right', value: e => e.gross.toFixed(2) },
+      { label: 'TAXA (%)',           width: 0.06,  align: 'right', value: e => e.gross > 0 ? `${((e.irps / e.gross) * 100).toFixed(1)}%` : '0%' },
+      { label: 'IRPS RETIDO NO ANO', width: 0.1,   align: 'right', value: e => e.irps.toFixed(2) },
+      { label: 'N.º PAGAMENTOS',     width: 0.1,   align: 'right', value: e => String(e.months) },
+    ];
+
+    if (req.query.format === 'xlsx') {
+      const totalsRow = ['TOTAIS', null, null, null, null, null, null,
+        employeesArr.reduce((t, e) => t + e.irps, 0).toFixed(2), null];
+      const buf = await buildSheetXLSX({ title: 'Modelo 20H — Mapa Anual de Retenções na Fonte', subtitle: `Exercício ${year}`, rows: employeesArr, columns, totalsRow, sheetName: 'Modelo 20H' });
+      return sendXlsx(res, buf, `modelo-20h-${year}.xlsx`);
+    }
+
+    const { default: PDFDocument } = await import('pdfkit');
+    const pdf = new PDFDocument({ margin: 50, size: 'A4', layout: 'landscape' });
+    const chunks = [];
+    pdf.on('data', c => chunks.push(c));
+    await new Promise((ok, err) => {
+      pdf.on('end', ok);
+      pdf.on('error', err);
+      const PW = pdf.page.width - 100;
+      const LM = 50;
+      const headerBottom = drawBrandHeader(pdf, tax, logoBuf, { LM });
+      pdf.fontSize(16).fillColor('#1d1d1f').text('MODELO 20H — MAPA ANUAL DE RETENÇÕES NA FONTE', LM, 50, { align: 'right', width: PW });
+      pdf.fontSize(9).fillColor('#6e6e73').text(`Exercício: ${year}`, LM, 72, { align: 'right', width: PW });
+      pdf.text(`${tax.companyName || ''}${tax.companyNuit ? ` — NUIT: ${tax.companyNuit}` : ''}`, LM, 86, { align: 'right', width: PW });
+      const dividerY = Math.max(115, headerBottom + 6);
+      pdf.moveTo(LM, dividerY).lineTo(LM + PW, dividerY).strokeColor('#d2d2d7').lineWidth(1).stroke();
+
+      let y = dividerY + 15;
+      const xs = []; let acc = LM;
+      for (const col of columns) { xs.push(acc); acc += PW * col.width; }
+      const drawHead = () => {
+        pdf.rect(LM, y, PW, 18).fillColor('#059669').fill();
+        pdf.fontSize(7.5).fillColor('#ffffff');
+        columns.forEach((col, i) => pdf.text(col.label, xs[i] + 4, y + 5, { width: PW * col.width - 8, align: col.align || 'left' }));
+        y += 18;
+      };
+      drawHead();
+      employeesArr.forEach((e, idx) => {
+        if (y > pdf.page.height - 90) { pdf.addPage(); y = 50; drawHead(); }
+        if (idx % 2 === 1) pdf.rect(LM, y, PW, 16).fillColor('#f9fafb').fill();
+        pdf.fontSize(7.5).fillColor('#1d1d1f');
+        columns.forEach((col, i) => pdf.text(String(col.value(e, idx)), xs[i] + 4, y + 4, { width: PW * col.width - 8, align: col.align || 'left', ellipsis: true }));
+        y += 16;
+      });
+
+      y += 10;
+      pdf.fontSize(7.5).fillColor('#6e6e73').text(
+        `${employeesArr.length} beneficiário${employeesArr.length !== 1 ? 's' : ''} · Total IRPS retido: ${employeesArr.reduce((t, e) => t + e.irps, 0).toFixed(2)} MT`,
+        LM, y
+      );
+      y += 20;
+      pdf.fontSize(7).fillColor('#6e6e73').text(
+        'Este mapa é um instrumento de apoio ao preenchimento do Modelo 20H — não substitui o formulário oficial nem a submissão à Autoridade Tributária.',
+        LM, y, { width: PW }
+      );
+
+      const FY = pdf.page.height - 40;
+      pdf.moveTo(LM, FY).lineTo(LM + PW, FY).strokeColor('#d2d2d7').lineWidth(0.5).stroke();
+      pdf.fontSize(6.5).fillColor('#6e6e73').text(`Gerado em ${new Date().toLocaleString('pt-MZ')}`, LM, FY + 8, { align: 'center', width: PW });
+      pdf.end();
+    });
+
+    send(res, Buffer.concat(chunks), `modelo-20h-${year}.pdf`);
+  } catch (err) { console.error('[PDF/payroll-annual-20h]', err); res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/pdf/payroll-annual-conference/:year — Conferência Jan–Dez (base do Modelo 20H)
+router.get('/payroll-annual-conference/:year', authMiddleware, async (req, res) => {
+  try {
+    const year = parseInt(req.params.year, 10);
+    const rows = await getAnnualPayslips(year);
+    const tax = await getTax();
+    const logoBuf = await loadLogoBuffer(tax.logoUrl);
+
+    const byEmployee = new Map();
+    for (const r of rows) {
+      if (!byEmployee.has(r.employee_id)) byEmployee.set(r.employee_id, { full_name: r.full_name, nuit: r.nuit, months: Array(12).fill(0) });
+      byEmployee.get(r.employee_id).months[r.month - 1] += Number(r.irps || 0);
+    }
+    const employeesArr = Array.from(byEmployee.values());
+    const MONTH_LABELS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+    const columns = [
+      { label: 'N.º',    width: 0.025, value: (_, i) => String(i + 1) },
+      { label: 'NUIT',   width: 0.08,  value: e => e.nuit || '—' },
+      { label: 'BENEFICIÁRIO', width: 0.155, value: e => e.full_name || '—' },
+      ...MONTH_LABELS.map((m, mi) => ({ label: m, width: 0.055, align: 'right', value: e => e.months[mi] ? e.months[mi].toFixed(2) : '—' })),
+      { label: 'TOTAL RETIDO ANO', width: 0.08, align: 'right', value: e => e.months.reduce((t, v) => t + v, 0).toFixed(2) },
+    ];
+
+    if (req.query.format === 'xlsx') {
+      const buf = await buildSheetXLSX({ title: 'Conferência Jan–Dez para Preparação do Modelo 20H', subtitle: `Exercício ${year}`, rows: employeesArr, columns, sheetName: 'Conferência' });
+      return sendXlsx(res, buf, `conferencia-irps-${year}.xlsx`);
+    }
+
+    const { default: PDFDocument } = await import('pdfkit');
+    const pdf = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape' });
+    const chunks = [];
+    pdf.on('data', c => chunks.push(c));
+    await new Promise((ok, err) => {
+      pdf.on('end', ok);
+      pdf.on('error', err);
+      const PW = pdf.page.width - 80;
+      const LM = 40;
+      const headerBottom = drawBrandHeader(pdf, tax, logoBuf, { LM });
+      pdf.fontSize(15).fillColor('#1d1d1f').text('CONFERÊNCIA JAN–DEZ PARA PREPARAÇÃO DO MODELO 20H', LM, 50, { align: 'right', width: PW });
+      pdf.fontSize(9).fillColor('#6e6e73').text(`Exercício: ${year}`, LM, 72, { align: 'right', width: PW });
+      const dividerY = Math.max(115, headerBottom + 6);
+      pdf.moveTo(LM, dividerY).lineTo(LM + PW, dividerY).strokeColor('#d2d2d7').lineWidth(1).stroke();
+
+      let y = dividerY + 15;
+      const xs = []; let acc = LM;
+      for (const col of columns) { xs.push(acc); acc += PW * col.width; }
+      const drawHead = () => {
+        pdf.rect(LM, y, PW, 18).fillColor('#059669').fill();
+        pdf.fontSize(7).fillColor('#ffffff');
+        columns.forEach((col, i) => pdf.text(col.label, xs[i] + 3, y + 5, { width: PW * col.width - 6, align: col.align || 'left' }));
+        y += 18;
+      };
+      drawHead();
+      employeesArr.forEach((e, idx) => {
+        if (y > pdf.page.height - 80) { pdf.addPage(); y = 50; drawHead(); }
+        if (idx % 2 === 1) pdf.rect(LM, y, PW, 16).fillColor('#f9fafb').fill();
+        pdf.fontSize(7).fillColor('#1d1d1f');
+        columns.forEach((col, i) => pdf.text(String(col.value(e, idx)), xs[i] + 3, y + 4, { width: PW * col.width - 6, align: col.align || 'left', ellipsis: true }));
+        y += 16;
+      });
+
+      const FY = pdf.page.height - 32;
+      pdf.moveTo(LM, FY).lineTo(LM + PW, FY).strokeColor('#d2d2d7').lineWidth(0.5).stroke();
+      pdf.fontSize(6.5).fillColor('#6e6e73').text(`Gerado em ${new Date().toLocaleString('pt-MZ')}`, LM, FY + 8, { align: 'center', width: PW });
+      pdf.end();
+    });
+
+    send(res, Buffer.concat(chunks), `conferencia-irps-${year}.pdf`);
+  } catch (err) { console.error('[PDF/payroll-annual-conference]', err); res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/pdf/payroll-inss/:periodId — Folha de INSS — Relação Nominal Mensal (modelo oficial)
 router.get('/payroll-inss/:periodId', authMiddleware, async (req, res) => {
   try {
     const data = await getPeriodSheetData(req.params.periodId);
@@ -601,25 +1014,34 @@ router.get('/payroll-inss/:periodId', authMiddleware, async (req, res) => {
     const { period, slips } = data;
     const tax = await getTax();
 
-    const inssPct = (s) => s.inss_exempt ? 0 : (s.inss_rate != null ? Number(s.inss_rate) : 3);
+    const contributivo = (s) => Number(s.inss_base ?? s.gross_salary ?? 0);
     const sum = (fn) => slips.reduce((t, s) => t + fn(s), 0);
-    const totGross = sum(s => Number(s.gross_salary || 0));
+    const totContributivo = sum(s => contributivo(s));
     const totEmp   = sum(s => Number(s.inss_employee || 0));
     const totEmpr  = sum(s => Number(s.inss_employer || 0));
 
-    const buf = await buildSheetPDF({
-      title: 'FOLHA DE INSS', period, slips, tax,
-      columns: [
-        { label: 'FUNCIONÁRIO',       width: 0.26, value: s => s.full_name || '—' },
-        { label: 'NUIT',              width: 0.12, value: s => s.nuit || '—' },
-        { label: 'SALÁRIO BRUTO',     width: 0.14, align: 'right', value: s => Number(s.gross_salary || 0).toFixed(2) },
-        { label: 'TAXA (%)',          width: 0.10, align: 'right', value: s => `${inssPct(s)}%` },
-        { label: 'INSS FUNC.',        width: 0.13, align: 'right', value: s => Number(s.inss_employee || 0).toFixed(2) },
-        { label: 'INSS ENTID. (4%)',  width: 0.13, align: 'right', value: s => Number(s.inss_employer || 0).toFixed(2) },
-        { label: 'TOTAL',             width: 0.12, align: 'right', value: s => (Number(s.inss_employee || 0) + Number(s.inss_employer || 0)).toFixed(2) },
-      ],
-      totalsRow: ['TOTAIS', null, totGross.toFixed(2), null, totEmp.toFixed(2), totEmpr.toFixed(2), (totEmp + totEmpr).toFixed(2)],
-    });
+    const columns = [
+      { label: 'N.º',            width: 0.03, value: (s, i) => String(i + 1) },
+      { label: 'NOME COMPLETO',  width: 0.15, value: s => s.full_name || '—' },
+      { label: 'N.º INSS',       width: 0.08, value: s => s.inss_number || '—' },
+      { label: 'NUIT',           width: 0.08, value: s => s.nuit || '—' },
+      { label: 'DATA ADMISSÃO',  width: 0.07, value: s => s.hire_date ? new Date(s.hire_date).toLocaleDateString('pt-MZ') : '—' },
+      { label: 'FUNÇÃO/CARGO',   width: 0.09, value: s => s.job_title || '—' },
+      { label: 'SAL. CONTRIBUTIVO', width: 0.09, align: 'right', value: s => contributivo(s).toFixed(2) },
+      { label: 'TRABALHADOR 3%', width: 0.08, align: 'right', value: s => Number(s.inss_employee || 0).toFixed(2) },
+      { label: 'ENTIDADE 4%',    width: 0.08, align: 'right', value: s => Number(s.inss_employer || 0).toFixed(2) },
+      { label: 'TOTAL INSS 7%',  width: 0.08, align: 'right', value: s => (Number(s.inss_employee || 0) + Number(s.inss_employer || 0)).toFixed(2) },
+      { label: 'DIAS TRAB.',     width: 0.05, align: 'right', value: s => s.worked_days != null ? String(s.worked_days) : '—' },
+      { label: 'SITUAÇÃO',       width: 0.06, value: s => SLIP_STATUS_LABELS[s.slip_status] || s.slip_status || '—' },
+      { label: 'OBSERVAÇÕES',    width: 0.06, value: s => s.slip_notes || '—' },
+    ];
+    const totalsRow = ['TOTAIS', null, null, null, null, null, totContributivo.toFixed(2), totEmp.toFixed(2), totEmpr.toFixed(2), (totEmp + totEmpr).toFixed(2), null, null, null];
+
+    if (req.query.format === 'xlsx') {
+      const buf = await buildSheetXLSX({ title: 'Folha de INSS — Relação Nominal Mensal', subtitle: period.period_name, rows: slips, columns, totalsRow, sheetName: 'Folha INSS' });
+      return sendXlsx(res, buf, `folha-inss-${safeFileName(period.period_name)}.xlsx`);
+    }
+    const buf = await buildSheetPDF({ title: 'FOLHA DE INSS — RELAÇÃO NOMINAL MENSAL', period, slips, tax, landscape: true, columns, totalsRow });
     send(res, buf, `folha-inss-${safeFileName(period.period_name)}.pdf`);
   } catch (err) { console.error('[PDF/payroll-inss]', err); res.status(500).json({ error: err.message }); }
 });
@@ -639,18 +1061,21 @@ router.get('/payroll-sheet/:periodId', authMiddleware, async (req, res) => {
       s.payment_method === 'emola' ? (s.emola_number || '—') : '—';
     const totNet = slips.reduce((t, s) => t + Number(s.net_salary || 0), 0);
 
-    const buf = await buildSheetPDF({
-      title: 'FOLHA DE SALÁRIOS', period, slips, tax,
-      columns: [
-        { label: 'FUNCIONÁRIO',       width: 0.24, value: s => s.full_name || '—' },
-        { label: 'MÉTODO',            width: 0.11, value: s => METHOD_LABELS[s.payment_method] || '—' },
-        { label: 'BANCO',             width: 0.14, value: s => s.payment_method === 'bank' ? (s.bank_name || '—') : '—' },
-        { label: 'NIB',               width: 0.17, value: s => s.payment_method === 'bank' ? (s.bank_nib || '—') : '—' },
-        { label: 'CONTA / CARTEIRA',  width: 0.18, value: accountOf },
-        { label: 'LÍQUIDO (MT)',      width: 0.16, align: 'right', value: s => Number(s.net_salary || 0).toFixed(2) },
-      ],
-      totalsRow: ['TOTAL A PAGAR', null, null, null, null, totNet.toFixed(2)],
-    });
+    const columns = [
+      { label: 'FUNCIONÁRIO',       width: 0.24, value: s => s.full_name || '—' },
+      { label: 'MÉTODO',            width: 0.11, value: s => METHOD_LABELS[s.payment_method] || '—' },
+      { label: 'BANCO',             width: 0.14, value: s => s.payment_method === 'bank' ? (s.bank_name || '—') : '—' },
+      { label: 'NIB',               width: 0.17, value: s => s.payment_method === 'bank' ? (s.bank_nib || '—') : '—' },
+      { label: 'CONTA / CARTEIRA',  width: 0.18, value: accountOf },
+      { label: 'LÍQUIDO (MT)',      width: 0.16, align: 'right', value: s => Number(s.net_salary || 0).toFixed(2) },
+    ];
+    const totalsRow = ['TOTAL A PAGAR', null, null, null, null, totNet.toFixed(2)];
+
+    if (req.query.format === 'xlsx') {
+      const buf = await buildSheetXLSX({ title: 'Folha de Salários', subtitle: period.period_name, rows: slips, columns, totalsRow, sheetName: 'Folha Salários' });
+      return sendXlsx(res, buf, `folha-salarios-${safeFileName(period.period_name)}.xlsx`);
+    }
+    const buf = await buildSheetPDF({ title: 'FOLHA DE SALÁRIOS', period, slips, tax, columns, totalsRow });
     send(res, buf, `folha-salarios-${safeFileName(period.period_name)}.pdf`);
   } catch (err) { console.error('[PDF/payroll-sheet]', err); res.status(500).json({ error: err.message }); }
 });
@@ -669,18 +1094,22 @@ router.get('/payroll-irps/:periodId', authMiddleware, async (req, res) => {
     const totBase  = sum(s => Number(s.gross_salary || 0) - Number(s.inss_employee || 0));
     const totIrps  = sum(s => Number(s.irps || 0));
 
-    const buf = await buildSheetPDF({
-      title: 'FOLHA DE IRPS', period, slips, tax,
-      columns: [
-        { label: 'FUNCIONÁRIO',    width: 0.28, value: s => s.full_name || '—' },
-        { label: 'NUIT',           width: 0.13, value: s => s.nuit || '—' },
-        { label: 'SALÁRIO BRUTO',  width: 0.15, align: 'right', value: s => Number(s.gross_salary || 0).toFixed(2) },
-        { label: 'BASE TRIBUT.',   width: 0.15, align: 'right', value: s => (Number(s.gross_salary || 0) - Number(s.inss_employee || 0)).toFixed(2) },
-        { label: 'TAXA (%)',       width: 0.13, align: 'right', value: irpsPctLabel },
-        { label: 'IRPS',           width: 0.16, align: 'right', value: s => Number(s.irps || 0).toFixed(2) },
-      ],
-      totalsRow: ['TOTAIS', null, totGross.toFixed(2), totBase.toFixed(2), null, totIrps.toFixed(2)],
-    });
+    const columns = [
+      { label: 'FUNCIONÁRIO',    width: 0.24, value: s => s.full_name || '—' },
+      { label: 'NUIT',           width: 0.12, value: s => s.nuit || '—' },
+      { label: 'DEPEND.',        width: 0.08, align: 'right', value: s => String(s.dependents_count ?? 0) },
+      { label: 'SALÁRIO BRUTO',  width: 0.14, align: 'right', value: s => Number(s.gross_salary || 0).toFixed(2) },
+      { label: 'BASE TRIBUT.',   width: 0.14, align: 'right', value: s => (Number(s.gross_salary || 0) - Number(s.inss_employee || 0)).toFixed(2) },
+      { label: 'TAXA/TABELA',    width: 0.13, align: 'right', value: irpsPctLabel },
+      { label: 'IRPS',           width: 0.15, align: 'right', value: s => Number(s.irps || 0).toFixed(2) },
+    ];
+    const totalsRow = ['TOTAIS', null, null, totGross.toFixed(2), totBase.toFixed(2), null, totIrps.toFixed(2)];
+
+    if (req.query.format === 'xlsx') {
+      const buf = await buildSheetXLSX({ title: 'Folha de IRPS', subtitle: period.period_name, rows: slips, columns, totalsRow, sheetName: 'Folha IRPS' });
+      return sendXlsx(res, buf, `folha-irps-${safeFileName(period.period_name)}.xlsx`);
+    }
+    const buf = await buildSheetPDF({ title: 'FOLHA DE IRPS', period, slips, tax, columns, totalsRow });
     send(res, buf, `folha-irps-${safeFileName(period.period_name)}.pdf`);
   } catch (err) { console.error('[PDF/payroll-irps]', err); res.status(500).json({ error: err.message }); }
 });
