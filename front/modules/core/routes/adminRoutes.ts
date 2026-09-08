@@ -96,6 +96,7 @@ export const ADMIN_ROUTE_MAP: Record<string, string> = {
   'clinic-patients': '/admin/clinica/pacientes',
   'clinic-agenda': '/admin/clinica/agenda',
   'clinic-protocols': '/admin/clinica/protocolos',
+  'clinic-billing': '/admin/clinica/faturacao',
   // Perfil
   'profile': '/admin/perfis'
 };
@@ -190,6 +191,7 @@ export const getActivePageFromPath = (pathname: string): string => {
           'clinic-patients': 'clinic',
           'clinic-agenda': 'clinic',
           'clinic-protocols': 'clinic',
+          'clinic-billing': 'clinic',
           'hr-incentives': 'hr',
         };
         return parentMap[pageId] || pageId;

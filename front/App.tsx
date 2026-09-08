@@ -85,6 +85,7 @@ const ClinicDashboard = lazy(() => import('./modules/clinic/pages/ClinicDashboar
 const ClinicPatients  = lazy(() => import('./modules/clinic/pages/ClinicPatients').then(m => ({ default: m.ClinicPatients })));
 const ClinicAgenda    = lazy(() => import('./modules/clinic/pages/ClinicAgenda').then(m => ({ default: m.ClinicAgenda })));
 const ClinicProtocols = lazy(() => import('./modules/clinic/pages/ClinicProtocols').then(m => ({ default: m.ClinicProtocols })));
+const ClinicBilling   = lazy(() => import('./modules/clinic/pages/ClinicBilling').then(m => ({ default: m.ClinicBilling })));
 
 // Services & Utils
 import { Lock, User as UserIcon, Loader2, Info, Eye, EyeOff } from 'lucide-react';
@@ -736,6 +737,13 @@ const App = () => {
                 <ProtectedRoute user={currentUser} permission="clinic.view">
                   <TrackedPage pagePath="/admin/clinica/protocolos" pageTitle="Clínica — Protocolos">
                     <ClinicProtocols showToast={showToast} />
+                  </TrackedPage>
+                </ProtectedRoute>
+              } />
+              <Route path="clinica/faturacao" element={
+                <ProtectedRoute user={currentUser} permission="clinic.view">
+                  <TrackedPage pagePath="/admin/clinica/faturacao" pageTitle="Clínica — Faturação">
+                    <ClinicBilling showToast={showToast} />
                   </TrackedPage>
                 </ProtectedRoute>
               } />

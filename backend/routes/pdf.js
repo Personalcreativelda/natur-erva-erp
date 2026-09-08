@@ -113,6 +113,42 @@ router.get('/invoice/:id', authMiddleware, async (req, res) => {
   } catch (err) { console.error('[PDF/invoice]', err); res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/pdf/clinic-invoice/:id — recibo da Clínica
+router.get('/clinic-invoice/:id', authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM clinic_invoices WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Fatura não encontrada' });
+    const inv = rows[0];
+    const tax = await getTax();
+
+    const items = (inv.items || []).map(i => ({
+      name:      i.name || '',
+      quantity:  i.quantity || 1,
+      unitPrice: Number(i.unitPrice || 0),
+      vatRate:   0,
+    }));
+
+    const buf = await generateDocumentPDF({
+      type:   'invoice',
+      number: inv.invoice_number,
+      doc: {
+        customerName:  inv.customer_name,
+        customerPhone: inv.customer_phone,
+        notes:         inv.notes,
+      },
+      taxConfig: tax,
+      items,
+      totals: {
+        subtotal: Number(inv.subtotal || 0),
+        discount: Number(inv.discount || 0),
+        total:    Number(inv.total    || 0),
+        vatRate:  0,
+      },
+    });
+    send(res, buf, `recibo-clinica-${inv.invoice_number}.pdf`);
+  } catch (err) { console.error('[PDF/clinic-invoice]', err); res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/pdf/quote/:id — orçamento
 router.get('/quote/:id', authMiddleware, async (req, res) => {
   try {

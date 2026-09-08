@@ -192,7 +192,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
  { id: 'helpdesk', children: [{ path: '/admin/helpdesk' }] },
  { id: 'messaging', children: [{ path: '/admin/mensagens' }] },
  { id: 'documents', children: [{ path: '/admin/documentos' }] },
- { id: 'clinic', children: [{ path: '/admin/clinica' }, { path: '/admin/clinica/pacientes' }, { path: '/admin/clinica/agenda' }, { path: '/admin/clinica/protocolos' }] },
+ { id: 'clinic', children: [{ path: '/admin/clinica' }, { path: '/admin/clinica/pacientes' }, { path: '/admin/clinica/agenda' }, { path: '/admin/clinica/protocolos' }, { path: '/admin/clinica/faturacao' }] },
  ];
 
  // Auto-expandir apenas o menu que contém a rota atual
@@ -361,6 +361,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   { id: 'clinic-patients', label: 'Pacientes', icon: Users, path: '/admin/clinica/pacientes' },
   { id: 'clinic-agenda', label: 'Agenda', icon: Calendar, path: '/admin/clinica/agenda' },
   { id: 'clinic-protocols', label: 'Planos de Tratamento', icon: Pill, path: '/admin/clinica/protocolos' },
+  { id: 'clinic-billing', label: 'Faturação', icon: Wallet, path: '/admin/clinica/faturacao' },
  ]
  },
  ];

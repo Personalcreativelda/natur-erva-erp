@@ -52,6 +52,7 @@ import messagesRoutes    from './routes/messages.js';
 import subscriptionsRoutes from './routes/subscriptions.js';
 import docmanagerRoutes  from './routes/docmanager.js';
 import clinicRoutes      from './routes/clinic.js';
+import clinicBillingRoutes from './routes/clinicBilling.js';
 import incentivesRoutes  from './routes/incentives.js';
 import assistantRoutes   from './routes/assistant.js';
 
@@ -168,6 +169,7 @@ app.use('/api/messages',      messagesRoutes);
 app.use('/api/subscriptions', subscriptionsRoutes);
 app.use('/api/docs',          docmanagerRoutes);
 app.use('/api/clinic',        clinicRoutes);
+app.use('/api/clinic',        clinicBillingRoutes);
 app.use('/api/incentives',    incentivesRoutes);
 app.use('/api/assistant',     assistantRoutes);
 
