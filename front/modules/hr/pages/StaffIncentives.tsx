@@ -13,19 +13,24 @@ interface Props { showToast?: (msg: string, type: Toast['type']) => void; }
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
 
-type GoalType = 'unit_threshold' | 'promoter_target';
+type GoalType = 'unit_threshold' | 'promoter_target' | 'daily_category_commission' | 'service_commission';
 type Goal = {
   id: string; name: string; type: GoalType;
   productId?: string | null; productName?: string | null; everyNUnits?: number | null;
   targetValue?: number | null; baseAmount?: number | null; fullAmount?: number | null;
+  category?: string | null; minDailyUnits?: number | null; commissionPercent?: number | null;
+  clinicServiceId?: string | null; clinicServiceName?: string | null;
   employeeIds: number[]; isActive: boolean; notes?: string | null; createdAt: string;
 };
 type EmployeeLite = { id: number; full_name: string; job_title: string; status: string };
 type ProductLite = { id: string; name: string };
+type ClinicServiceLite = { id: string; name: string; type: string };
 type GoalResult = {
   goalId: string; goalName: string; type: GoalType; productName?: string | null;
   unitsSold?: number; everyNUnits?: number; bonusUnits?: number;
   salesValue?: number; targetValue?: number; achieved?: boolean; baseAmount?: number; fullAmount?: number;
+  category?: string; qualifyingDays?: number; minDailyUnits?: number; qualifyingRevenue?: number;
+  clinicServiceName?: string; count?: number; revenue?: number; commissionPercent?: number;
   bonusValue: number;
 };
 type EmployeeReport = { employeeId: number; employeeName: string; jobTitle?: string; goals: GoalResult[]; totalBonus: number };
@@ -44,8 +49,16 @@ const EMPTY_GOAL_FORM = {
   name: '', type: 'unit_threshold' as GoalType,
   productId: '', everyNUnits: '4',
   targetValue: '', baseAmount: '', fullAmount: '',
+  category: '', minDailyUnits: '5', commissionPercent: '2.5', clinicServiceId: '',
   employeeIds: [] as number[], notes: '',
 };
+
+const GOAL_TYPE_OPTIONS: { value: GoalType; label: string }[] = [
+  { value: 'unit_threshold', label: 'Staff — a cada N unidades' },
+  { value: 'promoter_target', label: 'Promotor — meta de valor' },
+  { value: 'daily_category_commission', label: 'Comissão diária por categoria' },
+  { value: 'service_commission', label: 'Comissão por serviço da Clínica' },
+];
 
 function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: React.ReactNode; wide?: boolean }) {
   return createPortal(
@@ -86,6 +99,8 @@ export function StaffIncentives({ showToast }: Props) {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [employees, setEmployees] = useState<EmployeeLite[]>([]);
   const [products, setProducts] = useState<ProductLite[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [clinicServices, setClinicServices] = useState<ClinicServiceLite[]>([]);
 
   const [goalModal, setGoalModal] = useState<null | 'new' | Goal>(null);
   const [goalForm, setGoalForm] = useState(EMPTY_GOAL_FORM);
@@ -99,12 +114,15 @@ export function StaffIncentives({ showToast }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [g, e, p] = await Promise.all([
+      const [g, e, p, cs] = await Promise.all([
         api.get<Goal[]>('/incentives/goals'),
         api.get<EmployeeLite[]>('/hr/employees?status=active'),
-        api.get<ProductLite[]>('/products'),
+        api.get<(ProductLite & { category?: string })[]>('/products'),
+        api.get<ClinicServiceLite[]>('/clinic/services'),
       ]);
       setGoals(g); setEmployees(e); setProducts(p);
+      setCategories(Array.from(new Set(p.map(x => x.category).filter((c): c is string => !!c))));
+      setClinicServices(cs);
     } catch { showToast?.('Erro ao carregar metas', 'error'); }
     finally { setLoading(false); }
   }, [showToast]);
@@ -119,6 +137,9 @@ export function StaffIncentives({ showToast }: Props) {
       targetValue: g.targetValue != null ? String(g.targetValue) : '',
       baseAmount: g.baseAmount != null ? String(g.baseAmount) : '',
       fullAmount: g.fullAmount != null ? String(g.fullAmount) : '',
+      category: g.category || '', minDailyUnits: g.minDailyUnits != null ? String(g.minDailyUnits) : '5',
+      commissionPercent: g.commissionPercent != null ? String(g.commissionPercent) : '2.5',
+      clinicServiceId: g.clinicServiceId || '',
       employeeIds: g.employeeIds || [], notes: g.notes || '',
     });
     setGoalModal(g);
@@ -135,11 +156,18 @@ export function StaffIncentives({ showToast }: Props) {
       if (goalForm.type === 'unit_threshold') {
         payload.productId = goalForm.productId || null;
         payload.everyNUnits = Number(goalForm.everyNUnits) || 1;
-      } else {
+      } else if (goalForm.type === 'promoter_target') {
         payload.productId = goalForm.productId || null;
         payload.targetValue = Number(goalForm.targetValue) || 0;
         payload.baseAmount = Number(goalForm.baseAmount) || 0;
         payload.fullAmount = Number(goalForm.fullAmount) || 0;
+      } else if (goalForm.type === 'daily_category_commission') {
+        payload.category = goalForm.category || null;
+        payload.minDailyUnits = Number(goalForm.minDailyUnits) || 1;
+        payload.commissionPercent = Number(goalForm.commissionPercent) || 0;
+      } else if (goalForm.type === 'service_commission') {
+        payload.clinicServiceId = goalForm.clinicServiceId || null;
+        payload.commissionPercent = Number(goalForm.commissionPercent) || 0;
       }
       if (goalModal === 'new') {
         await api.post('/incentives/goals', payload);
@@ -190,9 +218,19 @@ export function StaffIncentives({ showToast }: Props) {
     finally { setDownloadingReport(false); }
   };
 
-  const goalSummary = (g: Goal) => g.type === 'unit_threshold'
-    ? `${g.productName || 'Produto'} — a cada ${g.everyNUnits} vendidas, 1 é bónus`
-    : `Meta de ${fmtMT(g.targetValue || 0)}${g.productName ? ` (${g.productName})` : ''} — base ${fmtMT(g.baseAmount || 0)} → completo ${fmtMT(g.fullAmount || 0)}`;
+  const goalSummary = (g: Goal) => {
+    if (g.type === 'unit_threshold') return `${g.productName || 'Produto'} — a cada ${g.everyNUnits} vendidas, 1 é bónus`;
+    if (g.type === 'promoter_target') return `Meta de ${fmtMT(g.targetValue || 0)}${g.productName ? ` (${g.productName})` : ''} — base ${fmtMT(g.baseAmount || 0)} → completo ${fmtMT(g.fullAmount || 0)}`;
+    if (g.type === 'daily_category_commission') return `${g.category} — ${g.commissionPercent}% no dia em que vender pelo menos ${g.minDailyUnits} unidades`;
+    return `${g.clinicServiceName || 'Serviço da Clínica'} — ${g.commissionPercent}% por cada fatura paga`;
+  };
+
+  const GOAL_TYPE_BADGE: Record<GoalType, { label: string; className: string }> = {
+    unit_threshold: { label: 'Staff', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+    promoter_target: { label: 'Promotor', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
+    daily_category_commission: { label: 'Comissão diária', className: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400' },
+    service_commission: { label: 'Comissão Clínica', className: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' },
+  };
 
   return (
     <PageShell title="Metas & Bónus" description="Metas de vendas e bónus para o staff interno do caixa"
@@ -228,8 +266,8 @@ export function StaffIncentives({ showToast }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-content-primary">{g.name}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${g.type === 'unit_threshold' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'}`}>
-                          {g.type === 'unit_threshold' ? 'Staff' : 'Promotor'}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${GOAL_TYPE_BADGE[g.type].className}`}>
+                          {GOAL_TYPE_BADGE[g.type].label}
                         </span>
                         {!g.isActive && <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">Inativa</span>}
                       </div>
@@ -304,9 +342,14 @@ export function StaffIncentives({ showToast }: Props) {
                               <div className="min-w-0">
                                 <p className="text-content-secondary font-medium truncate">{g.goalName}</p>
                                 <p className="text-content-muted">
-                                  {g.type === 'unit_threshold'
-                                    ? `${g.productName || 'Produto'} — ${g.unitsSold} vendidas (a cada ${g.everyNUnits}) = ${g.bonusUnits} bónus`
-                                    : `${g.salesValue?.toFixed(2)} / ${g.targetValue?.toFixed(2)} MT — ${g.achieved ? 'meta atingida' : 'meta não atingida'}`}
+                                  {g.type === 'unit_threshold' &&
+                                    `${g.productName || 'Produto'} — ${g.unitsSold} vendidas (a cada ${g.everyNUnits}) = ${g.bonusUnits} bónus`}
+                                  {g.type === 'promoter_target' &&
+                                    `${g.salesValue?.toFixed(2)} / ${g.targetValue?.toFixed(2)} MT — ${g.achieved ? 'meta atingida' : 'meta não atingida'}`}
+                                  {g.type === 'daily_category_commission' &&
+                                    `${g.category} — ${g.qualifyingDays} dia(s) com ≥${g.minDailyUnits} unidades, ${fmtMT(g.qualifyingRevenue || 0)} × ${g.commissionPercent}%`}
+                                  {g.type === 'service_commission' &&
+                                    `${g.clinicServiceName} — ${g.count}× pago, ${fmtMT(g.revenue || 0)} × ${g.commissionPercent}%`}
                                 </p>
                               </div>
                               <span className={`shrink-0 font-medium ${g.bonusValue > 0 ? 'text-brand-600 dark:text-brand-400' : 'text-content-muted'}`}>{fmtMT(g.bonusValue)}</span>
@@ -336,15 +379,11 @@ export function StaffIncentives({ showToast }: Props) {
                 placeholder="Ex: Chá Verde 500ml — bónus a cada 4 vendas" className={inputCls} />
             </div>
 
-            <div className="flex border border-border-default rounded-lg p-1 bg-surface-base">
-              <button onClick={() => setGoalForm(p => ({ ...p, type: 'unit_threshold' }))}
-                className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${goalForm.type === 'unit_threshold' ? 'bg-brand-600 text-white' : 'text-content-secondary hover:bg-surface-overlay'}`}>
-                Staff — a cada N unidades
-              </button>
-              <button onClick={() => setGoalForm(p => ({ ...p, type: 'promoter_target' }))}
-                className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${goalForm.type === 'promoter_target' ? 'bg-brand-600 text-white' : 'text-content-secondary hover:bg-surface-overlay'}`}>
-                Promotor — meta de valor
-              </button>
+            <div>
+              <label className={labelCls}>Tipo de meta/comissão</label>
+              <select value={goalForm.type} onChange={e => setGoalForm(p => ({ ...p, type: e.target.value as GoalType }))} className={inputCls}>
+                {GOAL_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
             </div>
 
             {goalForm.type === 'unit_threshold' ? (
@@ -364,7 +403,7 @@ export function StaffIncentives({ showToast }: Props) {
                   Ex: com "4", a cada 4 unidades vendidas pelo funcionário, o valor de 1 unidade (a última) vira bónus.
                 </p>
               </div>
-            ) : (
+            ) : goalForm.type === 'promoter_target' ? (
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
                   <label className={labelCls}>Produto (opcional)</label>
@@ -388,6 +427,44 @@ export function StaffIncentives({ showToast }: Props) {
                 </div>
                 <p className="col-span-2 text-xs text-content-muted">
                   Se atingir a meta de vendas no período, o bónus será a diferença entre o salário completo e o base. Se não atingir, o bónus é 0 (o funcionário recebe apenas o base, já refletido no seu salário em RH).
+                </p>
+              </div>
+            ) : goalForm.type === 'daily_category_commission' ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className={labelCls}>Categoria de produtos *</label>
+                  <select value={goalForm.category} onChange={e => setGoalForm(p => ({ ...p, category: e.target.value }))} className={inputCls}>
+                    <option value="">Selecionar categoria…</option>
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Mínimo de unidades por dia *</label>
+                  <input type="number" min="1" value={goalForm.minDailyUnits} onChange={e => setGoalForm(p => ({ ...p, minDailyUnits: e.target.value }))} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Comissão (%) *</label>
+                  <input type="number" min="0" step="0.1" value={goalForm.commissionPercent} onChange={e => setGoalForm(p => ({ ...p, commissionPercent: e.target.value }))} className={inputCls} />
+                </div>
+                <p className="col-span-2 text-xs text-content-muted">
+                  Em cada dia em que o funcionário vender pelo menos este mínimo de unidades da categoria, a comissão incide sobre o valor total vendido dessa categoria nesse dia (não apenas o excedente).
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className={labelCls}>Serviço/Pacote da Clínica *</label>
+                  <select value={goalForm.clinicServiceId} onChange={e => setGoalForm(p => ({ ...p, clinicServiceId: e.target.value }))} className={inputCls}>
+                    <option value="">Selecionar serviço/pacote…</option>
+                    {clinicServices.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Comissão (%) *</label>
+                  <input type="number" min="0" step="0.1" value={goalForm.commissionPercent} onChange={e => setGoalForm(p => ({ ...p, commissionPercent: e.target.value }))} className={inputCls} />
+                </div>
+                <p className="col-span-2 text-xs text-content-muted">
+                  A comissão incide sobre cada fatura da Clínica já paga que inclua este serviço/pacote, atribuída ao colaborador que a registou.
                 </p>
               </div>
             )}
