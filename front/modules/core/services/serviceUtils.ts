@@ -242,19 +242,40 @@ export const hasPaymentProof = (order: Order): boolean => {
 };
 
 export const getPaidAmount = (order: Order): number => {
-    if (!hasPaymentProof(order)) return 0;
-
-    const total = order.totalAmount || 0;
+    const total = Number(order.totalAmount) || 0;
     if (total <= 0) return 0;
 
-    if (typeof order.amountPaid === 'number') {
-        const clamped = !Number.isFinite(order.amountPaid) ? 0 : Math.max(0, order.amountPaid);
-        return clamped;
+    const paymentStatus = (order.paymentStatus || '').toLowerCase();
+    const rawPaid = order.amountPaid;
+    const amountPaid = typeof rawPaid === 'string' ? parseFloat(rawPaid) : (typeof rawPaid === 'number' ? rawPaid : undefined);
+
+    // Se o status de pagamento for explicitamente 'paid' ou 'pago', considerar pago totalmente
+    if (paymentStatus === 'paid' || paymentStatus === 'pago') {
+        if (typeof amountPaid === 'number' && Number.isFinite(amountPaid) && amountPaid > 0) {
+            return Math.min(amountPaid, total);
+        }
+        return total;
     }
 
-    if (order.paymentStatus === 'paid') return total;
+    // Se o status de pagamento for 'partial' ou 'parcial', usar o valor pago definido
+    if (paymentStatus === 'partial' || paymentStatus === 'parcial') {
+        if (typeof amountPaid === 'number' && Number.isFinite(amountPaid) && amountPaid > 0) {
+            return Math.min(amountPaid, total);
+        }
+        return 0;
+    }
 
-    return total;
+    // Se tem valor pago registrado > 0 (ex.: venda em dinheiro / POS), respeitar o valor
+    if (typeof amountPaid === 'number' && Number.isFinite(amountPaid) && amountPaid > 0) {
+        return Math.min(amountPaid, total);
+    }
+
+    // Se tem comprovativo anexado mas status não foi definido, assumir o total
+    if (hasPaymentProof(order)) {
+        return total;
+    }
+
+    return 0;
 };
 
 // Helper to parse product name into base and variant

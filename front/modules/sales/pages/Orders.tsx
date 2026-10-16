@@ -1,4 +1,4 @@
-// Orders Component
+﻿// Orders Component
 import React, { useState, useMemo, useEffect } from 'react';
 import { Customer, Order, OrderItem, OrderStatus, Product, ProductVariant, DeliveryZone, User, UserRole } from '../../core/types/types';
 import { Plus, Filter, CheckCircle, Clock, Truck, XCircle, Search, Package, Printer, Eye, Upload, FileSpreadsheet, Loader2, Edit2, Trash2, Save, X, CheckSquare, Square, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, DollarSign, User as UserIcon, Smartphone, MapPin, ShoppingCart, FileText, Download } from 'lucide-react';
@@ -707,22 +707,30 @@ export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, tot
  }, [filteredAndSortedOrders]);
 
  const getEffectivePaymentStatus = (order: Order): 'paid' | 'partial' | 'unpaid' => {
- const paid = getPaidAmount(order);
- if (paid >= (order.totalAmount || 0)) return 'paid';
- if (paid > 0) return 'partial';
- return 'unpaid';
+   const rawStatus = (order.paymentStatus || '').toLowerCase();
+   if (rawStatus === 'paid' || rawStatus === 'pago') return 'paid';
+   if (rawStatus === 'partial' || rawStatus === 'parcial') return 'partial';
+
+   const paid = getPaidAmount(order);
+   const total = Number(order.totalAmount) || 0;
+   if (paid >= total && paid > 0) return 'paid';
+   if (paid > 0) return 'partial';
+   return 'unpaid';
  };
 
  const getPaymentStatusLabel = (status: 'paid' | 'partial' | 'unpaid'): string => {
- if (status === 'paid') return 'Pago';
- if (status === 'partial') return 'Parcial';
- return 'Não Pago';
+   if (status === 'paid') return 'Pago';
+   if (status === 'partial') return 'Parcial';
+   return 'Nao Pago';
  };
 
  const getPaymentStatusTooltip = (order: Order): string => {
- if (!hasPaymentProof(order)) return 'Sem comprovativo: considerado Não Pago';
- const effective = getEffectivePaymentStatus(order);
- return `Pagamento: ${getPaymentStatusLabel(effective)}`;
+   const effective = getEffectivePaymentStatus(order);
+   const paid = getPaidAmount(order);
+   if (effective === 'paid') return `Pagamento: Pago (${formatMoney(paid)})`;
+   if (effective === 'partial') return `Pagamento: Parcial (${formatMoney(paid)} / ${formatMoney(order.totalAmount)})`;
+   if (!hasPaymentProof(order)) return 'Pagamento: Nao Pago (sem comprovativo anexado)';
+   return 'Pagamento: Nao Pago';
  };
 
  const shouldIncludeInTotals = (order: Order): boolean => {
@@ -3854,9 +3862,32 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <p className="font-medium">{selectedOrder.orderNumber}</p>
  </div>
  )}
- {(selectedOrder.paymentStatus || selectedOrder.paymentProof || selectedOrder.paymentProofText) && (
+ {(true) && (
  <div className="mb-4">
- <p className="text-xs text-content-muted uppercase mb-1">Status de Pagamento</p>
+ <div className="flex items-center justify-between mb-1.5">
+ <p className="text-xs text-content-muted uppercase">Status de Pagamento</p>
+ {canEdit && getEffectivePaymentStatus(selectedOrder) !== 'paid' && (
+ <button
+ type="button"
+ onClick={async () => {
+ const total = Number(selectedOrder.totalAmount) || 0;
+ const updated: Order = {
+ ...selectedOrder,
+ paymentStatus: 'paid',
+ amountPaid: total
+ };
+ setSelectedOrder(updated);
+ if (onEditOrder) onEditOrder(updated);
+ showToast('Pedido marcado como Pago', 'success');
+ }}
+ className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+ >
+ <CheckCircle className="w-3.5 h-3.5" />
+ Marcar como Pago
+ </button>
+ )}
+ </div>
+ <div className="flex items-center justify-between gap-3 p-3 bg-surface-base dark:bg-surface-base rounded-lg border border-border-default">
  <div className="flex items-center gap-2">
  {(() => {
  const effective = getEffectivePaymentStatus(selectedOrder);
@@ -3864,19 +3895,19 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  return (
  <>
  {effective === 'paid' && (
- <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+ <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
  )}
  {effective === 'partial' && (
- <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+ <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400 flex-shrink-0" />
  )}
  {effective === 'unpaid' && (
- <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+ <XCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
  )}
- <span className="font-medium">
- {effective === 'paid' ? 'Pago' : effective === 'partial' ? 'Parcial' : 'Não Pago'}
+ <span className="font-medium text-sm">
+ {effective === 'paid' ? 'Pago' : effective === 'partial' ? 'Parcial' : 'Nao Pago'}
  </span>
  {paidAmount > 0 && (
- <span className="text-sm text-content-secondary">
+ <span className="text-xs text-content-secondary">
  ({formatMoney(paidAmount)} / {formatMoney(selectedOrder.totalAmount)})
  </span>
  )}
@@ -3884,9 +3915,35 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  );
  })()}
  </div>
+ {canEdit && (
+ <select
+ value={getEffectivePaymentStatus(selectedOrder)}
+ onChange={async (e) => {
+ const newPaymentStatus = e.target.value as 'paid' | 'unpaid' | 'partial';
+ const total = Number(selectedOrder.totalAmount) || 0;
+ const newAmountPaid = newPaymentStatus === 'paid'
+ ? total
+ : (newPaymentStatus === 'unpaid' ? 0 : (selectedOrder.amountPaid || 0));
+ const updated: Order = {
+ ...selectedOrder,
+ paymentStatus: newPaymentStatus,
+ amountPaid: newAmountPaid
+ };
+ setSelectedOrder(updated);
+ if (onEditOrder) onEditOrder(updated);
+ showToast(`Status de pagamento alterado para "${newPaymentStatus === 'paid' ? 'Pago' : newPaymentStatus === 'partial' ? 'Parcial' : 'Nao Pago'}"`, 'success');
+ }}
+ className="text-xs bg-surface-raised border border-border-default dark:border-border-strong text-content-secondary px-3 py-1.5 rounded-lg hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+ >
+ <option value="unpaid">Nao Pago</option>
+ <option value="partial">Parcial</option>
+ <option value="paid">Pago</option>
+ </select>
+ )}
+ </div>
  {getPaidAmount(selectedOrder) > 0 && getPaidAmount(selectedOrder) < selectedOrder.totalAmount && (
  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
- Dé­vida: {formatMoney(selectedOrder.totalAmount - getPaidAmount(selectedOrder))}
+ Divida: {formatMoney(selectedOrder.totalAmount - getPaidAmount(selectedOrder))}
  </p>
  )}
  </div>
