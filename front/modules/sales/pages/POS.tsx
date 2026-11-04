@@ -691,7 +691,7 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
 
  // ── POS Principal ─────────────────────────────────────────────────────────────
  return (
- <div className="flex flex-col overflow-hidden bg-surface-base -mx-3 -mt-3 sm:-mx-4 sm:-mt-4 md:mx-0 md:mt-0 md:h-[calc(100vh-64px)]">
+ <div className="flex flex-col overflow-hidden bg-surface-base -mx-4 -mt-4 md:mx-0 md:mt-0 md:h-[calc(100vh-64px)]">
 
  {/* Barra de sessão */}
  <div className="flex items-center gap-2 px-3 md:px-4 py-2 bg-brand-600 text-white text-sm shrink-0">

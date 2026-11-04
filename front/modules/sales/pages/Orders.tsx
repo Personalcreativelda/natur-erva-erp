@@ -3676,7 +3676,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
 
  {/* Floating Action Bar */}
  {selectedOrderIds.length > 0 && (
- <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#1d1d1f] dark:bg-surface-raised text-[#f5f5f7] dark:text-content-primary border border-border-default px-6 py-3 rounded-full shadow-2xl z-40 flex items-center space-x-4 animate-fade-in-up">
+ <div className="fixed bottom-24 md:bottom-6 left-1/2 transform -translate-x-1/2 max-w-[calc(100vw-2rem)] bg-[#1d1d1f] dark:bg-surface-raised text-[#f5f5f7] dark:text-content-primary border border-border-default px-6 py-3 rounded-full shadow-2xl z-40 flex items-center space-x-4 animate-fade-in-up">
  <span className="font-bold text-sm">{selectedOrderIds.length} selecionados</span>
  <div className="h-4 w-px bg-border-strong dark:bg-surface-base"></div>
  <button

@@ -68,7 +68,7 @@ export const ToastComponent: React.FC<ToastProps> = ({ toast, onClose }) => {
 
  return (
  <div 
- className={`${colors[toast.type]} border-l-4 rounded-xl p-4 shadow-2xl flex flex-col min-w-[320px] max-w-md mb-3 transform transition-all duration-300 ease-out relative overflow-hidden`}
+ className={`${colors[toast.type]} border-l-4 rounded-xl p-4 shadow-2xl flex flex-col w-full md:w-auto md:min-w-[320px] max-w-md mb-3 transform transition-all duration-300 ease-out relative overflow-hidden`}
  style={{
  animation: 'slideInUp 0.3s ease-out',
  }}
@@ -122,7 +122,8 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onClose 
  if (toasts.length === 0) return null;
 
  return (
- <div className="fixed bottom-4 right-4 z-[9999] space-y-2 pointer-events-none">
+ // Mobile: topo (abaixo do header, longe da barra inferior). Desktop: canto inferior direito
+ <div className="fixed top-[68px] left-4 right-4 md:top-auto md:left-auto md:bottom-4 md:right-4 z-[9999] space-y-2 pointer-events-none flex flex-col items-stretch md:items-end">
  {toasts.map(toast => (
  <div key={toast.id} className="pointer-events-auto">
  <ToastComponent toast={toast} onClose={onClose} />

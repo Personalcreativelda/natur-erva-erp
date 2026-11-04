@@ -2,7 +2,8 @@
 <html lang="pt-PT">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>Natur Erva - Natural é saudável</title>
@@ -225,11 +226,43 @@
         -webkit-tap-highlight-color: transparent;
       }
       
-      /* Better touch targets for mobile */
+      /* Better touch targets for mobile (checkbox/radio/range ficam no tamanho nativo) */
       @media (max-width: 640px) {
-        button, a, input, select, textarea {
+        /* button:empty = pontos de paginação/indicadores (sem conteúdo) — não esticar */
+        button:not(:empty), a,
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+        select, textarea {
           min-height: 44px;
         }
+        /* Evita o zoom automático do iOS ao focar campos (< 16px dispara zoom) */
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+        select, textarea {
+          font-size: 16px;
+        }
+      }
+
+      /* Espaço do <main> admin no mobile: header fixo (56px) + barra inferior (~72px) + safe-areas */
+      @media (max-width: 767px) {
+        .admin-main-mobile {
+          padding-top: calc(56px + 16px + env(safe-area-inset-top));
+          padding-bottom: calc(88px + env(safe-area-inset-bottom));
+        }
+      }
+
+      /* Conteúdo da loja abaixo do header fixo (+ status bar na app Android) */
+      .shop-main-offset { padding-top: calc(64px + env(safe-area-inset-top)); }
+      @media (min-width: 640px) { .shop-main-offset { padding-top: calc(68px + env(safe-area-inset-top)); } }
+
+      /* Drawer lateral do menu mobile */
+      @keyframes drawer-in {
+        from { transform: translateX(-100%); }
+        to   { transform: translateX(0); }
+      }
+      .animate-drawer-in {
+        animation: drawer-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .animate-drawer-in, .animate-modal-enter, .animate-fade-in-up { animation: none; }
       }
       
       /* Prevent text size adjustment on iOS */

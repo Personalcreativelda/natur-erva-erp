@@ -1,0 +1,28 @@
+{
+  "appId": "mz.co.naturerva.app",
+  "appName": "Natur Erva",
+  "webDir": "www",
+  "server": {
+    "url": "https://www.natur-erva.co.mz",
+    "androidScheme": "https",
+    "cleartext": false,
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "backgroundColor": "#ffffff",
+    "allowMixedContent": false,
+    "appendUserAgent": "NaturErvaApp/1.0 (Android)"
+  },
+  "plugins": {
+    "SystemBars": {
+      "style": "LIGHT"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffff",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_INSIDE"
+    }
+  }
+}

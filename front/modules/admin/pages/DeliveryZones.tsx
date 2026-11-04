@@ -130,7 +130,7 @@ export const DeliveryZones: React.FC<{
  <p>Nenhuma zona definida. Cria a primeira zona de entrega.</p>
  </div>
  ) : (
- <div className="bg-surface-raised rounded-xl border border-border-default overflow-hidden">
+ <div className="bg-surface-raised rounded-xl border border-border-default overflow-x-auto">
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-surface-base/50 border-b border-border-default">

@@ -18,3 +18,18 @@ dist-ssr/
 .env
 .env.*
 !.env.example
+
+# Logs e ficheiros temporários
+*.log
+push_error.txt
+
+# Configuração local do Claude Code (permissões da máquina)
+.claude/
+
+# App Android (Capacitor) — artefactos de build e segredos
+mobile/node_modules/
+*.apk
+*.aab
+mobile/android/keystore/
+mobile/android/keystore.properties
+mobile/android/local.properties

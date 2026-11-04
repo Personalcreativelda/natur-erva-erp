@@ -180,7 +180,7 @@ export function Subscriptions({ showToast }: Props) {
               {plans.length === 0 && <p className="col-span-3 text-center py-12 text-content-muted">Nenhum plano criado</p>}
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto -mx-1 px-1"><table className="w-full text-sm">
               <thead><tr className="border-b border-border-default">
                 {['Cliente', 'Plano', 'Valor', 'Ciclo', 'Estado', 'Próx. Cobrança', ''].map(h => (
                   <th key={h} className="text-left py-3 px-3 text-xs font-medium text-content-muted">{h}</th>
@@ -208,7 +208,7 @@ export function Subscriptions({ showToast }: Props) {
                 ))}
                 {subs.length === 0 && <tr><td colSpan={7} className="py-12 text-center text-content-muted">Nenhuma assinatura</td></tr>}
               </tbody>
-            </table>
+            </table></div>
           )}
         </div>
       </div>

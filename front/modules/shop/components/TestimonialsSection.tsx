@@ -99,12 +99,12 @@ export const TestimonialsSection: React.FC = () => {
   const visible = reviews.slice(startIndex, startIndex + VISIBLE_DESKTOP);
 
   return (
-    <section className="py-16 bg-surface-base">
+    <section className="py-10 sm:py-14 bg-surface-base">
       <div className="max-w-6xl mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-2">
-          Veja o que falam da nossa loja
+        <h2 className="text-xl sm:text-2xl font-bold text-content-primary mb-1">
+          O que dizem os nossos clientes
         </h2>
-        <p className="text-center text-content-muted text-sm mb-10">
+        <p className="text-content-muted text-sm mb-6 sm:mb-8">
           Avaliações reais dos nossos clientes
         </p>
 

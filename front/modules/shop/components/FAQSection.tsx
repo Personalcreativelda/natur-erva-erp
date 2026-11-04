@@ -78,9 +78,9 @@ export const FAQSection: React.FC = () => {
   };
 
   return (
-    <section className="max-w-3xl mx-auto px-4 py-16">
-      <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-10">
-        Perguntas e Respostas
+    <section id="faq" className="max-w-3xl mx-auto px-4 py-10 sm:py-14 scroll-mt-20">
+      <h2 className="text-xl sm:text-2xl font-bold text-content-primary mb-6">
+        Perguntas frequentes
       </h2>
 
       <div className="space-y-3">
@@ -93,21 +93,21 @@ export const FAQSection: React.FC = () => {
               className="bg-surface-raised border border-border-default rounded-xl shadow-sm overflow-hidden"
             >
               <button
-                className="w-full flex items-center justify-between px-6 py-4 text-left"
+                className="w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-4 text-left"
                 onClick={() => handleToggle(globalIdx)}
                 aria-expanded={isOpen}
               >
-                <span className="font-medium text-gray-800 dark:text-white text-sm sm:text-base">
+                <span className="font-medium text-content-primary text-sm sm:text-base">
                   {faq.question}
                 </span>
                 <ChevronDown
-                  className={`h-5 w-5 text-content-muted flex-shrink-0 ml-4 transition-transform duration-300 ${
+                  className={`h-5 w-5 text-content-muted flex-shrink-0 transition-transform duration-300 ${
                     isOpen ? 'rotate-180' : ''
                   }`}
                 />
               </button>
               {isOpen && (
-                <div className="px-6 pb-5">
+                <div className="px-4 sm:px-6 pb-5">
                   <p className="text-content-secondary text-sm leading-relaxed">
                     {faq.answer}
                   </p>
@@ -120,12 +120,12 @@ export const FAQSection: React.FC = () => {
 
       {/* Pagination dots */}
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-6">
+        <div className="flex justify-center gap-1 mt-6">
           {Array.from({ length: totalPages }).map((_, p) => (
             <button
               key={p}
               onClick={() => handlePageChange(p)}
-              className={`w-3 h-3 rounded-full transition-colors ${
+              className={`w-2.5 h-2.5 m-2 rounded-full transition-colors ${
                 p === page
                   ? 'bg-green-600 dark:bg-green-400'
                   : 'bg-border-strong dark:bg-white/[0.2] hover:bg-content-muted'

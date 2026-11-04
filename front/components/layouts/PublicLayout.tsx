@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { Header } from '../../modules/core/components/layout/Header';
 import { Footer } from '../../modules/core/components/layout/Footer';
 import { User } from '../../modules/core/types/types';
-import { useMobile } from '../../modules/core/hooks/useMobile';
 import { useShopContextSafe } from '../../contexts/ShopContext';
 import { CartDrawer } from '../../modules/shop/components/CartDrawer';
+import { useCart } from '../../modules/shop/context/CartContext';
 
 interface PublicLayoutProps {
   currentUser: User | null;
@@ -23,36 +23,17 @@ const PublicLayoutContent: React.FC<PublicLayoutProps> = ({
   onLogout,
   onLogin
 }) => {
-  const location = useLocation();
-  const isMobile = useMobile(768);
   // Usar contexto do Shop (pode ser null se não estiver disponível)
   const shopContext = useShopContextSafe();
-
-  // CartDrawer — visible on all pages except the main Shop page
-  // (Shop.tsx mounts its own CartSidebar and overrides setOnCartClick)
-  const [cartOpen, setCartOpen] = useState(false);
-  const openCart = useCallback(() => setCartOpen(true), []);
-  const closeCart = useCallback(() => setCartOpen(false), []);
-
-  // Pages where Shop.tsx is mounted and manages its own cart
-  const isMainShopPage = location.pathname === '/loja' || location.pathname === '/';
-
-  // Register our handler when NOT on the main shop page.
-  // This effect runs AFTER child effects, so Shop.tsx can still override when /loja mounts.
-  useEffect(() => {
-    if (!isMainShopPage && shopContext) {
-      shopContext.setOnCartClick(openCart);
-    }
-  }, [isMainShopPage, shopContext, openCart]);
+  // Carrinho único (CartContext) — o mesmo em todas as páginas públicas
+  const cart = useCart();
 
   // Memoizar valores derivados do contexto para evitar recálculos
   // IMPORTANTE: Não memoizar os callbacks para garantir que mudanças sejam detectadas
   const effectiveDarkMode = useMemo(() => shopContext?.darkMode ?? isDarkMode, [shopContext?.darkMode, isDarkMode]);
   const effectiveToggleTheme = useMemo(() => shopContext?.toggleTheme ?? toggleTheme, [shopContext?.toggleTheme, toggleTheme]);
-  const effectiveCartItemCount = useMemo(() => shopContext?.cartItemCount ?? 0, [shopContext?.cartItemCount]);
-  
+
   // NÃO memoizar callbacks - garantir que mudanças sejam detectadas pelo Header
-  const effectiveOnCartClick = shopContext?.onCartClick;
   const effectiveOnProfileClick = shopContext?.onProfileClick;
   const effectiveOnLoginClick = shopContext?.onLoginClick;
   
@@ -61,10 +42,10 @@ const PublicLayoutContent: React.FC<PublicLayoutProps> = ({
   
   useEffect(() => {
     // Quando os callbacks estiverem disponíveis, forçar re-render
-    if (shopContext?.onCartClick && shopContext?.onLoginClick) {
+    if (shopContext?.onLoginClick) {
       setCallbacksReady(true);
     }
-  }, [shopContext?.onCartClick, shopContext?.onLoginClick]);
+  }, [shopContext?.onLoginClick]);
   
   // Criar fallback para onLogin se não estiver disponível no contexto ainda
   // Isso garante que o botão sempre tenha uma função válida, mesmo na primeira renderização
@@ -89,21 +70,15 @@ const PublicLayoutContent: React.FC<PublicLayoutProps> = ({
         onLogout={onLogout}
         onLogin={effectiveOnLoginClick || handleLoginFallback}
         isShopMode={true}
-        cartItemCount={effectiveCartItemCount}
-        onCartClick={effectiveOnCartClick}
+        cartItemCount={cart.count}
+        onCartClick={cart.open}
         onProfileClick={effectiveOnProfileClick}
       />
-      <main className="flex-1 pt-16 sm:pt-[68px]">
+      <main className="flex-1 shop-main-offset">
         <Outlet />
       </main>
       <Footer isShopMode={true} />
-      {!isMainShopPage && (
-        <CartDrawer
-          open={cartOpen}
-          onClose={closeCart}
-          onCartCountChange={count => shopContext?.setCartItemCount(count)}
-        />
-      )}
+      <CartDrawer />
     </div>
   );
 };

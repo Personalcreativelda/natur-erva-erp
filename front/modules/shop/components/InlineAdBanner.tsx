@@ -242,8 +242,8 @@ export const InlineAdBanner: React.FC<InlineAdBannerProps> = ({ slot, isAdmin = 
   return (
     <>
       <div
-        className="relative w-full overflow-hidden cursor-pointer group rounded-xl my-6 flex items-center"
-        style={{ backgroundColor: banner!.bgColor, height: '160px' }}
+        className="relative w-full overflow-hidden cursor-pointer group rounded-2xl my-6 flex items-center min-h-[160px]"
+        style={{ backgroundColor: banner!.bgColor }}
         onClick={handleClick}
       >
         {imgUrl && (
@@ -251,7 +251,8 @@ export const InlineAdBanner: React.FC<InlineAdBannerProps> = ({ slot, isAdmin = 
             <img src={imgUrl} alt={banner!.title}
               className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute inset-0 bg-black/40" />
+            {/* Gradiente da esquerda: o texto fica legível sem escurecer a imagem toda */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/10" />
           </>
         )}
 
@@ -262,17 +263,17 @@ export const InlineAdBanner: React.FC<InlineAdBannerProps> = ({ slot, isAdmin = 
           />
         )}
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 flex items-center justify-between gap-4">
-          <div className="text-white drop-shadow-md">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-5 py-5 md:px-10 flex flex-col items-start md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+          <div className="text-white drop-shadow-md min-w-0 max-w-[85%] md:max-w-none">
             <p className="font-extrabold leading-tight" style={{ fontSize: 'clamp(1rem, 2.5vw, 1.5rem)' }}>
               {banner!.title}
             </p>
             {banner!.subtitle && (
-              <p className="text-white/80 text-sm mt-0.5 line-clamp-1">{banner!.subtitle}</p>
+              <p className="text-white/85 text-sm mt-1 line-clamp-2">{banner!.subtitle}</p>
             )}
           </div>
           {banner!.buttonText && (
-            <button className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-gray-900 font-bold px-4 py-2 rounded-xl hover:bg-surface-base active:scale-95 transition-all shadow-md text-sm whitespace-nowrap">
+            <button className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-gray-900 font-semibold px-4 py-2.5 rounded-xl hover:bg-surface-base active:scale-95 transition-all shadow-md text-sm whitespace-nowrap">
               {banner!.buttonText}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
@@ -282,7 +283,7 @@ export const InlineAdBanner: React.FC<InlineAdBannerProps> = ({ slot, isAdmin = 
         {isAdmin && (
           <button
             onClick={e => { e.stopPropagation(); openEdit(); }}
-            className="absolute top-2 right-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg px-2.5 py-1 flex items-center gap-1 text-xs font-medium transition-colors opacity-0 group-hover:opacity-100 z-20"
+            className="absolute top-2 right-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg px-2.5 py-1 flex items-center gap-1 text-xs font-medium transition-colors md:opacity-0 md:group-hover:opacity-100 z-20"
           >
             <Settings className="w-3 h-3" />
             Editar Anúncio

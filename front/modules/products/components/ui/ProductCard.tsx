@@ -2,22 +2,25 @@ import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Product, ProductVariant } from '../../../core/types/types';
-import { ShoppingCart, Package, Bell, X, Star, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Package, X, Star, TrendingUp } from 'lucide-react';
 import { getVariantImage } from '../../../core/utils/productUtils';
 import { StarRating } from './StarRating';
 import { ReviewModal } from './ReviewModal';
 import { getProductRating, RatingStats } from '../../services/reviewService';
+import { getAvailableStock, getBasePrice, getDiscountPercent, getPromoPrice } from '../../../shop/utils/pricing';
 
 export const ProductCardSkeleton: React.FC<{ isMobile?: boolean }> = ({ isMobile = false }) => {
  return (
- <div className="bg-surface-raised rounded-2xl overflow-hidden border border-border-default shadow-sm">
- <div className={`w-full ${isMobile ? 'h-40' : 'h-52'} bg-surface-base dark:bg-surface-base animate-pulse`} />
- <div className={`${isMobile ? 'p-3' : 'p-4'} space-y-3`}>
- <div className="h-4 bg-surface-base rounded-lg animate-pulse w-3/4" />
- <div className="h-3 bg-surface-base rounded-lg animate-pulse w-1/2" />
- {!isMobile && <div className="h-3 bg-surface-base rounded-lg animate-pulse w-full" />}
- <div className="h-5 bg-surface-base rounded-lg animate-pulse w-1/3 mt-2" />
- <div className="h-9 bg-surface-base rounded-lg animate-pulse w-full mt-1" />
+ <div className="bg-surface-raised rounded-2xl overflow-hidden border border-border-default shadow-sm" aria-hidden="true">
+ <div className="w-full aspect-square bg-surface-base animate-pulse" />
+ <div className={`${isMobile ? 'p-2.5' : 'p-4'} space-y-2.5`}>
+ {!isMobile && <div className="h-3 bg-surface-base rounded animate-pulse w-1/3" />}
+ <div className="h-4 bg-surface-base rounded animate-pulse w-11/12" />
+ <div className="h-4 bg-surface-base rounded animate-pulse w-2/3" />
+ {!isMobile && <div className="h-5 bg-surface-base rounded animate-pulse w-1/2 mt-3" />}
+ {isMobile
+ ? <div className="flex justify-between items-end"><div className="h-4 bg-surface-base rounded animate-pulse w-1/2" /><div className="w-10 h-10 bg-surface-base rounded-full animate-pulse" /></div>
+ : <div className="h-11 bg-surface-base rounded-xl animate-pulse w-full" />}
  </div>
  </div>
  );
@@ -99,13 +102,11 @@ const ProductCardComponent: React.FC<{
  }
  };
 
- const handleNotify = () => { if (onNotify) onNotify(); };
-
- const currentPrice = selectedVariant?.price || product.price;
- const promoPrice = (product.promotionalPrice && product.promotionalPrice > 0 && product.promotionalPrice < currentPrice)
- ? product.promotionalPrice : null;
- const discountPct = promoPrice ? Math.round((1 - promoPrice / currentPrice) * 100) : 0;
- const currentStock = selectedVariant?.stock ?? product.variants?.[0]?.stock ?? product.stock ?? 0;
+ // Mesmo cálculo que o carrinho usa — o preço mostrado é o preço cobrado
+ const currentPrice = getBasePrice(product, selectedVariant);
+ const promoPrice = getPromoPrice(product, selectedVariant);
+ const discountPct = getDiscountPercent(product, selectedVariant);
+ const currentStock = getAvailableStock(product, selectedVariant);
  const hasStock = currentStock > 0;
  const isLowStock = hasStock && currentStock <= 5;
  const displayName = selectedVariant?.name ? `${product.name} - ${selectedVariant.name}` : product.name;
@@ -113,19 +114,19 @@ const ProductCardComponent: React.FC<{
  return (
  <div
  data-product-id={product.id}
- className="bg-surface-raised rounded-2xl overflow-hidden border border-border-default shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group flex flex-col"
+ className="w-full bg-surface-raised rounded-2xl overflow-hidden border border-border-default shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group flex flex-col"
  style={{ animationDelay: `${index * 50}ms` }}
  >
- {/* Imagem */}
- <Link to={`/loja/produto/${product.slug}`} className="block relative overflow-hidden flex-shrink-0">
- <div className={`relative w-full ${isMobile ? 'h-40' : 'h-52'} bg-surface-raised`}>
+ {/* Imagem — quadrada para todos os cartões terem a mesma altura */}
+ <Link to={`/loja/produto/${product.slug}`} className="block relative overflow-hidden flex-shrink-0" tabIndex={-1} aria-hidden="true">
+ <div className="relative w-full aspect-square bg-white dark:bg-surface-base">
  {(() => {
  const imageUrl = getVariantImage(selectedVariant, product);
  return imageUrl && !imageUrl.includes('placeholder') ? (
  <img
  src={imageUrl}
  alt={displayName}
- className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
+ className={`w-full h-full object-contain ${isMobile ? 'p-2' : 'p-3'} group-hover:scale-105 transition-transform duration-500 ease-out`}
  loading="lazy"
  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
  />
@@ -136,133 +137,151 @@ const ProductCardComponent: React.FC<{
  );
  })()}
 
- {/* Badge de desconto — circular, canto superior esquerdo */}
+ {/* Selo de desconto (a categoria passou para o texto — antes os dois selos sobrepunham-se) */}
  {promoPrice ? (
- <div
- className="absolute top-3 left-3 w-11 h-11 rounded-full flex flex-col items-center justify-center shadow-md text-white leading-none"
- style={{ background: '#e53e3e' }}
- >
- <span className="text-[11px] font-black">{discountPct}%</span>
- <span className="text-[9px] font-bold tracking-wide">OFF</span>
- </div>
+ <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-red-600 text-white text-[11px] font-bold leading-tight shadow-sm">
+ -{discountPct}%
+ </span>
  ) : showFeaturedBadge && (
- <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-amber-900 text-[10px] font-bold shadow-sm bg-amber-400">
- <Star className="w-2.5 h-2.5 fill-current" />
+ <span className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-lg text-amber-900 text-[11px] font-bold leading-none shadow-sm bg-amber-400">
+ <Star className="w-3 h-3 fill-current" />
  Destaque
- </div>
- )}
-
- {/* Badge categoria — canto superior direito */}
- {product.category && (
- <span
- className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-semibold shadow-sm border bg-surface-raised/90 backdrop-blur-sm"
- style={{ color: 'var(--brand-700, var(--brand-600))', borderColor: 'color-mix(in srgb, var(--brand-600) 20%, transparent)' }}
- >
- {product.category}
  </span>
  )}
 
- {/* Stock overlay e badges */}
+ {/* Stock */}
  {!hasStock && (
- <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center">
- <span className="text-white font-bold text-sm px-4 py-2 bg-red-600/95 rounded-full shadow-lg tracking-wide">Esgotado</span>
+ <div className="absolute inset-0 bg-white/60 dark:bg-black/50 flex items-center justify-center">
+ <span className="text-white font-semibold text-xs px-3 py-1.5 bg-gray-900/85 rounded-full">Esgotado</span>
  </div>
  )}
  {isLowStock && (
- <div className="absolute bottom-2 left-0 right-0 flex justify-center">
- <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-orange-500/90 text-white shadow">Últimas {currentStock} unidade{currentStock !== 1 ? 's' : ''}</span>
- </div>
+ <span className="absolute bottom-1.5 left-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-orange-500/95 text-white leading-tight">
+ {currentStock === 1 ? 'Última unidade' : `Últimas ${currentStock}`}
+ </span>
  )}
  </div>
  </Link>
 
- {/* Conteúdo */}
- <div className={`${isMobile ? 'p-3' : 'p-4'} flex flex-col flex-1`}>
- {/* Nome */}
- <Link to={`/loja/produto/${product.slug}`} className="block transition-colors mb-1" style={{ color: 'inherit' }}>
- <h3 className={`${isMobile ? 'text-sm' : 'text-sm sm:text-base'} font-semibold text-content-primary truncate leading-snug hover:opacity-80 transition-opacity`}>
+ {/* Conteúdo — mobile compacto (estilo app Android) / desktop completo */}
+ {isMobile ? (
+ <div className="px-2.5 pt-2 pb-2.5 flex flex-col flex-1 gap-1">
+ <Link to={`/loja/produto/${product.slug}`} className="block !min-h-0" style={{ color: 'inherit' }}>
+ <h3 className="text-[13px] font-medium text-content-primary leading-snug line-clamp-2 min-h-[2.6em]">
  {product.name}
  </h3>
  </Link>
 
- {/* Rating + Vendas */}
- <div className="flex items-center justify-between mb-1.5">
- <button
- type="button"
- onClick={() => setShowReviewModal(true)}
- className="flex items-center gap-1 w-fit p-0 border-0 bg-transparent"
- aria-label="Ver avaliações"
- >
- <StarRating value={ratingStats.average} size="sm" />
- <span className="text-[11px] text-content-muted hover:opacity-80 transition-opacity">
- {ratingStats.total > 0 ? `(${ratingStats.total})` : 'Avaliar'}
+ {(ratingStats.total > 0 || (product.totalSold || 0) > 0) && (
+ <div className="flex items-center gap-1.5 text-[11px] text-content-muted leading-none">
+ {ratingStats.total > 0 && (
+ <span className="flex items-center gap-0.5">
+ <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+ {ratingStats.average.toFixed(1)}
  </span>
- </button>
+ )}
+ {ratingStats.total > 0 && (product.totalSold || 0) > 0 && <span aria-hidden="true">·</span>}
  {(product.totalSold || 0) > 0 && (
- <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
- <TrendingUp className="w-3 h-3" />
- {product.totalSold! >= 1000 ? `${(product.totalSold! / 1000).toFixed(1)}k` : product.totalSold} vendas
- </span>
+ <span>{product.totalSold! >= 1000 ? `${(product.totalSold! / 1000).toFixed(1)}k` : product.totalSold} {product.totalSold === 1 ? 'vendido' : 'vendidos'}</span>
  )}
  </div>
-
- {/* Descrição — flex-1 garante que absorve o espaço extra,
- mantendo preço+botão sempre no fundo independente do texto */}
- <div className="flex-1 min-h-[2rem]">
- {product.description && (
- <p className={`text-content-muted leading-relaxed ${isMobile ? 'text-[11px] line-clamp-2' : 'text-xs line-clamp-2'}`}>
- {product.description}
- </p>
  )}
- </div>
 
- {/* Preço + Botão — sempre ancorado no fundo */}
- <div className="pt-2 flex flex-col gap-2.5">
- {/* Preços na mesma linha: original riscado + promo em destaque */}
- <div className="flex items-baseline gap-2 flex-wrap">
- {promoPrice ? (
- <>
- <span className="text-xs sm:text-sm line-through font-medium text-red-500">
- {currentPrice.toFixed(2)} MT
- </span>
+ {/* Preço + botão de carrinho na mesma linha */}
+ <div className="mt-auto pt-1 flex items-end justify-between gap-1.5">
+ <div className="min-w-0 leading-tight">
+ {promoPrice && (
+ <span className="block text-[11px] text-content-muted line-through tabular-nums">{currentPrice.toFixed(2)} MT</span>
+ )}
  <span
- className={`${isMobile ? 'text-sm' : 'text-base sm:text-lg'} font-extrabold`}
- style={{ color: 'var(--brand-600)' }}
+ className={`block text-[15px] font-bold tabular-nums whitespace-nowrap ${promoPrice ? 'text-red-600 dark:text-red-400' : ''}`}
+ style={promoPrice ? undefined : { color: 'var(--brand-600)' }}
  >
- {promoPrice.toFixed(2)} MT
+ {(promoPrice ?? currentPrice).toFixed(2)} MT
  </span>
- </>
- ) : (
- <span
- className={`${isMobile ? 'text-sm' : 'text-base sm:text-lg'} font-extrabold`}
- style={{ color: 'var(--brand-600)' }}
- >
- {currentPrice.toFixed(2)} MT
- </span>
- )}
  </div>
-
- {/* Botão largura total */}
  {hasStock ? (
  <button
  onClick={handleAddToCart}
- className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-xs sm:text-sm font-bold uppercase tracking-wide transition-all duration-150 active:scale-95 shadow-sm hover:opacity-90"
- style={{ background: 'var(--brand-600)' }}
+ className="shrink-0 w-10 h-10 !min-h-0 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"
+ style={{ background: 'var(--brand-600)', boxShadow: '0 4px 10px -4px var(--brand-600)' }}
+ aria-label={`Adicionar ${product.name} ao carrinho`}
+ >
+ <ShoppingCart className="w-[18px] h-[18px]" />
+ </button>
+ ) : (
+ <span className="shrink-0 text-[11px] font-semibold text-content-muted">Esgotado</span>
+ )}
+ </div>
+ </div>
+ ) : (
+ <div className="p-3 flex flex-col flex-1 border-t border-border-default/60">
+ {product.category && (
+ <p className="text-[11px] font-medium text-content-muted truncate mb-1">{product.category}</p>
+ )}
+
+ <Link to={`/loja/produto/${product.slug}`} className="block mb-1.5" style={{ color: 'inherit' }}>
+ <h3 className="text-sm min-h-[2.5em] font-semibold text-content-primary leading-tight line-clamp-2 hover:opacity-80 transition-opacity">
+ {product.name}
+ </h3>
+ </Link>
+
+ {/* Estrelas só quando há avaliações — 5 estrelas vazias parecem "nota zero" */}
+ <div className="flex items-center gap-x-2 gap-y-0.5 flex-wrap mb-1 min-h-[16px]">
+ {ratingStats.total > 0 && (
+ <button
+ type="button"
+ onClick={() => setShowReviewModal(true)}
+ className="flex items-center gap-1 !min-h-0 p-0 border-0 bg-transparent"
+ aria-label={`Avaliação ${ratingStats.average.toFixed(1)} de 5, ${ratingStats.total} avaliações`}
+ >
+ <StarRating value={ratingStats.average} size="sm" />
+ <span className="text-[11px] text-content-muted">({ratingStats.total})</span>
+ </button>
+ )}
+ {(product.totalSold || 0) > 0 && (
+ <span className="flex items-center gap-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+ <TrendingUp className="w-3 h-3" />
+ {product.totalSold! >= 1000 ? `${(product.totalSold! / 1000).toFixed(1)}k` : product.totalSold} {product.totalSold === 1 ? 'vendido' : 'vendidos'}
+ </span>
+ )}
+ </div>
+
+
+ <div className="mt-auto pt-1 flex flex-col gap-2">
+ <div className="leading-tight">
+ <span className={`block text-xs text-content-muted line-through tabular-nums ${promoPrice ? '' : 'invisible'}`} aria-hidden={!promoPrice}>
+ {currentPrice.toFixed(2)} MT
+ </span>
+ <span
+ className={`block text-base font-bold tabular-nums ${promoPrice ? 'text-red-600 dark:text-red-400' : ''}`}
+ style={promoPrice ? undefined : { color: 'var(--brand-600)' }}
+ >
+ {(promoPrice ?? currentPrice).toFixed(2)} MT
+ </span>
+ </div>
+
+ {hasStock ? (
+ <button
+ onClick={handleAddToCart}
+ className="w-full flex items-center justify-center gap-2 h-10 rounded-xl text-white text-[13px] font-semibold transition-all duration-150 active:scale-[0.97] hover:opacity-90"
+ style={{ background: 'var(--brand-600)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)' }}
+ aria-label={`Adicionar ${product.name} ao carrinho`}
  >
  <ShoppingCart className="w-4 h-4 flex-shrink-0" />
- {isMobile ? 'Comprar' : 'Adicionar ao carrinho'}
+ Adicionar ao carrinho
  </button>
  ) : (
  <button
- onClick={handleNotify}
- className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-content-muted text-xs sm:text-sm font-bold uppercase tracking-wide border border-border-default bg-surface-base transition-all duration-150 hover:border-brand-300 cursor-not-allowed opacity-60"
+ disabled
+ className="w-full flex items-center justify-center h-10 rounded-xl text-content-muted text-[13px] font-semibold border border-border-default bg-surface-base cursor-not-allowed"
  >
- <Bell className="w-4 h-4 flex-shrink-0" />
  Esgotado
  </button>
  )}
  </div>
  </div>
+ )}
 
  {/* Modal de variante — Portal */}
  {showVariantModal && typeof document !== 'undefined' && createPortal(

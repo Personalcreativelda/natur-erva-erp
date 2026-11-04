@@ -170,7 +170,7 @@ function RequestsTab({ requests, onRefresh, showToast }: { requests: any[]; onRe
             {isOpen && (
               <div className="border-t border-border-default px-5 py-4 space-y-4">
                 {items.length > 0 && (
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto -mx-1 px-1"><table className="w-full text-sm">
                     <thead>
                       <tr className="text-xs text-content-muted uppercase">
                         <th className="text-left pb-2">Produto</th>
@@ -187,7 +187,7 @@ function RequestsTab({ requests, onRefresh, showToast }: { requests: any[]; onRe
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                 )}
                 {r.notes && <p className="text-sm text-content-muted italic">"{r.notes}"</p>}
                 {r.rejectionReason && (
@@ -363,7 +363,7 @@ function OrdersTab({ purchases, suppliers, onRefresh, showToast }: { purchases: 
                 {isOpen && (
                   <div className="border-t border-border-default px-5 py-4 space-y-4">
                     {items.length > 0 && (
-                      <table className="w-full text-sm">
+                      <div className="overflow-x-auto -mx-1 px-1"><table className="w-full text-sm">
                         <thead>
                           <tr className="text-xs text-content-muted uppercase">
                             <th className="text-left pb-2">Produto</th>
@@ -388,7 +388,7 @@ function OrdersTab({ purchases, suppliers, onRefresh, showToast }: { purchases: 
                             <td className="pt-2 font-bold text-content-primary text-right">{fmt(po.totalAmount)}</td>
                           </tr>
                         </tfoot>
-                      </table>
+                      </table></div>
                     )}
                     {po.notes && <p className="text-sm text-content-muted italic">"{po.notes}"</p>}
                     {po.approvedByName && <p className="text-xs text-content-muted">Aprovado por {po.approvedByName} em {fmtDate(po.approvedAt)}</p>}
@@ -537,7 +537,7 @@ function ReceiveTab({ purchases, onRefresh, showToast }: { purchases: any[]; onR
             </h3>
           </div>
 
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-1 px-1"><table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-content-muted uppercase border-b border-border-default">
                 <th className="text-left pb-2">Produto</th>
@@ -558,7 +558,7 @@ function ReceiveTab({ purchases, onRefresh, showToast }: { purchases: any[]; onR
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
 
           <textarea value={notes} onChange={e => setNotes(e.target.value)}
             placeholder="Observações (opcional)" rows={2}

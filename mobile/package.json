@@ -1,0 +1,22 @@
+{
+  "name": "natur-erva-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App Android da Natur Erva (Capacitor). Carrega o site de produção — cada deploy no Vercel actualiza a app automaticamente.",
+  "scripts": {
+    "sync": "cap sync android",
+    "open": "cap open android",
+    "icons": "capacitor-assets generate --android --iconBackgroundColor \"#ffffff\" --splashBackgroundColor \"#ffffff\"",
+    "apk": "npm run sync && cd android && gradlew.bat assembleRelease",
+    "apk:debug": "npm run sync && cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/splash-screen": "^8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0"
+  }
+}

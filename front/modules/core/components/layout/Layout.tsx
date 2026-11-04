@@ -1,9 +1,10 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { AdminBottomNavigation } from './AdminBottomNavigation';
 
 import { User, UserRole } from '../../../core/types/types';
-import { Menu, X, LogOut, ChevronDown, User as UserIcon, Globe, LayoutDashboard, ShoppingCart, TrendingUp, Truck, Users, Package, ShoppingBag, BarChart3, Activity, FileText, ArrowLeftRight, Wallet, Repeat, Share2, Megaphone, Image, Tag, Ruler, List, ClipboardCheck, AlertTriangle, Scale, Shield, Boxes, Store, MapPin, CreditCard, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, RefreshCw, FolderOpen, HeartPulse } from 'lucide-react';
+import { X, LogOut, ChevronDown, User as UserIcon, Globe, LayoutDashboard, ShoppingCart, TrendingUp, Truck, Users, Package, ShoppingBag, BarChart3, Activity, FileText, ArrowLeftRight, Wallet, Repeat, Share2, Megaphone, Image, Tag, Ruler, List, ClipboardCheck, AlertTriangle, Scale, Shield, Boxes, Store, MapPin, CreditCard, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, RefreshCw, FolderOpen, HeartPulse } from 'lucide-react';
 import { useLanguage } from '../../../core/contexts/LanguageContext';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
@@ -377,17 +378,21 @@ export const Layout: React.FC<LayoutProps> = ({
 
  {/* Mobile Header */}
  {activePage !== 'shop' && (
- <div className="md:hidden fixed w-full bg-surface-raised z-30 border-b border-border-default shadow-md overflow-visible">
- <div className="px-4 sm:px-5 py-3 sm:py-3.5 flex justify-between items-center min-h-[56px] sm:min-h-[64px] relative">
+ <div
+ className="md:hidden fixed top-0 inset-x-0 bg-surface-raised/95 backdrop-blur-xl z-30 border-b border-border-default overflow-visible"
+ style={{ paddingTop: 'env(safe-area-inset-top)', boxShadow: '0 4px 24px -12px rgba(48,49,61,0.18)' }}
+ >
+ <div className="px-4 h-14 flex justify-between items-center relative">
  {/* Logo */}
  <div className="flex items-center min-w-0 flex-1">
  <button
  onClick={() => {
- navigate('/');
+ navigate('/admin');
  }}
  className="flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation"
+ aria-label="Ir para o painel"
  >
- <Logo variant="full" width={150} height={46} className="h-[46px] w-auto max-w-[150px] object-contain" isDarkMode={isDarkMode} />
+ <Logo variant="full" width={128} height={36} className="h-9 w-auto max-w-[128px] object-contain" isDarkMode={isDarkMode} />
  </button>
  </div>
 
@@ -429,7 +434,7 @@ export const Layout: React.FC<LayoutProps> = ({
  className="fixed inset-0 z-[50]"
  onClick={() => setUserMenuOpen(false)}
  />
- <div className="fixed right-2 top-[72px] sm:absolute sm:right-0 sm:top-auto sm:mt-2 w-[calc(100vw-1rem)] sm:w-[90vw] sm:max-w-sm bg-surface-raised rounded-xl shadow-2xl border border-border-default z-[70] overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto">
+ <div className="fixed right-2 top-[64px] sm:absolute sm:right-0 sm:top-auto sm:mt-2 w-[calc(100vw-1rem)] sm:w-[90vw] sm:max-w-sm bg-surface-raised rounded-xl shadow-2xl border border-border-default z-[70] overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto">
  <div className="p-4 border-b border-border-default bg-gradient-to-r from-brand-50 to-transparent dark:from-brand-900/20">
  <div className="flex items-center space-x-3">
  <div className="border-2 border-brand-200 dark:border-brand-700 rounded-full shadow-sm">
@@ -499,21 +504,7 @@ export const Layout: React.FC<LayoutProps> = ({
  )}
  </div>
 
- {/* Menu Toggle Button */}
- <button
- onClick={() => {
- setMobileMenuOpen(!mobileMenuOpen);
- setUserMenuOpen(false);
- }}
- className="p-2.5 sm:p-3 rounded-xl active:bg-surface-raised hover:bg-surface-raised/50 transition-all touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
- aria-label="Menu de navegação"
- >
- {mobileMenuOpen ? (
- <X className="w-6 h-6 sm:w-7 sm:h-7 text-content-primary" />
- ) : (
- <Menu className="w-6 h-6 sm:w-7 sm:h-7 text-content-primary" />
- )}
- </button>
+ {/* O menu de navegação abre pela barra inferior (zona do polegar) */}
  </div>
  </div>
  </div>
@@ -527,21 +518,32 @@ export const Layout: React.FC<LayoutProps> = ({
  onClick={() => setMobileMenuOpen(false)}
  />
  <div
- className="md:hidden fixed left-0 top-0 h-full w-[85vw] max-w-sm bg-surface-raised z-50 shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto"
+ className="md:hidden fixed left-0 top-0 h-full w-[85vw] max-w-sm bg-surface-raised z-50 shadow-2xl overflow-y-auto overscroll-contain animate-drawer-in rounded-r-3xl"
+ style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
  onClick={e => e.stopPropagation()}
+ role="dialog"
+ aria-modal="true"
+ aria-label="Menu de navegação"
  >
  {/* Menu Header */}
- <div className="px-4 py-4 flex items-center justify-start border-b border-border-default bg-gradient-to-r from-brand-50 to-brand-100/50 dark:bg-none dark:bg-surface-overlay">
- <div className="flex-shrink-0 flex items-center overflow-hidden">
+ <div className="sticky top-0 z-10 px-4 h-16 flex items-center justify-between border-b border-border-default bg-surface-raised/95 backdrop-blur-xl">
  <button
  onClick={() => {
- navigate('/');
+ setMobileMenuOpen(false);
+ navigate('/admin');
  }}
  className="cursor-pointer hover:opacity-80 transition-opacity"
+ aria-label="Ir para o painel"
  >
- <Logo width={220} height={70} className="h-16 w-auto max-w-[calc(100%-2rem)] object-contain" isDarkMode={isDarkMode} />
+ <Logo width={140} height={40} className="h-10 w-auto max-w-[140px] object-contain" isDarkMode={isDarkMode} />
  </button>
- </div>
+ <button
+ onClick={() => setMobileMenuOpen(false)}
+ className="w-11 h-11 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-overlay active:scale-95 transition-all"
+ aria-label="Fechar menu"
+ >
+ <X className="w-5 h-5" />
+ </button>
  </div>
 
  {/* Navigation Menu com Submenus Accordion */}
@@ -698,9 +700,21 @@ export const Layout: React.FC<LayoutProps> = ({
  </>
  )}
 
+ {/* Mobile Bottom Navigation (zona do polegar) */}
+ {activePage !== 'shop' && (
+ <AdminBottomNavigation
+ currentUser={currentUser}
+ isMenuOpen={mobileMenuOpen}
+ onOpenMenu={() => {
+ setMobileMenuOpen(prev => !prev);
+ setUserMenuOpen(false);
+ }}
+ />
+ )}
+
  {/* Main Content */}
  <main
- className={`flex-1 p-3 sm:p-4 md:p-8 ${activePage === 'shop' ? 'pt-0' : 'pt-[88px] sm:pt-[88px] md:pt-4'} ${activePage === 'shop' ? 'pb-24' : 'pb-4'} md:pb-8 overflow-x-hidden text-content-primary transition-all duration-300`}
+ className={`flex-1 min-w-0 p-4 md:p-8 ${activePage === 'shop' ? 'pt-0 pb-24' : 'admin-main-mobile md:pt-4'} md:pb-8 overflow-x-hidden text-content-primary transition-all duration-300`}
  style={{ marginLeft: (!isMobile && activePage !== 'shop') ? `${sidebarWidth}px` : '0' }}
  >
  {children}

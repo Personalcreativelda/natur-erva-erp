@@ -79,7 +79,7 @@ export const ShopInstagram: React.FC = () => {
   const next = () => { stopAuto(); scrollToIndex(activeDot + 1); };
 
   return (
-    <section className="py-14 bg-surface-base">
+    <section className="py-10 sm:py-14 bg-surface-base">
       <div className="max-w-7xl mx-auto px-4">
 
         {/* Header */}

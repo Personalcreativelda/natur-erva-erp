@@ -155,6 +155,13 @@ const AdminLayout = lazy(() => import('./components/layouts/AdminLayout').then(m
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PageSkeleton, ConnectionErrorState } from './modules/core/components/ui/Skeleton';
 import { ShopProvider } from './contexts/ShopContext';
+import { CartProvider } from './modules/shop/context/CartContext';
+/** /loja era uma cópia da home — redirecciona mantendo ?categoria=... */
+const LojaRedirect = () => {
+  const { search } = useRouterLocation();
+  return <Navigate to={{ pathname: '/', search, hash: '#produtos-section' }} replace />;
+};
+const NotFoundPage = lazy(() => import('./modules/shop/pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 import { getAdminPath } from './modules/core/routes/adminRoutes';
 import { useAppAuth } from './modules/auth/hooks/useAppAuth';
 import { ForceStrongPasswordModal } from './modules/auth/components/ForceStrongPasswordModal';
@@ -387,10 +394,13 @@ const App = () => {
     );
   }
 
-  // Componente de rotas públicas
-  const PublicRoutes = () => {
+  // Rotas públicas — função de render (NÃO um componente declarado dentro do App):
+  // um componente criado a cada render do App tinha identidade nova e remontava
+  // toda a loja (estado, scroll, contexto) sempre que o App re-renderizava.
+  const renderPublicRoutes = () => {
     return (
       <ShopProvider>
+        <CartProvider>
         <Routes>
           <Route element={
             <PublicLayout
@@ -403,16 +413,9 @@ const App = () => {
               }}
             />
           }>
-            <Route path="loja" element={
-              <LocationProvider>
-                <Shop currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} requireAuth />
-              </LocationProvider>
-            } />
-            <Route path="loja/produto/:slug" element={
-              <LocationProvider>
-                <ProductLandingPage />
-              </LocationProvider>
-            } />
+            {/* /loja era uma cópia da home que exigia login para ver produtos — agora redirecciona */}
+            <Route path="loja" element={<LojaRedirect />} />
+            <Route path="loja/produto/:slug" element={<ProductLandingPage />} />
             {/* Painel do cliente */}
             <Route path="minha-conta" element={currentUser ? <CustomerDashboard currentUser={currentUser} /> : <Navigate to="/" replace />} />
             <Route path="minha-conta/encomendas" element={currentUser ? <CustomerOrders /> : <Navigate to="/" replace />} />
@@ -432,12 +435,12 @@ const App = () => {
             <Route path="scanner-remoto" element={<Suspense fallback={<PageLoadingFallback />}><RemoteScannerPage /></Suspense>} />
             {/* Home: mostra loja */}
             <Route index element={
-              <LocationProvider>
-                <Shop currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} requireAuth={false} />
-              </LocationProvider>
+              <Shop currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} />
             } />
+            <Route path="*" element={<Suspense fallback={<PageLoadingFallback />}><NotFoundPage /></Suspense>} />
           </Route>
         </Routes>
+        </CartProvider>
       </ShopProvider>
     );
   };
@@ -1026,7 +1029,7 @@ const App = () => {
               onBack={() => navigate('/')}
               backLabel="Ir para início"
             >
-              <PublicRoutes />
+              {renderPublicRoutes()}
             </ErrorBoundary>
           } />
         </Routes>

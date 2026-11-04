@@ -9,6 +9,132 @@ const router = express.Router();
 // Garantir que phone tem espaço suficiente para placeholder e números internacionais
 pool.query(`ALTER TABLE customers ALTER COLUMN phone TYPE VARCHAR(50)`).catch(() => {});
 
+const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+/** Staff (POS, pedidos manuais) pode definir preços; clientes da loja não. */
+const isStaffRequest = (user) => {
+  if (!user) return false;
+  if (user.isSuperAdmin) return true;
+  const roles = Array.isArray(user.roles) && user.roles.length ? user.roles : [user.role];
+  return roles.some(r => r && String(r).toUpperCase() !== 'CLIENTE');
+};
+
+class PricingError extends Error {
+  constructor(message, status = 400) { super(message); this.status = status; }
+}
+
+/**
+ * Recalcula no servidor preços, entrega e desconto de um pedido feito por um cliente.
+ * Nunca confia nos valores enviados pelo browser (antes era possível criar um pedido de 1 MT).
+ * Regra de promoção = a mesma do front (front/modules/shop/utils/pricing.ts):
+ *   promoção activa dentro das datas e menor que o preço base da variante/produto.
+ */
+async function repriceCustomerOrder(client, order) {
+  const items = Array.isArray(order.items) ? order.items : [];
+  if (!items.length) throw new PricingError('O pedido não tem artigos.');
+
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (items.some(i => !UUID_RE.test(String(i.productId || '')) || (i.variantId && !UUID_RE.test(String(i.variantId))))) {
+    throw new PricingError('Artigo inválido no pedido.');
+  }
+  if (order.isDelivery && order.deliveryZoneId && !UUID_RE.test(String(order.deliveryZoneId))) {
+    throw new PricingError('Zona de entrega inválida.');
+  }
+  const productIds = [...new Set(items.map(i => i.productId))];
+
+  const { rows: products } = await client.query(
+    `SELECT id, name, price, show_in_shop,
+            CASE WHEN promotional_price > 0
+                  AND (promotional_price_start IS NULL OR promotional_price_start <= CURRENT_DATE)
+                  AND (promotional_price_end   IS NULL OR promotional_price_end   >= CURRENT_DATE)
+                 THEN promotional_price END AS active_promo
+       FROM products WHERE id = ANY($1::uuid[])`,
+    [productIds]
+  );
+  const { rows: variants } = await client.query(
+    'SELECT id, product_id, name, price FROM product_variants WHERE product_id = ANY($1::uuid[])',
+    [productIds]
+  );
+  const productMap = new Map(products.map(p => [p.id, p]));
+
+  const repriced = items.map(item => {
+    const product = productMap.get(item.productId);
+    if (!product) throw new PricingError(`Produto "${item.productName || ''}" já não está disponível.`);
+    if (product.show_in_shop === false) throw new PricingError(`Produto "${product.name}" não está à venda na loja.`);
+
+    const qty = Math.floor(Number(item.quantity));
+    if (!Number.isFinite(qty) || qty < 1 || qty > 999) throw new PricingError(`Quantidade inválida para "${product.name}".`);
+
+    let base = Number(product.price) || 0;
+    if (item.variantId) {
+      const variant = variants.find(v => v.id === item.variantId && v.product_id === product.id);
+      if (!variant) throw new PricingError(`A opção escolhida de "${product.name}" já não existe.`);
+      base = Number(variant.price ?? product.price) || 0;
+    }
+    const promo = product.active_promo != null ? Number(product.active_promo) : null;
+    const unitPrice = round2(promo != null && promo < base ? promo : base);
+
+    return { ...item, quantity: qty, price: unitPrice, priceAtTime: unitPrice };
+  });
+
+  const subtotal = round2(repriced.reduce((s, i) => s + i.price * i.quantity, 0));
+
+  // Taxa de entrega vem da zona, não do browser
+  let deliveryFee = 0;
+  let deliveryZoneName = order.deliveryZoneName || null;
+  if (order.isDelivery) {
+    if (!order.deliveryZoneId) throw new PricingError('Selecione a zona de entrega.');
+    const { rows: zones } = await client.query(
+      'SELECT name, price FROM delivery_zones WHERE id = $1 AND is_active IS NOT FALSE',
+      [order.deliveryZoneId]
+    );
+    if (!zones.length) throw new PricingError('A zona de entrega selecionada não está disponível.');
+    deliveryFee = round2(zones[0].price);
+    deliveryZoneName = zones[0].name;
+  }
+
+  // Desconto do cupão recalculado (mesma lógica de POST /coupons/validate)
+  let discountAmount = 0;
+  if (order.couponCode) {
+    const { rows: couponRows } = await client.query(
+      'SELECT * FROM coupons WHERE UPPER(code) = UPPER($1) AND is_active = TRUE LIMIT 1',
+      [order.couponCode]
+    );
+    const c = couponRows[0];
+    const now = new Date();
+    const valid = c
+      && (!c.valid_from || new Date(c.valid_from) <= now)
+      && (!c.valid_until || new Date(c.valid_until) >= now)
+      && (c.max_uses === null || c.current_uses < c.max_uses)
+      && subtotal >= (Number(c.min_order_amount) || 0);
+    if (valid) {
+      if (c.type === 'percentage') {
+        discountAmount = (subtotal * Number(c.value)) / 100;
+        if (c.max_discount_amount) discountAmount = Math.min(discountAmount, Number(c.max_discount_amount));
+      } else if (c.type === 'free_shipping') {
+        discountAmount = deliveryFee;
+      }
+    }
+    discountAmount = round2(Math.min(discountAmount, subtotal + deliveryFee));
+  }
+
+  return {
+    ...order,
+    items: repriced,
+    deliveryFee,
+    deliveryZoneName,
+    discountAmount,
+    couponCode: discountAmount > 0 ? order.couponCode : null,
+    totalAmount: round2(Math.max(0, subtotal + deliveryFee - discountAmount)),
+    // Campos que um cliente não pode definir
+    status: 'pending',
+    source: order.source === 'pos' ? 'Direct' : (order.source || 'Direct'), // 'pos' marcaria o pedido como pago
+    paymentStatus: undefined,
+    amountPaid: 0,
+    estimatedDeliveryDate: undefined,
+  };
+}
+
 const mapOrder = (row) => ({
   id: row.id,
   externalId: row.external_id,
@@ -226,7 +352,21 @@ router.post('/', optionalAuth, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const order = req.body;
+    const isStaff = isStaffRequest(req.user);
+    let order = req.body;
+    if (!isStaff) {
+      try {
+        order = await repriceCustomerOrder(client, req.body);
+      } catch (err) {
+        if (err instanceof PricingError) {
+          await client.query('ROLLBACK');
+          return res.status(err.status).json({ error: err.message });
+        }
+        throw err;
+      }
+      // Um cliente só pode criar pedidos em seu próprio nome (afiliados/emails usam createdBy)
+      order.createdBy = req.user?.id || null;
+    }
 
     const rawPhone = order.customerPhone || '';
     const cleanPhone = rawPhone.replace(/\D/g, '');
@@ -401,16 +541,18 @@ router.post('/', optionalAuth, async (req, res) => {
       }
     }
 
-    // Auto-definir data estimada de entrega se não fornecida
+    await client.query('COMMIT');
+
+    // Auto-definir data estimada de entrega se não fornecida.
+    // Feito DEPOIS do COMMIT: antes, corria com `pool` (outra ligação) enquanto a transacção
+    // estava aberta, a linha ainda não era visível e o UPDATE nunca tinha efeito.
     if (!order.estimatedDeliveryDate) {
       const deliveryDays = order.isDelivery ? 3 : 1; // 3 dias para entrega, 1 dia para levantamento
       await pool.query(
-        `UPDATE orders SET estimated_delivery_date = CURRENT_DATE + INTERVAL '${deliveryDays} days' WHERE id = $1`,
-        [orderRows[0].id]
+        `UPDATE orders SET estimated_delivery_date = CURRENT_DATE + ($1::int * INTERVAL '1 day') WHERE id = $2`,
+        [deliveryDays, orderRows[0].id]
       ).catch(() => {});
     }
-
-    await client.query('COMMIT');
 
     // Gerar comissão de afiliado (best-effort — não bloqueia o pedido)
     try {
@@ -645,3 +787,4 @@ router.delete('/', authMiddleware, async (req, res) => {
 });
 
 export default router;
+export { repriceCustomerOrder, isStaffRequest, PricingError };

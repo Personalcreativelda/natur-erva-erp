@@ -160,7 +160,7 @@ function ManualEntryModal({ accounts, onClose, onCreated, showToast }: { account
               <p className="text-xs font-semibold text-content-muted uppercase tracking-wide">Linhas do Lançamento</p>
               <button onClick={addLine} className="text-xs text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1"><Plus className="w-3.5 h-3.5" />Linha</button>
             </div>
-            <div className="border border-border-default rounded-xl overflow-hidden">
+            <div className="border border-border-default rounded-xl overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="bg-surface-base border-b border-border-default">
                   <th className="px-3 py-2 text-left text-xs font-semibold text-content-muted">Conta</th>
@@ -520,7 +520,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
                     </button>
                     {expanded.has(e.id) && e.lines.length > 0 && (
                       <div className="bg-surface-base border-t border-border-default/40 px-4 py-3">
-                        <table className="w-full text-xs">
+                        <div className="overflow-x-auto -mx-1 px-1"><table className="w-full text-xs">
                           <thead><tr><th className="text-left text-content-muted pb-1">Conta</th><th className="text-left text-content-muted pb-1">Histórico</th><th className="text-right text-content-muted pb-1">Débito</th><th className="text-right text-content-muted pb-1">Crédito</th></tr></thead>
                           <tbody className="divide-y divide-border-default/30">
                             {e.lines.map(l => (
@@ -532,7 +532,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
+                        </table></div>
                       </div>
                     )}
                   </div>

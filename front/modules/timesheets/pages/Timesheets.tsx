@@ -75,7 +75,7 @@ export function Timesheets({ showToast }: Props) {
         ))}
       </div>
 
-      <div className="bg-surface-raised rounded-2xl border border-border-default overflow-hidden">
+      <div className="bg-surface-raised rounded-2xl border border-border-default overflow-x-auto">
         {loading ? (
           <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-content-muted" /></div>
         ) : (
