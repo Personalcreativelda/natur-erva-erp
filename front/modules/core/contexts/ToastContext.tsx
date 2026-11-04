@@ -12,7 +12,10 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
  const showToast = useCallback((message: string, type: ToastType = 'info', duration?: number) => {
  const id = `toast-${Date.now()}-${Math.random()}`;
- setToasts(prev => [...prev, { id, message, type, duration }]);
+ // Mesma mensagem já visível → não empilhar duplicados
+ setToasts(prev => prev.some(t => t.message === message && t.type === type)
+ ? prev
+ : [...prev, { id, message, type, duration }]);
  }, []);
 
  const removeToast = useCallback((id: string) => {

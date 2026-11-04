@@ -1,7 +1,7 @@
 import { User, UserRole } from '../../core/types/types';
 
 /**
- * Verifica se o usué¡rio é© um cliente
+ * Verifica se o usuário é um cliente
  */
 export const isClientUser = (user: User | null): boolean => {
   if (!user) return false;
@@ -10,7 +10,7 @@ export const isClientUser = (user: User | null): boolean => {
 };
 
 /**
- * Verifica se o usué¡rio é© staff/admin (néo cliente)
+ * Verifica se o usuário é staff/admin (não cliente)
  */
 export const isStaffUser = (user: User | null): boolean => {
   if (!user) return false;
@@ -21,7 +21,7 @@ export const isStaffUser = (user: User | null): boolean => {
 };
 
 /**
- * Verifica se o usué¡rio pode gerenciar outros usué¡rios
+ * Verifica se o usuário pode gerenciar outros usuários
  */
 export const canManageUsers = (user: User | null): boolean => {
   if (!user) return false;
@@ -32,15 +32,15 @@ export const canManageUsers = (user: User | null): boolean => {
 };
 
 /**
- * Verifica se o usué¡rio pode ver um perfil especé­fico
+ * Verifica se o usuário pode ver um perfil específico
  */
 export const canViewProfile = (currentUser: User | null, targetUserId: string): boolean => {
   if (!currentUser) return false;
 
-  // Usué¡rio sempre pode ver seu pré³prio perfil
+  // Usuário sempre pode ver seu próprio perfil
   if (currentUser.id === targetUserId) return true;
 
-  // Clientes sé³ podem ver seu pré³prio perfil
+  // Clientes só podem ver seu próprio perfil
   if (isClientUser(currentUser)) return false;
 
   // Staff pode ver todos os perfis
@@ -50,7 +50,7 @@ export const canViewProfile = (currentUser: User | null, targetUserId: string): 
 };
 
 /**
- * Verifica se o usué¡rio tem uma role especé­fica
+ * Verifica se o usuário tem uma role específica
  */
 export const hasRole = (user: User | null, role: UserRole | string): boolean => {
   if (!user) return false;
@@ -59,7 +59,7 @@ export const hasRole = (user: User | null, role: UserRole | string): boolean => 
 };
 
 /**
- * Verifica se o usué¡rio tem qualquer uma das roles especificadas
+ * Verifica se o usuário tem qualquer uma das roles especificadas
  */
 export const hasAnyRole = (user: User | null, roles: (UserRole | string)[]): boolean => {
   if (!user) return false;
@@ -68,7 +68,7 @@ export const hasAnyRole = (user: User | null, roles: (UserRole | string)[]): boo
 };
 
 /**
- * Hook React para usar funçéµes de permissão
+ * Hook React para usar funções de permissão
  */
 export const useUserPermissions = (user: User | null) => {
   return {

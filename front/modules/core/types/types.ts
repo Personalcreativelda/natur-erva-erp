@@ -566,12 +566,12 @@ export interface Toast {
 export enum SeriesCategory {
     AVENTURA = 'Aventura',
     DRAMA = 'Drama',
-    COMEDIA = 'Comé©dia',
+    COMEDIA = 'Comédia',
     FANTASIA = 'Fantasia',
-    ACAO = 'Açéo',
+    ACAO = 'Ação',
     ROMANCE = 'Romance',
     TERROR = 'Terror',
-    FICCAO = 'Ficçéo',
+    FICCAO = 'Ficção',
     OUTRO = 'Outro',
 }
 

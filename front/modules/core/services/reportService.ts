@@ -4,7 +4,7 @@ import { getSystemSettings, type SystemSettings } from './systemSettingsService'
 import { formatDateTimeForReport } from '../utils/dateUtils';
 
 /**
- * Serviço unificado para geraçéo de relaté³rios PDF e Excel
+ * Serviço unificado para geração de relatórios PDF e Excel
  * com branding da Quinta Nicy
  */
 
@@ -23,11 +23,11 @@ const hexToRgb = (hex: string): [number, number, number] => {
         parseInt(result[2], 16),
         parseInt(result[3], 16),
       ]
-    : [16, 185, 129]; // Fallback para cor padréo da marca
+    : [16, 185, 129]; // Fallback para cor padrão da marca
 };
 
 /**
- * Obté©m cores da marca
+ * Obtém cores da marca
  */
 export const getBrandColors = (): { primary: string; secondary: string; primaryRgb: [number, number, number]; secondaryRgb: [number, number, number] } => {
   const primary = '#10b981'; // emerald-500
@@ -52,7 +52,7 @@ export const loadCompanyLogo = async (): Promise<string | null> => {
     const settings = await getSystemSettings();
     cachedSettings = settings;
     
-    // Preferir logo_light para relaté³rios (geralmente melhor contraste)
+    // Preferir logo_light para relatórios (geralmente melhor contraste)
     const logoUrl = settings.logo_light || settings.logo_dark || settings.logo_icon;
     
     if (!logoUrl) {
@@ -62,7 +62,7 @@ export const loadCompanyLogo = async (): Promise<string | null> => {
     // Se for SVG, tentar converter para imagem
     if (logoUrl.endsWith('.svg')) {
       // Para SVG, vamos tentar carregar como imagem
-      // jsPDF néo suporta SVG diretamente, entéo precisamos converter
+      // jsPDF não suporta SVG diretamente, então precisamos converter
       try {
         const response = await fetch(logoUrl);
         const svgText = await response.text();
@@ -123,7 +123,7 @@ export const loadCompanyLogo = async (): Promise<string | null> => {
 };
 
 /**
- * Obté©m Informações da empresa
+ * Obtém Informações da empresa
  */
 export const getCompanyInfo = async (): Promise<{ name: string; website: string; email?: string; phone?: string; address?: string }> => {
   if (cachedSettings) {
@@ -195,7 +195,7 @@ export const addPDFHeader = async (
   pdf.line(margin, yPos, pdfWidth - margin, yPos);
   yPos += 8;
 
-  // Té­tulo do relaté³rio
+  // Título do relatório
   pdf.setFontSize(18);
   pdf.setTextColor(0, 0, 0); // Preto
   pdf.setFont('helvetica', 'bold');
@@ -207,7 +207,7 @@ export const addPDFHeader = async (
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(60, 60, 60); // Cinza escuro
-    pdf.text(`Peré­odo: ${options.period}`, pdfWidth / 2, yPos, { align: 'center' });
+    pdf.text(`Período: ${options.period}`, pdfWidth / 2, yPos, { align: 'center' });
     yPos += 5;
   }
 
@@ -227,7 +227,7 @@ export const addPDFHeader = async (
   pdf.text(companyInfo.website, pdfWidth - margin, yPos, { align: 'right' });
   yPos += 5;
 
-  // Linha separadora antes do conteéºdo
+  // Linha separadora antes do conteúdo
   pdf.setDrawColor(...colors.primaryRgb);
   pdf.setLineWidth(0.3);
   pdf.line(margin, yPos, pdfWidth - margin, yPos);
@@ -237,7 +237,7 @@ export const addPDFHeader = async (
 };
 
 /**
- * Adiciona rodapé© ao PDF com numeraçéo de pé¡ginas
+ * Adiciona rodapé ao PDF com numeração de páginas
  */
 export const addPDFFooter = (
   pdf: jsPDF,
@@ -252,17 +252,17 @@ export const addPDFFooter = (
   const margin = 10;
   const colors = getBrandColors();
 
-  // Linha decorativa acima do rodapé©
+  // Linha decorativa acima do rodapé
   pdf.setDrawColor(...colors.primaryRgb);
   pdf.setLineWidth(0.3);
   pdf.line(margin, pdfHeight - 15, pdfWidth - margin, pdfHeight - 15);
 
-  // Numeraçéo de pé¡ginas e data
+  // Numeração de páginas e data
   pdf.setFontSize(8);
   pdf.setTextColor(100, 100, 100);
   pdf.setFont('helvetica', 'normal');
   
-  const footerText = `Pé¡gina ${pageNumber} de ${totalPages} - Gerado em ${formatDateTimeForReport(new Date())}`;
+  const footerText = `Página ${pageNumber} de ${totalPages} - Gerado em ${formatDateTimeForReport(new Date())}`;
   pdf.text(footerText, pdfWidth / 2, pdfHeight - 8, { align: 'center' });
 
   // Informações da empresa (opcional)
@@ -449,7 +449,7 @@ export const addPDFTableHeader = (
 ): number => {
   const colors = getBrandColors();
   
-  // Desenhar reté¢ngulo de fundo para cabeçalho
+  // Desenhar retângulo de fundo para cabeçalho
   pdf.setFillColor(...colors.primaryRgb);
   pdf.rect(margin, yPos - 4, pdfWidth - (margin * 2), 6, 'F');
   
@@ -557,7 +557,7 @@ export const addPDFTableRow = (
 };
 
 /**
- * Adiciona seçéo de resumo padronizada
+ * Adiciona seção de resumo padronizada
  */
 export const addPDFSummarySection = (
   pdf: jsPDF,
@@ -568,7 +568,7 @@ export const addPDFSummarySection = (
 ): number => {
   const colors = getBrandColors();
   
-  // Té­tulo da seçéo com cor da marca
+  // Título da seção com cor da marca
   pdf.setFontSize(11);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...colors.primaryRgb);
@@ -590,7 +590,7 @@ export const addPDFSummarySection = (
 };
 
 /**
- * Limpa cache (éºtil para testes ou quando configurações mudam)
+ * Limpa cache (útil para testes ou quando configurações mudam)
  */
 export const clearReportCache = (): void => {
   cachedLogo = null;

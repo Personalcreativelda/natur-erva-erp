@@ -39,7 +39,7 @@ const recordFailedAttempt = (): { locked: boolean; remainingTime?: number } => {
     const attempts = getLoginAttempts();
     const now = Date.now();
 
-    // Se esté¡ em lockout, retornar tempo restante
+    // Se está em lockout, retornar tempo restante
     if (attempts.lockoutUntil && now < attempts.lockoutUntil) {
         const remainingTime = Math.ceil((attempts.lockoutUntil - now) / 1000 / 60);
         return { locked: true, remainingTime };
@@ -71,10 +71,10 @@ const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return false;
 
-    // Verificar comprimento mé¡ximo
+    // Verificar comprimento máximo
     if (email.length > 254) return false;
 
-    // Verificar domé­nio vé¡lido
+    // Verificar domínio válido
     const parts = email.split('@');
     if (parts.length !== 2) return false;
     if (parts[1].length > 253) return false;
@@ -111,7 +111,7 @@ export const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
             setRememberMe(true);
         }
 
-        // Verificar se esté¡ em lockout
+        // Verificar se está em lockout
         const attempts = getLoginAttempts();
         if (attempts.lockoutUntil && Date.now() < attempts.lockoutUntil) {
             const remainingTime = Math.ceil((attempts.lockoutUntil - Date.now()) / 1000 / 60);
@@ -145,7 +145,7 @@ export const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
         }
 
         if (!validateEmail(sanitizedEmail)) {
-            setError('Email invé¡lido. Por favor, verifique e tente novamente.');
+            setError('Email inválido. Por favor, verifique e tente novamente.');
             setLoading(false);
             return;
         }
@@ -177,8 +177,8 @@ export const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
                     setLockoutMessage(`Muitas tentativas falhadas. Tente novamente em ${lockout.remainingTime} minutos.`);
                 }
 
-                // Mensagem gené©rica para néo expor Informações sensé­veis
-                setError('Credenciais invé¡lidas. Verifique seu email e senha e tente novamente.');
+                // Mensagem genérica para não expor Informações sensíveis
+                setError('Credenciais inválidas. Verifique seu email e senha e tente novamente.');
             }
         } catch (e) {
             // Registrar tentativa falhada
@@ -187,7 +187,7 @@ export const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
                 setLockoutMessage(`Muitas tentativas falhadas. Tente novamente em ${lockout.remainingTime} minutos.`);
             }
 
-            // Mensagem gené©rica
+            // Mensagem genérica
             setError('Erro ao fazer login. Tente novamente mais tarde.');
         } finally {
             setLoading(false);
@@ -254,7 +254,7 @@ export const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
                                 type={showPassword ? 'text' : 'password'}
                                 required
                                 className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢"
+                                placeholder="••••••"
                                 value={password}
                                 onChange={(e) => {
                                     const value = e.target.value;
@@ -364,7 +364,7 @@ export const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
 
                 <div className="mt-6 text-center pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Néo tem uma conta?{' '}
+                        Não tem uma conta?{' '}
                         <button
                             type="button"
                             onClick={() => setShowSignUpModal(true)}

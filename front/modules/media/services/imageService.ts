@@ -6,11 +6,11 @@ const BUCKET_NAME = 'product-images';
 let configWarningShown = false;
 
 /**
- * Cria o bucket de imagens se néo existir
+ * Cria o bucket de imagens se não existir
  */
 export const ensureBucketExists = async (): Promise<{ success: boolean; error?: string }> => {
   if (!isSupabaseConfigured() || !supabase) {
-    return { success: false, error: 'Supabase néo configurado' };
+    return { success: false, error: 'Supabase não configurado' };
   }
 
   try {
@@ -25,7 +25,7 @@ export const ensureBucketExists = async (): Promise<{ success: boolean; error?: 
     const bucketExists = buckets?.some(b => b.name === BUCKET_NAME);
     
     if (!bucketExists) {
-      // Criar bucket (requer permisséµes de admin)
+      // Criar bucket (requer permissões de admin)
       const { error: createError } = await supabase.storage.createBucket(BUCKET_NAME, {
         public: true,
         fileSizeLimit: 5242880, // 5MB
@@ -42,7 +42,7 @@ export const ensureBucketExists = async (): Promise<{ success: boolean; error?: 
         if (!existsAfterCreate) {
           return { 
             success: false, 
-            error: `Bucket '${BUCKET_NAME}' néo existe e néo pé´de ser criado automaticamente. Por favor, crie o bucket manualmente no Supabase Dashboard > Storage. Nome do bucket: ${BUCKET_NAME}` 
+            error: `Bucket '${BUCKET_NAME}' não existe e não pé´de ser criado automaticamente. Por favor, crie o bucket manualmente no Supabase Dashboard > Storage. Nome do bucket: ${BUCKET_NAME}` 
           };
         }
       } else {
@@ -52,7 +52,7 @@ export const ensureBucketExists = async (): Promise<{ success: boolean; error?: 
         if (!existsAfterCreate) {
           return { 
             success: false, 
-            error: `Bucket '${BUCKET_NAME}' néo foi criado. Por favor, crie o bucket manualmente no Supabase Dashboard > Storage.` 
+            error: `Bucket '${BUCKET_NAME}' não foi criado. Por favor, crie o bucket manualmente no Supabase Dashboard > Storage.` 
           };
         }
       }
@@ -69,39 +69,39 @@ export const ensureBucketExists = async (): Promise<{ success: boolean; error?: 
  * Faz upload de uma imagem para o Supabase Storage
  * @param file Arquivo de imagem
  * @param productId ID do produto (opcional, para organizar por produto)
- * @returns URL péºblica da imagem ou null em caso de erro
+ * @returns URL pública da imagem ou null em caso de erro
  */
 export const uploadProductImage = async (
   file: File,
   productId?: string
 ): Promise<string | null> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[uploadProductImage] Supabase néo configurado');
+    console.error('[uploadProductImage] Supabase não configurado');
     return null;
   }
 
   try {
-    // Tentar garantir que o bucket existe (mas néo bloquear se falhar a verificaçéo)
+    // Tentar garantir que o bucket existe (mas não bloquear se falhar a verificação)
     const bucketCheck = await ensureBucketExists();
     if (!bucketCheck.success) {
-      // Se a verificaçéo falhar, ainda tentamos fazer o upload
-      // O bucket pode existir mas néo estar visé­vel na listagem por questéµes de permissão
-      console.warn('[uploadProductImage] Aviso na verificaçéo do bucket:', bucketCheck.error);
+      // Se a verificação falhar, ainda tentamos fazer o upload
+      // O bucket pode existir mas não estar visível na listagem por questões de permissão
+      console.warn('[uploadProductImage] Aviso na verificação do bucket:', bucketCheck.error);
     }
 
     // Validar tipo de arquivo
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
-      throw new Error('Tipo de arquivo néo suportado. Use JPEG, PNG, WEBP ou GIF.');
+      throw new Error('Tipo de arquivo não suportado. Use JPEG, PNG, WEBP ou GIF.');
     }
 
-    // Validar tamanho (mé¡ximo 5MB)
+    // Validar tamanho (máximo 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      throw new Error('Arquivo muito grande. Tamanho mé¡ximo: 5MB.');
+      throw new Error('Arquivo muito grande. Tamanho máximo: 5MB.');
     }
 
-    // Gerar nome éºnico para o arquivo
+    // Gerar nome único para o arquivo
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
     const fileExtension = file.name.split('.').pop();
@@ -120,11 +120,11 @@ export const uploadProductImage = async (
     if (error) {
       console.error('[uploadProductImage] Erro no upload:', error);
       
-      // Mensagens de erro mais especé­ficas
+      // Mensagens de erro mais específicas
       if (error.message && error.message.includes('Bucket not found')) {
-        throw new Error(`Bucket '${BUCKET_NAME}' néo encontrado. Por favor, verifique se o bucket foi criado e salvo no Supabase Dashboard > Storage.`);
+        throw new Error(`Bucket '${BUCKET_NAME}' não encontrado. Por favor, verifique se o bucket foi criado e salvo no Supabase Dashboard > Storage.`);
       } else if (error.message && error.message.includes('new row violates row-level security')) {
-        throw new Error('Erro de permissão. Verifique se as polé­ticas RLS estéo configuradas corretamente para o bucket.');
+        throw new Error('Erro de permissão. Verifique se as políticas RLS estão configuradas corretamente para o bucket.');
       } else {
         throw error;
       }
@@ -175,7 +175,7 @@ Bucket: ${BUCKET_NAME}
  * @param file Arquivo de imagem
  * @param productId ID do produto
  * @param variantId ID da variação
- * @returns URL péºblica da imagem ou null em caso de erro
+ * @returns URL pública da imagem ou null em caso de erro
  */
 export const uploadVariantImage = async (
   file: File,
@@ -183,7 +183,7 @@ export const uploadVariantImage = async (
   variantId: string
 ): Promise<string | null> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[uploadVariantImage] Supabase néo configurado');
+    console.error('[uploadVariantImage] Supabase não configurado');
     return null;
   }
 
@@ -191,22 +191,22 @@ export const uploadVariantImage = async (
     // Tentar garantir que o bucket existe
     const bucketCheck = await ensureBucketExists();
     if (!bucketCheck.success) {
-      console.warn('[uploadVariantImage] Aviso na verificaçéo do bucket:', bucketCheck.error);
+      console.warn('[uploadVariantImage] Aviso na verificação do bucket:', bucketCheck.error);
     }
 
     // Validar tipo de arquivo
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
-      throw new Error('Tipo de arquivo néo suportado. Use JPEG, PNG, WEBP ou GIF.');
+      throw new Error('Tipo de arquivo não suportado. Use JPEG, PNG, WEBP ou GIF.');
     }
 
-    // Validar tamanho (mé¡ximo 5MB)
+    // Validar tamanho (máximo 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      throw new Error('Arquivo muito grande. Tamanho mé¡ximo: 5MB.');
+      throw new Error('Arquivo muito grande. Tamanho máximo: 5MB.');
     }
 
-    // Gerar nome éºnico para o arquivo
+    // Gerar nome único para o arquivo
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
     const fileExtension = file.name.split('.').pop();
@@ -223,23 +223,23 @@ export const uploadVariantImage = async (
     if (error) {
       console.error('[uploadVariantImage] Erro no upload:', error);
       
-      // Mensagens de erro mais especé­ficas
+      // Mensagens de erro mais específicas
       if (error.message && error.message.includes('Bucket not found')) {
-        throw new Error(`Bucket '${BUCKET_NAME}' néo encontrado. Por favor, verifique se o bucket foi criado e salvo no Supabase Dashboard > Storage.`);
+        throw new Error(`Bucket '${BUCKET_NAME}' não encontrado. Por favor, verifique se o bucket foi criado e salvo no Supabase Dashboard > Storage.`);
       } else if (error.message && error.message.includes('new row violates row-level security')) {
-        throw new Error('Erro de permissão. Verifique se as polé­ticas RLS estéo configuradas corretamente para o bucket.');
+        throw new Error('Erro de permissão. Verifique se as políticas RLS estão configuradas corretamente para o bucket.');
       } else {
         throw error;
       }
     }
 
-    // Obter URL péºblica
+    // Obter URL pública
     const { data: urlData } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(fileName);
 
     if (!urlData?.publicUrl) {
-      throw new Error('Erro ao obter URL péºblica da imagem');
+      throw new Error('Erro ao obter URL pública da imagem');
     }
 
     return urlData.publicUrl;
@@ -252,11 +252,11 @@ export const uploadVariantImage = async (
 /**
  * Remove uma imagem do Supabase Storage
  * @param imageUrl URL da imagem a ser removida
- * @returns true se removido com sucesso, false caso contré¡rio
+ * @returns true se removido com sucesso, false caso contrário
  */
 export const deleteProductImage = async (imageUrl: string): Promise<boolean> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[deleteProductImage] Supabase néo configurado');
+    console.error('[deleteProductImage] Supabase não configurado');
     return false;
   }
 
@@ -267,7 +267,7 @@ export const deleteProductImage = async (imageUrl: string): Promise<boolean> => 
     const fileNameIndex = urlParts.findIndex(part => part === 'product-images');
     
     if (fileNameIndex === -1 || fileNameIndex === urlParts.length - 1) {
-      console.error('[deleteProductImage] URL invé¡lida:', imageUrl);
+      console.error('[deleteProductImage] URL inválida:', imageUrl);
       return false;
     }
 
@@ -291,7 +291,7 @@ export const deleteProductImage = async (imageUrl: string): Promise<boolean> => 
 };
 
 /**
- * Valida se um arquivo é© uma imagem vé¡lida
+ * Valida se um arquivo é uma imagem válida
  */
 export const validateImageFile = (file: File): { valid: boolean; error?: string } => {
   const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'];
@@ -300,21 +300,21 @@ export const validateImageFile = (file: File): { valid: boolean; error?: string 
   // Verificar por tipo MIME
   const isValidType = validTypes.includes(file.type);
   
-  // Verificar por extensão (para casos onde o tipo MIME néo é© detectado corretamente)
+  // Verificar por extensão (para casos onde o tipo MIME não é detectado corretamente)
   const fileExtension = file.name.split('.').pop()?.toLowerCase();
   const isValidExtension = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'ico'].includes(fileExtension || '');
 
   if (!isValidType && !isValidExtension) {
     return {
       valid: false,
-      error: 'Tipo de arquivo néo suportado. Use JPEG, PNG, WEBP, GIF, SVG ou ICO.'
+      error: 'Tipo de arquivo não suportado. Use JPEG, PNG, WEBP, GIF, SVG ou ICO.'
     };
   }
 
   if (file.size > maxSize) {
     return {
       valid: false,
-      error: 'Arquivo muito grande. Tamanho mé¡ximo: 5MB.'
+      error: 'Arquivo muito grande. Tamanho máximo: 5MB.'
     };
   }
 
@@ -325,14 +325,14 @@ export const validateImageFile = (file: File): { valid: boolean; error?: string 
  * Faz upload de logo ou favicon para o Supabase Storage
  * @param file Arquivo de imagem
  * @param type Tipo de arquivo: 'logo_light', 'logo_dark', 'logo_icon', ou 'favicon'
- * @returns URL péºblica da imagem ou null em caso de erro
+ * @returns URL pública da imagem ou null em caso de erro
  */
 export const uploadSystemImage = async (
   file: File,
   type: 'logo_light' | 'logo_dark' | 'logo_icon' | 'favicon'
 ): Promise<string | null> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[uploadSystemImage] Supabase néo configurado');
+    console.error('[uploadSystemImage] Supabase não configurado');
     return null;
   }
 
@@ -340,16 +340,16 @@ export const uploadSystemImage = async (
     // Validar tipo de arquivo
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/x-icon'];
     if (!validTypes.includes(file.type)) {
-      throw new Error('Tipo de arquivo néo suportado. Use JPEG, PNG, WEBP, GIF, SVG ou ICO.');
+      throw new Error('Tipo de arquivo não suportado. Use JPEG, PNG, WEBP, GIF, SVG ou ICO.');
     }
 
-    // Validar tamanho (mé¡ximo 2MB para logos/favicons)
+    // Validar tamanho (máximo 2MB para logos/favicons)
     const maxSize = 2 * 1024 * 1024; // 2MB
     if (file.size > maxSize) {
-      throw new Error('Arquivo muito grande. Tamanho mé¡ximo: 2MB.');
+      throw new Error('Arquivo muito grande. Tamanho máximo: 2MB.');
     }
 
-    // Gerar nome éºnico para o arquivo
+    // Gerar nome único para o arquivo
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
     const fileExtension = file.name.split('.').pop() || 'png';
@@ -367,21 +367,21 @@ export const uploadSystemImage = async (
       console.error('[uploadSystemImage] Erro no upload:', error);
       
       if (error.message && error.message.includes('Bucket not found')) {
-        throw new Error(`Bucket '${BUCKET_NAME}' néo encontrado. Por favor, verifique se o bucket foi criado e salvo no Supabase Dashboard > Storage.`);
+        throw new Error(`Bucket '${BUCKET_NAME}' não encontrado. Por favor, verifique se o bucket foi criado e salvo no Supabase Dashboard > Storage.`);
       } else if (error.message && error.message.includes('new row violates row-level security')) {
-        throw new Error('Erro de permissão. Verifique se as polé­ticas RLS estéo configuradas corretamente para o bucket.');
+        throw new Error('Erro de permissão. Verifique se as políticas RLS estão configuradas corretamente para o bucket.');
       } else {
         throw error;
       }
     }
 
-    // Obter URL péºblica
+    // Obter URL pública
     const { data: urlData } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(fileName);
 
     if (!urlData?.publicUrl) {
-      throw new Error('Erro ao obter URL péºblica da imagem');
+      throw new Error('Erro ao obter URL pública da imagem');
     }
 
     return urlData.publicUrl;
@@ -394,11 +394,11 @@ export const uploadSystemImage = async (
 /**
  * Remove uma imagem do sistema do Supabase Storage
  * @param imageUrl URL da imagem a ser removida
- * @returns true se removido com sucesso, false caso contré¡rio
+ * @returns true se removido com sucesso, false caso contrário
  */
 export const deleteSystemImage = async (imageUrl: string): Promise<boolean> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[deleteSystemImage] Supabase néo configurado');
+    console.error('[deleteSystemImage] Supabase não configurado');
     return false;
   }
 
@@ -408,15 +408,15 @@ export const deleteSystemImage = async (imageUrl: string): Promise<boolean> => {
     const fileNameIndex = urlParts.findIndex(part => part === 'product-images');
     
     if (fileNameIndex === -1 || fileNameIndex === urlParts.length - 1) {
-      console.error('[deleteSystemImage] URL invé¡lida:', imageUrl);
+      console.error('[deleteSystemImage] URL inválida:', imageUrl);
       return false;
     }
 
     const fileName = urlParts.slice(fileNameIndex + 1).join('/');
 
-    // Verificar se é© uma imagem do sistema antes de remover
+    // Verificar se é uma imagem do sistema antes de remover
     if (!fileName.startsWith('system/')) {
-      console.warn('[deleteSystemImage] Tentativa de remover imagem que néo é© do sistema:', fileName);
+      console.warn('[deleteSystemImage] Tentativa de remover imagem que não é do sistema:', fileName);
       return false;
     }
 
@@ -440,13 +440,13 @@ export const deleteSystemImage = async (imageUrl: string): Promise<boolean> => {
 /**
  * Faz upload de um comprovativo de pagamento para o Supabase Storage
  * @param file Arquivo de imagem
- * @returns URL péºblica da imagem ou null em caso de erro
+ * @returns URL pública da imagem ou null em caso de erro
  */
 export const uploadPaymentProof = async (
   file: File
 ): Promise<string | null> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[uploadPaymentProof] Supabase néo configurado');
+    console.error('[uploadPaymentProof] Supabase não configurado');
     return null;
   }
 
@@ -454,22 +454,22 @@ export const uploadPaymentProof = async (
     // Validar tipo de arquivo
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
     if (!validTypes.includes(file.type)) {
-      throw new Error('Tipo de arquivo néo suportado. Use JPEG, PNG, WEBP, GIF ou PDF.');
+      throw new Error('Tipo de arquivo não suportado. Use JPEG, PNG, WEBP, GIF ou PDF.');
     }
 
-    // Validar tamanho (mé¡ximo 10MB para comprovativos)
+    // Validar tamanho (máximo 10MB para comprovativos)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      throw new Error('Arquivo muito grande. Tamanho mé¡ximo: 10MB.');
+      throw new Error('Arquivo muito grande. Tamanho máximo: 10MB.');
     }
 
-    // Gerar nome éºnico para o arquivo
+    // Gerar nome único para o arquivo
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
     const fileExtension = file.name.split('.').pop();
     const fileName = `payment-proofs/${timestamp}-${randomString}.${fileExtension}`;
 
-    // Fazer upload (usar o mesmo bucket de imagens ou criar um especé­fico)
+    // Fazer upload (usar o mesmo bucket de imagens ou criar um específico)
     const { data, error } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(fileName, file, {
@@ -482,13 +482,13 @@ export const uploadPaymentProof = async (
       throw error;
     }
 
-    // Obter URL péºblica
+    // Obter URL pública
     const { data: urlData } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(fileName);
 
     if (!urlData?.publicUrl) {
-      throw new Error('Erro ao obter URL péºblica do comprovativo');
+      throw new Error('Erro ao obter URL pública do comprovativo');
     }
 
     return urlData.publicUrl;
@@ -501,8 +501,8 @@ export const uploadPaymentProof = async (
 /**
  * Faz upload de uma foto de perfil (avatar) para o Supabase Storage
  * @param file Arquivo de imagem
- * @param userId ID do usué¡rio (para organizar por usué¡rio)
- * @returns URL péºblica da imagem ou null em caso de erro
+ * @param userId ID do usuário (para organizar por usuário)
+ * @returns URL pública da imagem ou null em caso de erro
  */
 /**
  * Upload de avatar via backend → MinIO (não usa Supabase)

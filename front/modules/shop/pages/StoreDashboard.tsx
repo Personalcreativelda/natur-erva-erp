@@ -266,7 +266,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({
                 {totalStockLoja.toLocaleString('pt-PT')}
               </div>
               <div className="text-xs text-content-muted mt-1">
-                Itens disponé­veis
+                Itens disponíveis
               </div>
             </div>
 
@@ -296,14 +296,14 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({
                 {completedOrdersInPeriod}
               </div>
               <div className="text-xs text-content-muted mt-1">
-                No peré­odo selecionado
+                No período selecionado
               </div>
             </div>
 
             <div className="bg-surface-raised rounded-lg p-6 shadow-sm border border-border-default">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm font-medium text-content-muted">
-                  Vendas do Peré­odo
+                  Vendas do Período
                 </div>
                 <DollarSign className="w-5 h-5 text-green-500" />
               </div>
@@ -370,7 +370,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({
                   ))
                 ) : (
                   <div className="text-sm text-content-muted text-center py-4">
-                    Nenhuma venda no peré­odo
+                    Nenhuma venda no período
                   </div>
                 )}
               </div>
@@ -378,7 +378,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({
 
             <div className="bg-surface-raised rounded-lg p-6 shadow-sm border border-border-default">
               <h3 className="text-lg font-semibold text-content-primary mb-4">
-                Movimentaçéµes Recentes de Stock
+                Movimentações Recentes de Stock
               </h3>
               <div className="space-y-2">
                 {stockMovementsInPeriod.slice(0, 5).map(movement => (
@@ -398,7 +398,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({
                 ))}
                 {stockMovementsInPeriod.length === 0 && (
                   <div className="text-sm text-content-muted text-center py-4">
-                    Nenhuma movimentaçéo no peré­odo
+                    Nenhuma movimentação no período
                   </div>
                 )}
               </div>

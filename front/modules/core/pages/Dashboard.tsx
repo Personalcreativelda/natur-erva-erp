@@ -123,7 +123,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  d.setDate(d.getDate() - (days - 1 - i));
  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
  const label = salesEvolutionPeriod === '7D'
- ? d.toLocaleDateString('pt-PT', { weekday: 'short' }).replace('.', '')
+ ? d.toLocaleDateString('pt-PT', { weekday: 'short' }).replace('.', '').slice(0, 3)
  : d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
  // Mesma lógica do KPI: orders não cancelados, campo totalAmount
  const vendas = orders
@@ -358,8 +358,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  return formatted.replace(/MZN/gi, 'MT').replace(/MTn/gi, 'MT');
  };
 
+ /** Valor monetário dos KPI: número em destaque + "MT" mais pequeno (cabe no mobile) */
+ const MoneyValue = ({ value }: { value: number }) => {
+ const text = formatMoney(value);
+ const m = text.match(/^(.*?)\s*MT$/);
+ return m
+ ? <span className="whitespace-nowrap">{m[1]}<span className="ml-1 text-xs sm:text-sm font-semibold text-content-muted">MT</span></span>
+ : <>{text}</>;
+ };
+
  const formatPercent = (value: number) => {
- return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+ return `${value >= 0 ? '+' : ''}${value.toLocaleString('pt-PT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
  };
 
  // Calculate metrics for current period
@@ -976,31 +985,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  const kpiCardsInOrder = useMemo(() => visibleCards.filter(c => KPI_CARD_IDS.has(c.id)), [visibleCards]);
  const widgetCardsInOrder = useMemo(() => visibleCards.filter(c => WIDGET_CARD_IDS.has(c.id)), [visibleCards]);
 
- const cardBaseClass = 'bg-surface-raised p-3 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07] flex items-start justify-between transition-all min-h-[90px] sm:min-h-[120px]';
+ const cardBaseClass = 'relative bg-surface-raised p-3.5 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex items-start justify-between transition-all min-h-[104px] sm:min-h-[124px]';
  const cardClickClass = onNavigate ? 'cursor-pointer active:scale-[0.98] hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/50' : '';
 
  return (
- <div className="space-y-6">
+ <div className="space-y-4 sm:space-y-6">
  <DashboardSettings />
  <div className="flex flex-col gap-3 sm:gap-4">
- <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+ {/* Mesmo cabeçalho do PageShell (todas as páginas admin) */}
+ <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6">
  <div className="flex-1 min-w-0">
- <h2 className="text-xl sm:text-2xl font-bold text-content-primary tracking-tight">{t.dashboard.overview}</h2>
- <p className="text-xs sm:text-sm text-content-muted mt-1 flex items-center">
- <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1.5 flex-shrink-0" />
+ <h1 className="text-xl sm:text-2xl lg:text-[26px] leading-tight font-bold tracking-tight text-content-primary truncate">{t.dashboard.overview}</h1>
+ <p className="text-sm text-content-muted mt-1 flex items-center gap-1.5">
+ <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" aria-hidden="true" />
  <span>{t.dashboard.realtimeData}</span>
  </p>
  </div>
- <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
+ <div className="flex items-start gap-2 sm:gap-3 w-full md:w-auto">
  <button
  onClick={() => setIsConfigOpen(true)}
- className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-content-primary bg-surface-raised border border-border-strong rounded-lg hover:bg-surface-base active:scale-95 transition-all min-h-[44px] sm:min-h-[auto] shadow-sm"
+ className="shrink-0 h-11 w-11 sm:w-auto sm:px-4 flex items-center justify-center gap-2 text-sm font-medium text-content-primary bg-surface-raised border border-border-default rounded-xl hover:bg-surface-base active:scale-95 transition-all"
  title={t.dashboard.customizeDashboard}
  >
  <Settings className="w-4 h-4 sm:w-4 sm:h-4" />
  <span className="hidden sm:inline">{t.dashboard.customize}</span>
  </button>
- <div className="flex-1 sm:flex-shrink-0 min-w-0">
+ <div className="flex-1 md:flex-none min-w-0">
  <PeriodFilter
  selectedPeriod={selectedPeriod}
  onPeriodChange={setSelectedPeriod}
@@ -1022,7 +1032,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
 
          {/* Grelha única de KPI cards — preenche o espaço pela ordem das preferências */}
  {kpiCardsInOrder.length > 0 && (
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+ <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
  {kpiCardsInOrder.map((card) => {
  const id = card.id;
  if (id === 'total-purchases') {
@@ -1030,17 +1040,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  <div key={id} onClick={() => handleCardClick('purchases')} className={`${cardBaseClass} ${cardClickClass}`}>
  <div className="flex-1 min-w-0">
  <div className="flex items-center justify-between mb-1">
- <p className="text-xs sm:text-sm font-medium text-content-muted truncate">{t.dashboard.totalPurchases}</p>
+ <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">{t.dashboard.totalPurchases}</p>
  {onNavigate && <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 text-content-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />}
  </div>
- <h3 className="text-sm sm:text-xl lg:text-2xl font-bold text-content-primary mt-1 sm:mt-2 break-all">{formatMoney(currentPeriodPurchasesTotal)}</h3>
+ <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5"><MoneyValue value={currentPeriodPurchasesTotal} /></h3>
  <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
  {purchasesGrowth >= 0 ? <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 rotate-180 flex-shrink-0" /> : <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-500 rotate-180 flex-shrink-0" />}
  <span className={`text-xs font-medium ${purchasesGrowth >= 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>{formatPercent(purchasesGrowth)}</span>
  </div>
  </div>
- <div className="p-1.5 sm:p-2.5 lg:p-3 bg-red-50 dark:bg-red-900/20 rounded-lg flex-shrink-0 ml-1.5 sm:ml-3">
- <ShoppingBag className="w-5 h-5 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-red-600 dark:text-red-400" />
+ <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center absolute top-3.5 right-3.5 sm:top-5 sm:right-5">
+ <ShoppingBag className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-red-600 dark:text-red-400" />
  </div>
  </div>
  );
@@ -1050,11 +1060,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  <div key={id} onClick={() => handleCardClick('orders')} className={`${cardBaseClass} ${cardClickClass}`}>
  <div className="flex items-center justify-between h-full min-w-0 flex-1">
  <div>
- <p className="text-xs sm:text-sm font-medium text-content-muted">{t.dashboard.activeOrders}</p>
- <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-content-primary mt-1 sm:mt-2">{activeOrders}</h3>
+ <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">{t.dashboard.activeOrders}</p>
+ <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5">{activeOrders}</h3>
  </div>
- <div className="p-1.5 sm:p-2.5 bg-orange-50 dark:bg-orange-900/20 rounded-lg shrink-0">
- <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 dark:text-orange-400" />
+ <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center absolute top-3.5 right-3.5 sm:top-5 sm:right-5">
+ <Clock className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-orange-600 dark:text-orange-400" />
  </div>
  </div>
  </div>
@@ -1065,12 +1075,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  <div key={id} onClick={() => handleCardClick('customers')} className={`${cardBaseClass} ${cardClickClass}`}>
  <div className="flex items-center justify-between h-full min-w-0 flex-1">
  <div>
- <p className="text-xs sm:text-sm font-medium text-content-muted">Clientes no Período</p>
- <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-content-primary mt-1 sm:mt-2">{customersInPeriod}</h3>
+ <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">Clientes</p>
+ <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5">{customersInPeriod}</h3>
  <p className="text-xs text-content-muted mt-2">clientes únicos que compraram</p>
  </div>
- <div className="p-1.5 sm:p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg shrink-0">
- <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+ <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center absolute top-3.5 right-3.5 sm:top-5 sm:right-5">
+ <Users className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
  </div>
  </div>
  </div>
@@ -1080,15 +1090,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  return (
  <div key={id} onClick={() => handleCardClick('sales')} className={`${cardBaseClass} ${cardClickClass}`} style={{}}>
  <div className="flex-1 min-w-0">
- <p className="text-xs sm:text-sm font-medium text-content-muted truncate">Vendas do Período</p>
- <h3 className="text-lg sm:text-xl lg:text-[2rem] font-bold text-content-primary mt-1 sm:mt-2 break-all">{formatMoney(currentPeriodSales)}</h3>
+ <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">Vendas</p>
+ <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5"><MoneyValue value={currentPeriodSales} /></h3>
  <div className="flex items-center gap-1.5 sm:gap-2 mt-2">
  {salesGrowth >= 0 ? <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-500" /> : <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500" />}
  <span className={`text-xs font-medium ${salesGrowth >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{formatPercent(salesGrowth)}</span>
  </div>
  </div>
- <div className="p-1.5 sm:p-2.5 bg-brand-50 dark:bg-brand-900/20 ml-1.5 sm:ml-2" style={{ borderRadius: 'var(--radius-md, 8px)' }}>
- <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-brand-600 dark:text-brand-400" />
+ <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center absolute top-3.5 right-3.5 sm:top-5 sm:right-5">
+ <DollarSign className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-brand-600 dark:text-brand-400" />
  </div>
  </div>
  );
@@ -1097,15 +1107,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  return (
  <div key={id} onClick={() => handleCardClick('orders')} className={`${cardBaseClass} ${cardClickClass}`} style={{}}>
  <div className="flex-1 min-w-0">
- <p className="text-xs sm:text-sm font-medium text-content-muted truncate">Pedidos do Período</p>
- <h3 className="text-xl sm:text-2xl lg:text-[2rem] font-bold text-content-primary mt-1 sm:mt-2">{currentPeriodOrders}</h3>
+ <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">Pedidos</p>
+ <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5">{currentPeriodOrders}</h3>
  <div className="flex items-center gap-1.5 sm:gap-2 mt-2">
  {ordersGrowth >= 0 ? <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-500" /> : <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500" />}
  <span className={`text-xs font-medium ${ordersGrowth >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{formatPercent(ordersGrowth)}</span>
  </div>
  </div>
- <div className="p-1.5 sm:p-2.5 bg-brand-50 dark:bg-brand-900/20 ml-1.5 sm:ml-2" style={{ borderRadius: 'var(--radius-md, 8px)' }}>
- <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-brand-600 dark:text-brand-400" />
+ <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center absolute top-3.5 right-3.5 sm:top-5 sm:right-5">
+ <ShoppingBag className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-brand-600 dark:text-brand-400" />
  </div>
  </div>
  );
@@ -1114,11 +1124,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  return (
  <div key={id} className={cardBaseClass} style={{}}>
  <div className="flex-1 min-w-0">
- <p className="text-xs sm:text-sm font-medium text-content-muted">Ticket Médio do Período</p>
- <h3 className="text-lg sm:text-xl lg:text-[2rem] font-bold text-content-primary mt-1 sm:mt-2 break-all">{formatMoney(currentPeriodAvgTicket)}</h3>
+ <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">Ticket médio</p>
+ <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5"><MoneyValue value={currentPeriodAvgTicket} /></h3>
  </div>
- <div className="p-1.5 sm:p-2.5 bg-brand-50 dark:bg-brand-900/20 ml-1.5 sm:ml-2" style={{ borderRadius: 'var(--radius-md, 8px)' }}>
- <Award className="w-5 h-5 sm:w-6 sm:h-6 text-brand-600 dark:text-brand-400" />
+ <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center absolute top-3.5 right-3.5 sm:top-5 sm:right-5">
+ <Award className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-brand-600 dark:text-brand-400" />
  </div>
  </div>
  );
@@ -1127,11 +1137,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  return (
  <div key={id} className={cardBaseClass} style={{}}>
  <div className="flex-1 min-w-0">
- <p className="text-xs sm:text-sm font-medium text-content-muted">Taxa de Conclusão do Período</p>
- <h3 className="text-xl sm:text-2xl lg:text-[2rem] font-bold text-content-primary mt-1 sm:mt-2">{completionRate.toFixed(1)}%</h3>
+ <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14"><span className="sm:hidden">Conclusão</span><span className="hidden sm:inline">Taxa de conclusão</span></p>
+ <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5">{completionRate.toLocaleString('pt-PT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</h3>
  </div>
- <div className="p-1.5 sm:p-2.5 bg-brand-50 dark:bg-brand-900/20 ml-1.5 sm:ml-2" style={{ borderRadius: 'var(--radius-md, 8px)' }}>
- <Percent className="w-5 h-5 sm:w-6 sm:h-6 text-brand-600 dark:text-brand-400" />
+ <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center absolute top-3.5 right-3.5 sm:top-5 sm:right-5">
+ <Percent className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-brand-600 dark:text-brand-400" />
  </div>
  </div>
  );
@@ -1140,12 +1150,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  return (
  <div key={id} onClick={() => handleCardClick('customers')} className={`${cardBaseClass} ${cardClickClass}`}>
  <div className="flex-1 min-w-0">
- <p className="text-xs sm:text-sm font-medium text-content-muted">Novos Clientes no Período</p>
- <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-content-primary mt-1 sm:mt-2">{newCustomersInPeriod}</h3>
+ <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">Novos clientes</p>
+ <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5">{newCustomersInPeriod}</h3>
  <p className="text-xs text-content-muted mt-1">primeira compra no período</p>
  </div>
- <div className="p-1.5 sm:p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg ml-1.5 sm:ml-2">
- <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
+ <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center absolute top-3.5 right-3.5 sm:top-5 sm:right-5">
+ <Users className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
  </div>
  </div>
  );
@@ -1164,7 +1174,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
 
  {/* Gráfico de evolução de vendas */}
  <div
- className="bg-surface-raised rounded-xl border border-border-default dark:border-white/[0.07] p-4 sm:p-5 lg:p-6 shadow-sm"
+ className="bg-surface-raised rounded-2xl border border-border-default dark:border-white/[0.07] p-4 sm:p-5 lg:p-6 shadow-sm"
  style={{}}
  >
  <div className="flex items-center justify-between mb-4 sm:mb-5">
@@ -1188,14 +1198,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  </div>
  <div className="h-44 sm:h-52 lg:h-60">
  <ResponsiveContainer width="100%" height="100%">
- <LineChart data={salesEvolutionData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+ <LineChart data={salesEvolutionData} margin={{ top: 5, right: 12, left: -18, bottom: 0 }}>
  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.grid.stroke} strokeOpacity={chartTheme.grid.strokeOpacity} />
  <XAxis
  dataKey="name"
  axisLine={false}
  tickLine={false}
  tick={{ fill: chartTheme.tick.fill, fontSize: 10 }}
- interval={salesEvolutionPeriod === '7D' ? 0 : salesEvolutionPeriod === '30D' ? 4 : 14}
+ interval={salesEvolutionPeriod === '7D' ? 0 : 'preserveStartEnd'}
+ minTickGap={12}
  />
  <YAxis
  axisLine={false}
@@ -1226,7 +1237,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  const id = card.id;
  if (id === 'orders-chart') {
  return (
- <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col">
+ <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col">
  <div className="flex items-center justify-between min-h-[2.25rem] sm:min-h-[2.5rem] mb-3 sm:mb-4">
  <h3 className="text-base sm:text-lg font-bold text-content-primary">Pedidos por Período</h3>
  </div>
@@ -1253,7 +1264,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'sales-chart') {
  return (
- <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col">
+ <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col">
  <div className="flex items-center justify-between min-h-[2.25rem] sm:min-h-[2.5rem] mb-3 sm:mb-4">
  <h3 className="text-base sm:text-lg font-bold text-content-primary">Vendas por Período</h3>
  </div>
@@ -1280,7 +1291,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'low-stock') {
  return (
- <div key={id} onClick={() => handleCardClick('stock-alerts')} className={`bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col ${onNavigate ? 'cursor-pointer hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/40 transition-all' : ''}`}>
+ <div key={id} onClick={() => handleCardClick('stock-alerts')} className={`bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col ${onNavigate ? 'cursor-pointer hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/40 transition-all' : ''}`}>
  <div className="flex items-center justify-between min-h-[2.25rem] sm:min-h-[2.5rem] mb-3 sm:mb-4">
  <h3 className="text-base sm:text-lg font-bold text-content-primary flex items-center gap-2">
  <AlertTriangle className="w-5 h-5 text-amber-500" />
@@ -1315,7 +1326,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'stock-forecast') {
  return (
- <div key={id} onClick={() => handleCardClick('stock-alerts')} className={`bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col ${onNavigate ? 'cursor-pointer hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/40 transition-all' : ''}`}>
+ <div key={id} onClick={() => handleCardClick('stock-alerts')} className={`bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col ${onNavigate ? 'cursor-pointer hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/40 transition-all' : ''}`}>
  <div className="flex items-center justify-between min-h-[2.25rem] sm:min-h-[2.5rem] mb-3 sm:mb-4">
  <h3 className="text-base sm:text-lg font-bold text-content-primary flex items-center gap-2">
  <TrendingUp className="w-5 h-5 text-orange-500" />
@@ -1350,7 +1361,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'top-products') {
  return (
- <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col">
+ <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col">
  <div className="flex items-center justify-between gap-3 mb-3 sm:mb-4 min-h-[2.25rem] sm:min-h-[2.5rem]">
  <h3 className="text-base sm:text-lg font-bold text-content-primary flex-1 min-w-0">Produtos Mais Vendidos</h3>
  <div className="flex rounded-lg border border-border-strong p-0.5 bg-surface-base flex-shrink-0">
@@ -1389,7 +1400,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'top-customers') {
  return (
- <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07]">
+ <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07]">
  <h3 className="text-base sm:text-lg font-bold text-content-primary mb-3 sm:mb-4">Clientes Mais Valiosos</h3>
  {topCustomers.length === 0 ? (
  <div className="flex flex-col items-center justify-center py-10 gap-3">
@@ -1425,7 +1436,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'products-sold-list') {
  return (
- <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col">
+ <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col">
  <div className="flex items-center justify-between gap-3 mb-3 sm:mb-4 min-h-[2.25rem] sm:min-h-[2.5rem]">
  <h3 className="text-base sm:text-lg font-bold text-content-primary flex-1 min-w-0">Lista Produtos Vendidos no Período</h3>
  <div className="flex rounded-lg border border-border-strong p-0.5 bg-surface-base flex-shrink-0">
@@ -1465,7 +1476,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'products-purchased-list') {
  return (
- <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07]">
+ <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07]">
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 sm:mb-4">
  <h3 className="text-base sm:text-lg font-bold text-content-primary">Lista Produtos Comprados no Período</h3>
  <div className="flex rounded-lg border border-border-strong p-0.5 bg-surface-base">
@@ -1517,7 +1528,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'delivery-stats') {
  return (
- <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07]">
+ <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07]">
  <h3 className="text-base sm:text-lg font-bold text-content-primary mb-3 sm:mb-4 flex items-center gap-2"><Truck className="w-5 h-5" />Estatísticas de Entrega</h3>
  <div className="space-y-3 sm:space-y-4">
  <div className="flex items-center justify-between p-3 sm:p-3 bg-surface-base dark:bg-white/[0.05] rounded-lg min-h-[44px]"><span className="text-sm text-content-muted">Pedidos com Entrega</span><span className="font-bold text-content-primary">{deliveryOrders}</span></div>
@@ -1529,7 +1540,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'payment-status') {
  return (
- <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-xl shadow-sm border border-border-default dark:border-white/[0.07]">
+ <div key={id} className="bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07]">
  <h3 className="text-base sm:text-lg font-bold text-content-primary mb-3 sm:mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5" />Status de Pagamento</h3>
  <div className="space-y-3 sm:space-y-4">
  <div className="flex items-center justify-between p-3 sm:p-3 bg-surface-base dark:bg-white/[0.05] rounded-lg min-h-[44px]"><span className="text-sm text-content-muted">Pedidos Pagos</span><span className="font-bold text-green-600 dark:text-green-400">{currentPeriodOrders - unpaidOrders}</span></div>

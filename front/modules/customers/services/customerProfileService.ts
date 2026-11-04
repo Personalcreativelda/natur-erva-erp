@@ -21,7 +21,7 @@ export const customerProfileService = {
   // ============================================
 
   /**
-   * Registrar uma açéo do cliente e conceder pontos
+   * Registrar uma ação do cliente e conceder pontos
    */
   async recordAction(
     customerId: string,
@@ -39,7 +39,7 @@ export const customerProfileService = {
 
       if (error) throw error;
 
-      // Buscar a açéo criada
+      // Buscar a ação criada
       const { data: action, error: fetchError } = await supabase
         .from('customer_actions')
         .select('*')
@@ -59,7 +59,7 @@ export const customerProfileService = {
         createdAt: action.created_at
       };
     } catch (error: any) {
-      console.error('Erro ao registrar açéo:', error);
+      console.error('Erro ao registrar ação:', error);
       return null;
     }
   },
@@ -139,9 +139,9 @@ export const customerProfileService = {
    */
   async calculateCustomerInsights(customerId: string): Promise<boolean> {
     try {
-      // Esta funçéo seria chamada pelo backend para calcular insights
+      // Esta função seria chamada pelo backend para calcular insights
       // Por enquanto, retornamos true
-      // Em produçéo, isso seria uma funçéo server-side
+      // Em produção, isso seria uma função server-side
       return true;
     } catch (error: any) {
       console.error('Erro ao calcular insights:', error);
@@ -345,7 +345,7 @@ export const customerProfileService = {
 
       if (error) throw error;
 
-      // Registrar açéo e conceder pontos
+      // Registrar ação e conceder pontos
       await this.recordAction(
         customerId,
         CustomerActionType.PARTILHAR_PRODUTO,
@@ -426,7 +426,7 @@ export const customerProfileService = {
 
       if (error) throw error;
 
-      // Registrar açéo e conceder pontos
+      // Registrar ação e conceder pontos
       await this.recordAction(
         customerId,
         reviewText ? CustomerActionType.CRIAR_REVIEW : CustomerActionType.AVALIAR_PRODUTO,
@@ -553,7 +553,7 @@ export const customerProfileService = {
   },
 
   /**
-   * Buscar referéªncias do afiliado
+   * Buscar referências do afiliado
    */
   async getAffiliateReferrals(affiliateId: string): Promise<AffiliateReferral[]> {
     try {

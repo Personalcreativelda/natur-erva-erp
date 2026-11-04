@@ -76,7 +76,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
  return filtered;
  }, [products, searchQuery, selectedCategory, showCategoryFilter]);
 
- // Verificar se produto esté¡ selecionado
+ // Verificar se produto está selecionado
  const isProductSelected = (product: Product, variantId?: string) => {
  return selectedItems.some(
  item => item.productId === product.id &&
@@ -93,7 +93,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
  return item?.quantity || 0;
  };
 
- // Handler para seleçéo de produto
+ // Handler para seleção de produto
  const handleProductSelect = (product: Product, variant?: ProductVariant) => {
  // Com showVariantSelector, a variação já vem selecionada do dropdown; sem ele, abrir modal se tiver variações
  if (!showVariantSelector && product.variants && product.variants.length > 0 && !variant) {
@@ -171,7 +171,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
  const hasVariants = product.variants && product.variants.length > 0;
  const defaultVariant = product.variants?.find(v => v.isDefault) || product.variants?.[0];
 
- // Verificar se alguma variaçéo esté¡ selecionada
+ // Verificar se alguma variação está selecionada
  const selectedVariantId = selectedItems.find(
  item => item.productId === product.id
  )?.variantId;

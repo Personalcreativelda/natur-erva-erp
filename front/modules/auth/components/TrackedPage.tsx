@@ -9,8 +9,8 @@ interface TrackedPageProps {
 }
 
 /**
- * Componente wrapper que adiciona tracking automé¡tico a pé¡ginas administrativas
- * Use este componente para envolver pé¡ginas que devem ser rastreadas
+ * Componente wrapper que adiciona tracking automático a páginas administrativas
+ * Use este componente para envolver páginas que devem ser rastreadas
  */
 export const TrackedPage: React.FC<TrackedPageProps> = ({
   children,
@@ -24,7 +24,7 @@ export const TrackedPage: React.FC<TrackedPageProps> = ({
     enabled
   });
 
-  // Expor trackAction globalmente para uso em handlers de açéµes
+  // Expor trackAction globalmente para uso em handlers de ações
   useEffect(() => {
     if (enabled && typeof window !== 'undefined') {
       (window as any).__trackAction = trackAction;
@@ -40,12 +40,12 @@ export const TrackedPage: React.FC<TrackedPageProps> = ({
 };
 
 /**
- * Hook helper para rastrear açéµes facilmente em componentes
+ * Hook helper para rastrear ações facilmente em componentes
  */
 export const useTrackAction = () => {
   if (typeof window !== 'undefined' && (window as any).__trackAction) {
     return (window as any).__trackAction;
   }
-  return () => { }; // No-op se néo disponé­vel
+  return () => { }; // No-op se não disponível
 };
 

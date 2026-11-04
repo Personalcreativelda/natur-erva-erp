@@ -6,7 +6,7 @@ import { useMobile } from '../../core/hooks/useMobile';
 
 const AUTOPLAY_MS = 4500;
 const RESUME_AFTER_INTERACTION_MS = 8000;
-const MAX_DOTS = 10;
+const MAX_DOTS = 12;
 
 /**
  * Carrossel de produtos (scroll nativo + scroll-snap):
@@ -109,7 +109,7 @@ export const ProductCarousel: React.FC<{
     >
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2.5 min-w-0">
-          <h2 className="text-lg sm:text-xl font-bold text-content-primary truncate">{title}</h2>
+          <h2 className="text-lg sm:text-2xl font-bold text-content-primary truncate">{title}</h2>
           {badge}
         </div>
         {/* Setas no cabeçalho (tablet/desktop) — não tapam os cartões */}
@@ -139,7 +139,7 @@ export const ProductCarousel: React.FC<{
         onPointerDown={pauseForInteraction}
         onTouchStart={pauseForInteraction}
         onWheel={pauseForInteraction}
-        className="-mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1"
+        className="-mx-4 px-4 sm:mx-0 sm:px-0 flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1"
         style={{ scrollPaddingLeft: isMobile ? 16 : 0 }}
       >
         {products.map((product, i) => (
@@ -148,13 +148,14 @@ export const ProductCarousel: React.FC<{
             role="group"
             aria-roledescription="slide"
             aria-label={`${i + 1} de ${products.length}`}
-            className="snap-start shrink-0 w-[64%] max-w-[260px] sm:max-w-none sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)] xl:w-[calc((100%-4rem)/5)] flex"
+            className="snap-start shrink-0 w-full sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)] xl:w-[calc((100%-4rem)/5)] flex"
           >
             <ProductCard
               product={product}
               onAddToCart={onAddToCart}
               onNotify={onNotify}
               isMobile={isMobile}
+              horizontal={isMobile}
               index={i}
               currentUserName={currentUserName}
             />

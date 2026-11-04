@@ -36,7 +36,7 @@ export const DeliveryZoneSelector: React.FC<DeliveryZoneSelectorProps> = ({
  const loadedZones = await deliveryService.getDeliveryZones();
  setZones(loadedZones);
  if (loadedZones.length === 0) {
- console.warn('Nenhuma zona de entrega encontrada. Verifique se hé¡ zonas ativas no banco de dados e se as polé­ticas RLS permitem leitura.');
+ console.warn('Nenhuma zona de entrega encontrada. Verifique se há zonas ativas no banco de dados e se as políticas RLS permitem leitura.');
  }
  } catch (error) {
  console.error('Erro ao carregar zonas de entrega:', error);
@@ -90,7 +90,7 @@ export const DeliveryZoneSelector: React.FC<DeliveryZoneSelectorProps> = ({
 
  return (
  <div className={`relative ${className}`}>
- {/* Botéo de seleçéo */}
+ {/* Botão de seleção */}
  <div className="flex items-center gap-2">
  <button
  type="button"
@@ -133,7 +133,7 @@ export const DeliveryZoneSelector: React.FC<DeliveryZoneSelectorProps> = ({
  type="button"
  onClick={handleClear}
  className="p-2.5 border-2 border-border-default rounded-lg bg-surface-raised hover:bg-surface-base text-content-muted hover:text-content-secondary transition-colors"
- title="Limpar seleçéo"
+ title="Limpar seleção"
  >
  <X className="h-4 w-4" />
  </button>
@@ -164,7 +164,7 @@ export const DeliveryZoneSelector: React.FC<DeliveryZoneSelectorProps> = ({
  <div className="overflow-y-auto flex-1">
  {filteredZones.length === 0 ? (
  <div className="p-4 text-center text-content-muted">
- {searchQuery ? 'Nenhuma zona encontrada' : 'Nenhuma zona disponé­vel'}
+ {searchQuery ? 'Nenhuma zona encontrada' : 'Nenhuma zona disponível'}
  </div>
  ) : (
  <div className="py-1">

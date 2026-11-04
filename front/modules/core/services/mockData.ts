@@ -21,8 +21,8 @@ export const MOCK_USERS: User[] = [
 
 export const MOCK_PRODUCTS: Product[] = [
   { id: 'p1', name: 'Mandioca Fresca', price: 60.00, costPrice: 35.00, type: ProductType.FRESH, category: 'Diversos', stock: 50, minStock: 10, unit: 'kg', updatedAt: '2025-11-20' },
-  { id: 'p2', name: 'Maracujé¡', price: 300.00, costPrice: 180.00, type: ProductType.FRESH, category: 'Diversos', stock: 20, minStock: 5, unit: 'kg', updatedAt: '2025-11-22' },
-  { id: 'p3', name: 'Polpa de Maracujé¡', price: 250.00, costPrice: 150.00, type: ProductType.FROZEN, category: 'Polpas', stock: 100, minStock: 20, unit: 'kg', updatedAt: '2025-11-23' },
+  { id: 'p2', name: 'Maracujá', price: 300.00, costPrice: 180.00, type: ProductType.FRESH, category: 'Diversos', stock: 20, minStock: 5, unit: 'kg', updatedAt: '2025-11-22' },
+  { id: 'p3', name: 'Polpa de Maracujá', price: 250.00, costPrice: 150.00, type: ProductType.FROZEN, category: 'Polpas', stock: 100, minStock: 20, unit: 'kg', updatedAt: '2025-11-23' },
   { id: 'p4', name: 'Pato Fumado', price: 1200.00, costPrice: 800.00, type: ProductType.PROCESSED, category: 'Carnes', stock: 3, minStock: 5, unit: 'un', updatedAt: '2025-11-24' },
   { id: 'p5', name: 'Maçanica Seca', price: 150.00, costPrice: 90.00, type: ProductType.FRESH, category: 'Diversos', stock: 30, minStock: 10, unit: 'kg', updatedAt: '2025-11-21' },
   { id: 'p6', name: 'Galinha Cafreal', price: 650.00, costPrice: 450.00, type: ProductType.FROZEN, category: 'Carnes', stock: 45, minStock: 10, unit: 'un', updatedAt: '2025-11-25' },
@@ -42,7 +42,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
   },
   {
     id: 'c2',
-    name: 'Arsé©nio',
+    name: 'Arsénio',
     phone: '845498841',
     address: 'Maputo, Polana',
     totalOrders: 6,
@@ -71,7 +71,7 @@ export const MOCK_ORDERS: Order[] = [
     customerPhone: '840105682',
     items: [
       { productId: 'p1', productName: 'Mandioca', quantity: 2, priceAtTime: 60.00, unit: 'kg' },
-      { productId: 'p2', productName: 'Maracujé¡', quantity: 1, priceAtTime: 300.00, unit: 'kg' }
+      { productId: 'p2', productName: 'Maracujá', quantity: 1, priceAtTime: 300.00, unit: 'kg' }
     ],
     totalAmount: 420.00,
     status: OrderStatus.COMPLETED,
@@ -82,7 +82,7 @@ export const MOCK_ORDERS: Order[] = [
   {
     id: 'o1002',
     customerId: 'c2',
-    customerName: 'Arsé©nio',
+    customerName: 'Arsénio',
     customerPhone: '845498841',
     items: [
       { productId: 'p5', productName: 'Maçanica Seca', quantity: 1, priceAtTime: 150.00, unit: 'kg' }

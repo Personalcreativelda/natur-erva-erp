@@ -8,7 +8,7 @@ interface UseGoogleMapsReturn {
   getDistance: (lat1: number, lng1: number, lat2: number, lng2: number) => number;
 }
 
-// Cache para resultados de geocodificaçéo
+// Cache para resultados de geocodificação
 const geocodeCache: Map<string, { lat: number; lng: number; formatted: string; timestamp: number }> = new Map();
 const reverseGeocodeCache: Map<string, { address: string; timestamp: number }> = new Map();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 horas
@@ -22,11 +22,11 @@ export const useGoogleMaps = (): UseGoogleMapsReturn => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
     if (!apiKey) {
-      setLoadError(new Error('Chave da API do Google Maps néo configurada (VITE_GOOGLE_MAPS_API_KEY)'));
+      setLoadError(new Error('Chave da API do Google Maps não configurada (VITE_GOOGLE_MAPS_API_KEY)'));
       return;
     }
 
-    // Verificar se o Google Maps jé¡ esté¡ carregado
+    // Verificar se o Google Maps já está carregado
     if (window.google && window.google.maps) {
       setGeocoder(new google.maps.Geocoder());
       setIsLoaded(true);
@@ -37,7 +37,7 @@ export const useGoogleMaps = (): UseGoogleMapsReturn => {
     const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
     
     if (existingScript) {
-      // Script jé¡ existe, aguardar carregamento
+      // Script já existe, aguardar carregamento
       const checkLoaded = setInterval(() => {
         if (window.google && window.google.maps) {
           setGeocoder(new google.maps.Geocoder());
@@ -73,13 +73,13 @@ export const useGoogleMaps = (): UseGoogleMapsReturn => {
     document.head.appendChild(script);
 
     return () => {
-      // Néo remover o script ao desmontar, pode ser usado por outros componentes
+      // Não remover o script ao desmontar, pode ser usado por outros componentes
     };
   }, []);
 
   const geocode = useCallback(async (address: string): Promise<{ lat: number; lng: number; formatted: string } | null> => {
     if (!geocoder || !isLoaded) {
-      console.warn('Google Maps néo esté¡ carregado ainda');
+      console.warn('Google Maps não está carregado ainda');
       return null;
     }
 
@@ -106,20 +106,20 @@ export const useGoogleMaps = (): UseGoogleMapsReturn => {
             geocodeCache.set(cacheKey, { ...result, timestamp: Date.now() });
             resolve(result);
           } else {
-            console.warn('Geocodificaçéo falhou:', status, address);
+            console.warn('Geocodificação falhou:', status, address);
             resolve(null);
           }
         });
       });
     } catch (error) {
-      console.error('Erro na geocodificaçéo:', error);
+      console.error('Erro na geocodificação:', error);
       return null;
     }
   }, [geocoder, isLoaded]);
 
   const reverseGeocode = useCallback(async (lat: number, lng: number): Promise<string | null> => {
     if (!geocoder || !isLoaded) {
-      console.warn('Google Maps néo esté¡ carregado ainda');
+      console.warn('Google Maps não está carregado ainda');
       return null;
     }
 
@@ -140,20 +140,20 @@ export const useGoogleMaps = (): UseGoogleMapsReturn => {
             reverseGeocodeCache.set(cacheKey, { address, timestamp: Date.now() });
             resolve(address);
           } else {
-            console.warn('Geocodificaçéo reversa falhou:', status);
+            console.warn('Geocodificação reversa falhou:', status);
             resolve(null);
           }
         });
       });
     } catch (error) {
-      console.error('Erro na geocodificaçéo reversa:', error);
+      console.error('Erro na geocodificação reversa:', error);
       return null;
     }
   }, [geocoder, isLoaded]);
 
   const getDistance = useCallback((lat1: number, lng1: number, lat2: number, lng2: number): number => {
     if (!window.google || !window.google.maps) {
-      // Fallback para cé¡lculo de disté¢ncia usando fé³rmula de Haversine
+      // Fallback para cálculo de distância usando fórmula de Haversine
       const R = 6371; // Raio da Terra em km
       const dLat = (lat2 - lat1) * Math.PI / 180;
       const dLng = (lng2 - lng1) * Math.PI / 180;
@@ -179,7 +179,7 @@ export const useGoogleMaps = (): UseGoogleMapsReturn => {
   };
 };
 
-// Declaraçéo de tipos para window.google
+// Declaração de tipos para window.google
 declare global {
   interface Window {
     google: typeof google;

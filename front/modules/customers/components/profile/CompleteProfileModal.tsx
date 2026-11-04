@@ -3,7 +3,7 @@ import { X, Save } from 'lucide-react';
 import { dataService } from '../../../core/services/dataService';
 import { customerProfileService } from '../../services/customerProfileService';
 import { Customer } from '../../../core/types/types';
-import { Toast } from '../ui/Toast';
+import type { Toast } from '../../../core/components/ui/Toast';
 
 interface CompleteProfileModalProps {
  customer: Customer;
@@ -27,7 +27,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
  e.preventDefault();
 
  if (!email || !address) {
- showToast?.('Email e endereço são obrigaté³rios', 'error');
+ showToast?.('Email e endereço são obrigatórios', 'error');
  return;
  }
 
@@ -42,7 +42,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
  });
 
  if (success) {
- // Registrar açéo de completar perfil
+ // Registrar ação de completar perfil
  const actionResult = await customerProfileService.recordAction(
  customer.id,
  'completar_perfil',
@@ -131,7 +131,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
  {/* Reward info */}
  <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
  <p className="text-sm text-green-800 dark:text-green-300">
- ðŸŽ <strong>Recompensa:</strong> Ao completar seu perfil, vocéª ganharé¡ <strong>50 pontos</strong>!
+ ðŸŽ <strong>Recompensa:</strong> Ao completar seu perfil, você ganhará <strong>50 pontos</strong>!
  </p>
  </div>
 

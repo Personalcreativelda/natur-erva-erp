@@ -23,15 +23,17 @@ import type { MediaFile } from '../../core/types/types';
 import { MediaCategory, MediaType } from '../../core/types/types';
 import { Toast } from '../../core/components/ui/Toast';
 import { normalizeForSearch } from '../../core/services/serviceUtils';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 interface MediaProps {
  showToast: (message: string, type?: Toast['type'], duration?: number) => void;
 }
 
 export const Media: React.FC<MediaProps> = ({ showToast }) => {
+ const confirm = useConfirm();
  const isMobile = useMobile(768);
  
- // View Mode - Cards como padréo no mobile
+ // View Mode - Cards como padrão no mobile
  const [viewMode, setViewMode] = useState<'grid' | 'list'>(isMobile ? 'grid' : 'list');
  
  // Estado de dados
@@ -48,11 +50,11 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  const [filterDateTo, setFilterDateTo] = useState<string>('');
  const [showFilters, setShowFilters] = useState(false);
  
- // Paginaçéo
+ // Paginação
  const [currentPage, setCurrentPage] = useState(1);
  const [itemsPerPage, setItemsPerPage] = useState(12);
  
- // Seleçéo méºltipla
+ // Seleção múltipla
  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
  
  // Preview
@@ -63,7 +65,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
  const [uploadCategory, setUploadCategory] = useState<MediaCategory>(MediaCategory.MEDIA_LIBRARY);
  
- // Funçéo auxiliar para obter intervalo de datas
+ // Função auxiliar para obter intervalo de datas
  const getDateRangeFromPeriod = (period: PeriodOption, customStart?: string, customEnd?: string): { start: Date; end: Date } => {
  const today = new Date();
  let start = new Date();
@@ -144,7 +146,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  const loadMediaFiles = async () => {
  setIsLoading(true);
  try {
- // Usar cache se disponé­vel - seré¡ muito mais ré¡pido
+ // Usar cache se disponível - será muito mais rápido
  const files = await listMediaFiles();
  setMediaFiles(files);
  if (files.length === 0) {
@@ -152,7 +154,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  }
  } catch (error: any) {
  console.error('[Media] Erro ao carregar arquivos:', error);
- showToast(`Erro ao carregar arquivos de mé­dia: ${error.message}`, 'error');
+ showToast(`Erro ao carregar arquivos de mídia: ${error.message}`, 'error');
  } finally {
  setIsLoading(false);
  }
@@ -197,7 +199,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  return fileDate >= normalizedStart && fileDate <= normalizedEnd;
  });
  
- // Ordenaçéo (por data de criaçéo, mais recente primeiro)
+ // Ordenação (por data de criação, mais recente primeiro)
  filtered.sort((a, b) => {
  const dateA = new Date(a.createdAt).getTime();
  const dateB = new Date(b.createdAt).getTime();
@@ -207,14 +209,14 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  return filtered;
  }, [mediaFiles, searchQuery, filterType, filterCategory, filterPeriod, filterDateFrom, filterDateTo]);
  
- // Paginaçéo
+ // Paginação
  const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
  const paginatedData = useMemo(() => {
  const start = (currentPage - 1) * itemsPerPage;
  return filteredAndSortedData.slice(start, start + itemsPerPage);
  }, [filteredAndSortedData, currentPage, itemsPerPage]);
  
- // Reset paginaçéo quando filtros mudam
+ // Reset paginação quando filtros mudam
  useEffect(() => {
  setCurrentPage(1);
  }, [searchQuery, filterType, filterCategory, filterPeriod, filterDateFrom, filterDateTo]);
@@ -264,11 +266,11 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  }
  };
  
- // Deletar méºltiplos arquivos
+ // Deletar múltiplos arquivos
  const handleBulkDelete = async () => {
  if (selectedFiles.size === 0) return;
  
- if (!window.confirm(`Tem certeza que deseja deletar ${selectedFiles.size} arquivo(s)?`)) {
+ if (!(await confirm(`${selectedFiles.size} ficheiro(s) serão eliminados permanentemente.`, { title: 'Eliminar ficheiros?', confirmLabel: 'Eliminar', variant: 'danger' }))) {
  return;
  }
  
@@ -292,7 +294,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  }
  };
  
- // Seleçéo de arquivos
+ // Seleção de arquivos
  const handleSelectFile = (file: MediaFile) => {
  setSelectedFiles(prev => {
  const newSet = new Set(prev);
@@ -323,7 +325,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  const exportToExcel = async () => {
  try {
  if (filteredAndSortedData.length === 0) {
- showToast('Néo hé¡ dados para exportar', 'warning');
+ showToast('Não há dados para exportar', 'warning');
  return;
  }
  
@@ -332,7 +334,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  Tipo: file.type === 'image' ? 'Imagem' : file.type === 'document' ? 'Documento' : 'Outro',
  Categoria: file.category,
  Tamanho: formatFileSize(file.size),
- 'Data de Criaçéo': new Date(file.createdAt).toLocaleDateString('pt-PT'),
+ 'Data de Criação': new Date(file.createdAt).toLocaleDateString('pt-PT'),
  URL: file.url
  }));
  
@@ -343,18 +345,18 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
 
  const filename = `midia_${getTodayDateString()}.xlsx`;
  await writeWorkbookToFile(wb, filename);
- showToast(`Exportaçéo para Excel conclué­da: ${filteredAndSortedData.length} registros`, 'success');
+ showToast(`Exportação para Excel concluída: ${filteredAndSortedData.length} registros`, 'success');
  } catch (error: any) {
  console.error('Erro ao exportar para Excel:', error);
  showToast('Erro ao exportar para Excel', 'error');
  }
  };
  
- // Exportaçéo PDF
+ // Exportação PDF
  const exportToPDF = async () => {
  try {
  if (filteredAndSortedData.length === 0) {
- showToast('Néo hé¡ dados para exportar', 'warning');
+ showToast('Não há dados para exportar', 'warning');
  return;
  }
  
@@ -373,7 +375,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  filters.push({ label: 'Período', value: filterPeriod });
 
  // Adicionar cabeçalho com branding
- let yPos = await addPDFHeader(pdf, 'Biblioteca de Mé­dia', {
+ let yPos = await addPDFHeader(pdf, 'Biblioteca de Mídia', {
  filters,
  orientation: 'landscape',
  });
@@ -381,12 +383,12 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  // Tabela com branding
  const headers = ['Nome', 'Tipo', 'Categoria', 'Tamanho', 'Data'];
  
- // Calcular largura disponé­vel e proporçéµes das colunas
+ // Calcular largura disponível e proporções das colunas
  const availableWidth = pdfWidth - (margin * 2);
  const colProportions = [3.0, 1.2, 1.5, 1.2, 1.2]; // 5 colunas
  const colWidths = calculateColumnWidths(availableWidth, colProportions);
  
- // Calcular posiçéµes X das colunas
+ // Calcular posições X das colunas
  const colX: number[] = [margin];
  for (let i = 1; i < colWidths.length; i++) {
  colX.push(colX[i - 1] + colWidths[i - 1]);
@@ -394,12 +396,12 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
 
  yPos = addPDFTableHeader(pdf, headers, colX, yPos, margin, pdfWidth);
  
- // Linhas da tabela com alterné¢ncia de cores
+ // Linhas da tabela com alternância de cores
  filteredAndSortedData.forEach((file, index) => {
  if (yPos > pdfHeight - 20) {
  pdf.addPage();
  yPos = margin;
- // Repetir cabeçalho em nova pé¡gina
+ // Repetir cabeçalho em nova página
  yPos = addPDFTableHeader(pdf, headers, colX, yPos, margin, pdfWidth);
  }
  
@@ -420,7 +422,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  });
  });
  
- // Rodapé© com branding
+ // Rodapé com branding
  const totalPages = pdf.getNumberOfPages();
  for (let i = 1; i <= totalPages; i++) {
  pdf.setPage(i);
@@ -429,7 +431,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  
  const filename = `midia_${getTodayDateString()}.pdf`;
  pdf.save(filename);
- showToast(`Exportaçéo para PDF conclué­da: ${filteredAndSortedData.length} registros`, 'success');
+ showToast(`Exportação para PDF concluída: ${filteredAndSortedData.length} registros`, 'success');
  } catch (error: any) {
  console.error('Erro ao exportar para PDF:', error);
  showToast('Erro ao exportar para PDF', 'error');
@@ -440,7 +442,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  
  return (
  <PageShell
- title="Biblioteca de Mé­dia"
+ title="Biblioteca de Mídia"
  actions={
  <div className="flex items-center gap-2">
  <button
@@ -670,7 +672,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  
  <div>
  <label className="block text-xs font-medium text-content-secondary mb-2">
- Itens por pé¡gina
+ Itens por página
  </label>
  <ItemsPerPageSelect
  value={itemsPerPage}
@@ -687,7 +689,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  
  <div>
  <label className="block text-xs font-medium text-content-secondary mb-2">
- Peré­odo
+ Período
  </label>
  <PeriodFilter
  selectedPeriod={filterPeriod}
@@ -730,7 +732,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  </div>
  )}
  
- {/* Seleçéo méºltipla e açéµes em lote */}
+ {/* Seleção múltipla e ações em lote */}
  {selectedFiles.size > 0 && (
  <div className="bg-brand-50 dark:bg-brand-600/20 border border-brand-200 dark:border-brand-800 rounded-lg p-3 flex items-center justify-between">
  <span className="text-sm font-medium text-brand-900 dark:text-brand-100">
@@ -754,7 +756,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  </div>
  )}
  
- {/* Conteéºdo */}
+ {/* Conteúdo */}
  {isLoading ? (
  <div className="flex items-center justify-center py-12">
  <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
@@ -797,7 +799,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  <th className="p-3 text-left text-xs font-semibold text-content-secondary">Categoria</th>
  <th className="p-3 text-left text-xs font-semibold text-content-secondary">Tamanho</th>
  <th className="p-3 text-left text-xs font-semibold text-content-secondary">Data</th>
- <th className="p-3 text-left text-xs font-semibold text-content-secondary">Açéµes</th>
+ <th className="p-3 text-left text-xs font-semibold text-content-secondary">Ações</th>
  </tr>
  </thead>
  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -854,7 +856,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  </div>
  )}
  
- {/* Paginaçéo */}
+ {/* Paginação */}
  {totalPages > 1 && (
  <div className="flex justify-center items-center gap-2 mt-6">
  <Pagination

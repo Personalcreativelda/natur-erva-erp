@@ -251,13 +251,13 @@ const App = () => {
     }
   }, [location.pathname, darkMode]);
 
-  // Load system settings on mount - executar o mais cedo possé­vel
+  // Load system settings on mount - executar o mais cedo possível
   useEffect(() => {
     const loadSystemSettings = async () => {
       try {
         const settings = await getSystemSettings();
         if (settings.favicon && settings.favicon !== '/favicon.ico') {
-          // Sé³ atualizar se néo for o favicon padréo (que causa 404)
+          // Só atualizar se não for o favicon padrão (que causa 404)
           updateFavicon(settings.favicon);
         }
         if (settings.system_name) {
@@ -280,7 +280,7 @@ const App = () => {
     loadSystemSettings();
   }, []);
 
-  // Redirecionar pé¡ginas administrativas para Settings (apenas quando néo estamos em settings)
+  // Redirecionar páginas administrativas para Settings (apenas quando não estamos em settings)
 
 
   const toggleTheme = () => {
@@ -340,6 +340,20 @@ const App = () => {
       }).catch(() => {});
     }
   }, [currentUser, loadData]);
+
+  // Pré-carregar (quando o browser estiver livre) o código das páginas da barra inferior,
+  // para abrirem sem espera depois do painel carregar
+  useEffect(() => {
+    if (!currentUser || !hasLoadedOnce) return;
+    const prefetch = () => {
+      import('./modules/sales/pages/Orders');
+      import('./modules/sales/pages/POS');
+      import('./modules/products/pages/Products');
+    };
+    const w = window as any;
+    const id = w.requestIdleCallback ? w.requestIdleCallback(prefetch, { timeout: 4000 }) : setTimeout(prefetch, 2500);
+    return () => (w.cancelIdleCallback ? w.cancelIdleCallback(id) : clearTimeout(id));
+  }, [currentUser, hasLoadedOnce]);
 
   // AppDataLoader: recarregamento por mudança de local desativado (sistema de uma única loja).
   const AppDataLoader: React.FC<{ onLoadData: () => void }> = () => null;

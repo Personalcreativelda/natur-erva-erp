@@ -2,7 +2,7 @@
 import { customerProfileService } from '../../services/customerProfileService';
 import { CheckCircle, Circle, Gift, Loader2 } from 'lucide-react';
 import { CustomerActionType } from '../../../core/types/types';
-import { Toast } from '../ui/Toast';
+import type { Toast } from '../../../core/components/ui/Toast';
 
 interface ActionCardProps {
  action: {
@@ -37,7 +37,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
 
  setIsLoading(true);
  try {
- // Lé³gica especé­fica baseada no tipo
+ // Lógica específica baseada no tipo
  if (action.type === 'completar_perfil' && onCompleteProfile) {
  onCompleteProfile();
  setIsLoading(false);
@@ -52,7 +52,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
  return;
  }
 
- // Açéo gené©rica
+ // Ação genérica
  const result = await customerProfileService.recordAction(
  customerId,
  action.type as CustomerActionType,
@@ -60,14 +60,14 @@ export const ActionCard: React.FC<ActionCardProps> = ({
  );
 
  if (result) {
- showToast?.(`Açéo completada! Ganhou ${action.points} pontos.`, 'success');
+ showToast?.(`Ação completada! Ganhou ${action.points} pontos.`, 'success');
  onComplete?.();
  } else {
- showToast?.('Erro ao completar açéo. Tente novamente.', 'error');
+ showToast?.('Erro ao completar ação. Tente novamente.', 'error');
  }
  } catch (error: any) {
- console.error('Erro ao completar açéo:', error);
- const errorMessage = error?.message || 'Erro ao completar açéo. Tente novamente.';
+ console.error('Erro ao completar ação:', error);
+ const errorMessage = error?.message || 'Erro ao completar ação. Tente novamente.';
  showToast?.(errorMessage, 'error');
  } finally {
  setIsLoading(false);

@@ -168,16 +168,16 @@ export const OrdersReports: React.FC<OrdersReportsProps> = ({ orders, showToast 
  try {
  const data = calculateOrdersReport();
  setReportData(data);
- showToast('Relaté³rio gerado com sucesso', 'success');
+ showToast('Relatório gerado com sucesso', 'success');
  } catch (error) {
- console.error('Erro ao gerar relaté³rio:', error);
- showToast('Erro ao gerar relaté³rio', 'error');
+ console.error('Erro ao gerar relatório:', error);
+ showToast('Erro ao gerar relatório', 'error');
  }
  };
 
  const exportReport = async () => {
  if (!reportData || !reportRef.current) {
- showToast('Gere o relaté³rio primeiro', 'warning');
+ showToast('Gere o relatório primeiro', 'warning');
  return;
  }
 
@@ -219,7 +219,7 @@ export const OrdersReports: React.FC<OrdersReportsProps> = ({ orders, showToast 
 
  // Adicionar cabeçalho com branding
  const periodLabel = `${start.toLocaleDateString('pt-PT')} a ${end.toLocaleDateString('pt-PT')}`;
- const startY = await addPDFHeader(pdf, 'Relaté³rio de Pedidos', {
+ const startY = await addPDFHeader(pdf, 'Relatório de Pedidos', {
  period: periodLabel,
  orientation: 'portrait',
  });
@@ -236,7 +236,7 @@ export const OrdersReports: React.FC<OrdersReportsProps> = ({ orders, showToast 
  heightLeft -= (pdfHeight - margin * 2);
  }
 
- // Adicionar rodapé© em todas as pé¡ginas
+ // Adicionar rodapé em todas as páginas
  const totalPages = pdf.getNumberOfPages();
  for (let i = 1; i <= totalPages; i++) {
  pdf.setPage(i);
@@ -244,10 +244,10 @@ export const OrdersReports: React.FC<OrdersReportsProps> = ({ orders, showToast 
  }
 
  pdf.save(filename);
- showToast('Relaté³rio exportado em PDF com sucesso', 'success');
+ showToast('Relatório exportado em PDF com sucesso', 'success');
  } catch (error) {
  console.error('Erro ao exportar PDF:', error);
- showToast('Erro ao exportar relaté³rio em PDF', 'error');
+ showToast('Erro ao exportar relatório em PDF', 'error');
  }
  };
 
@@ -271,7 +271,7 @@ export const OrdersReports: React.FC<OrdersReportsProps> = ({ orders, showToast 
  <div className="flex items-center justify-between">
  <h2 className="text-xl font-bold text-content-primary flex items-center gap-2">
  <BarChart3 className="w-6 h-6 text-brand-500" />
- Relaté³rios de Pedidos
+ Relatórios de Pedidos
  </h2>
  </div>
 
@@ -299,7 +299,7 @@ export const OrdersReports: React.FC<OrdersReportsProps> = ({ orders, showToast 
  className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
  >
  <FileText className="w-4 h-4" />
- Gerar Relaté³rio
+ Gerar Relatório
  </button>
  <button
  onClick={exportReport}
@@ -316,7 +316,7 @@ export const OrdersReports: React.FC<OrdersReportsProps> = ({ orders, showToast 
  <div ref={reportRef} className="bg-surface-raised rounded-lg shadow p-6 space-y-6">
  <h2 className="text-2xl font-bold text-content-primary mb-6 flex items-center gap-2">
  <ShoppingCart className="w-7 h-7 text-brand-500" />
- Relaté³rio de Pedidos
+ Relatório de Pedidos
  </h2>
  
  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -462,7 +462,7 @@ export const OrdersReports: React.FC<OrdersReportsProps> = ({ orders, showToast 
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Valor</th>
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Dias Pendentes</th>
  <th className="text-left py-4 px-6 text-sm font-semibold text-content-primary">Data</th>
- <th className="w-32 py-4 px-6 text-sm font-semibold text-content-primary">Urgéªncia</th>
+ <th className="w-32 py-4 px-6 text-sm font-semibold text-content-primary">Urgência</th>
  </tr>
  </thead>
  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">

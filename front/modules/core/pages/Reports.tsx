@@ -301,7 +301,7 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  };
  };
 
- // Funçéµes de cé¡lculo de relaté³rios de stock
+ // Funções de cálculo de relatórios de stock
  const calculateStockReport = (): StockReport => {
  const lowStockItems = products
  .filter(p => p.minStock && p.stock < p.minStock)
@@ -387,7 +387,7 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  };
  };
 
- // Funçéµes de cé¡lculo de relaté³rios de pedidos
+ // Funções de cálculo de relatórios de pedidos
  const calculateOrdersReport = (): OrdersReport => {
  const { orders } = filteredData;
  const ordersByStatus: Record<string, { count: number; totalValue: number }> = {};
@@ -401,7 +401,7 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  });
 
  const pendingOrders = orders
- .filter(o => o.status === 'Pendente' || o.status === 'Em Preparaçéo')
+ .filter(o => o.status === 'Pendente' || o.status === 'Em Preparação')
  .map(order => {
  const orderDate = new Date(order.createdAt);
  const today = new Date();
@@ -428,7 +428,7 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  };
  };
 
- // Gerar relaté³rio baseado na categoria e tipo selecionados
+ // Gerar relatório baseado na categoria e tipo selecionados
  const generateReport = () => {
  try {
  let data: any = null;
@@ -449,22 +449,22 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  }
 
  setReportData(data);
- showToast('Relaté³rio gerado com sucesso', 'success');
+ showToast('Relatório gerado com sucesso', 'success');
  } catch (error) {
- console.error('Erro ao gerar relaté³rio:', error);
- showToast('Erro ao gerar relaté³rio', 'error');
+ console.error('Erro ao gerar relatório:', error);
+ showToast('Erro ao gerar relatório', 'error');
  }
  };
 
- // Exportar relaté³rio em PDF
+ // Exportar relatório em PDF
  const exportReport = async () => {
  if (!reportData) {
- showToast('Gere o relaté³rio primeiro', 'warning');
+ showToast('Gere o relatório primeiro', 'warning');
  return;
  }
 
  if (!reportRef.current) {
- showToast('Erro ao exportar relaté³rio', 'error');
+ showToast('Erro ao exportar relatório', 'error');
  return;
  }
 
@@ -479,7 +479,7 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
 
  const filename = `relatorio_${categoryLabel.toLowerCase().replace(/\s+/g, '_')}_${reportLabel.toLowerCase().replace(/\s+/g, '_')}_${startStr}_${endStr}.pdf`;
 
- // Capturar o elemento do relaté³rio
+ // Capturar o elemento do relatório
  const element = reportRef.current;
  const canvas = await html2canvas(element, {
  scale: 2,
@@ -496,17 +496,17 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
 
- // Dimenséµes da imagem em pixels
+ // Dimensões da imagem em pixels
  const imgWidth = canvas.width;
  const imgHeight = canvas.height;
 
- // Calcular dimenséµes para caber na pé¡gina com margens
+ // Calcular dimensões para caber na página com margens
  const margin = 15;
  const headerHeight = 35;
  const maxWidth = pdfWidth - (margin * 2);
  const maxHeight = pdfHeight - headerHeight - margin;
 
- // Calcular proporçéo para caber na pé¡gina
+ // Calcular proporção para caber na página
  const widthRatio = maxWidth / imgWidth;
  const heightRatio = maxHeight / imgHeight;
  const ratio = Math.min(widthRatio, heightRatio);
@@ -525,11 +525,11 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  let heightLeft = imgScaledHeight;
  let position = startY;
 
- // Primeira pé¡gina
+ // Primeira página
  pdf.addImage(imgData, 'PNG', margin, position, imgScaledWidth, imgScaledHeight);
  heightLeft -= (pdfHeight - position - margin);
 
- // Adicionar pé¡ginas adicionais se necessé¡rio
+ // Adicionar páginas adicionais se necessário
  while (heightLeft > 0) {
  position = margin - (imgScaledHeight - heightLeft);
  pdf.addPage();
@@ -537,7 +537,7 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  heightLeft -= (pdfHeight - margin * 2);
  }
 
- // Adicionar rodapé© em todas as pé¡ginas
+ // Adicionar rodapé em todas as páginas
  const totalPages = pdf.getNumberOfPages();
  for (let i = 1; i <= totalPages; i++) {
  pdf.setPage(i);
@@ -547,10 +547,10 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  // Salvar PDF
  pdf.save(filename);
 
- showToast('Relaté³rio exportado em PDF com sucesso', 'success');
+ showToast('Relatório exportado em PDF com sucesso', 'success');
  } catch (error) {
  console.error('Erro ao exportar PDF:', error);
- showToast('Erro ao exportar relaté³rio em PDF', 'error');
+ showToast('Erro ao exportar relatório em PDF', 'error');
  }
  };
 
@@ -561,7 +561,7 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  }).format(value);
  };
 
- // Obter opçéµes de relaté³rios para a categoria selecionada
+ // Obter opções de relatórios para a categoria selecionada
  const availableReports = reportConfig[selectedCategory]?.reports || [];
 
  if (loading) {
@@ -661,7 +661,7 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  );
 };
 
-// Componente para renderizar diferentes tipos de relaté³rios
+// Componente para renderizar diferentes tipos de relatórios
 interface ReportRendererProps {
  category: ReportCategory;
  reportType: ReportType;
@@ -707,10 +707,10 @@ const SalesReportRenderer: React.FC<{ data: SalesReport; formatCurrency: (value:
  <div className="space-y-6">
  <h2 className="text-2xl font-bold text-content-primary mb-6 flex items-center gap-2">
  <TrendingUp className="w-7 h-7 text-brand-500" />
- Relaté³rio de Vendas
+ Relatório de Vendas
  </h2>
 
- {/* Cards de Mé©tricas */}
+ {/* Cards de Métricas */}
  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 rounded-xl shadow-sm border border-blue-200 dark:border-blue-800">
  <div className="flex items-center justify-between mb-2">
@@ -735,10 +735,10 @@ const SalesReportRenderer: React.FC<{ data: SalesReport; formatCurrency: (value:
  </div>
  </div>
 
- {/* Gré¡ficos */}
+ {/* Gráficos */}
  {data.topProducts.length > 0 && (
  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
- {/* Gré¡fico de Barras - Top Produtos */}
+ {/* Gráfico de Barras - Top Produtos */}
  <div className="bg-surface-raised rounded-xl shadow-sm border border-border-default p-6">
  <h3 className="text-lg font-semibold text-content-primary mb-4">Top Produtos por Valor</h3>
  <ResponsiveContainer width="100%" height={300}>
@@ -766,9 +766,9 @@ const SalesReportRenderer: React.FC<{ data: SalesReport; formatCurrency: (value:
  </ResponsiveContainer>
  </div>
 
- {/* Gré¡fico de Pizza - Distribuiçéo */}
+ {/* Gráfico de Pizza - Distribuição */}
  <div className="bg-surface-raised rounded-xl shadow-sm border border-border-default p-6">
- <h3 className="text-lg font-semibold text-content-primary mb-4">Distribuiçéo de Vendas</h3>
+ <h3 className="text-lg font-semibold text-content-primary mb-4">Distribuição de Vendas</h3>
  <ResponsiveContainer width="100%" height={300}>
  <PieChart>
  <Pie
@@ -816,7 +816,7 @@ const SalesReportRenderer: React.FC<{ data: SalesReport; formatCurrency: (value:
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Quantidade</th>
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Valor Total</th>
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">%</th>
- <th className="w-32 py-4 px-6 text-sm font-semibold text-content-primary">Distribuiçéo</th>
+ <th className="w-32 py-4 px-6 text-sm font-semibold text-content-primary">Distribuição</th>
  </tr>
  </thead>
  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -863,10 +863,10 @@ const StockReportRenderer: React.FC<{ data: StockReport; formatCurrency: (value:
  <div className="space-y-6">
  <h2 className="text-2xl font-bold text-content-primary mb-6 flex items-center gap-2">
  <Package className="w-7 h-7 text-brand-500" />
- Relaté³rio de Stock
+ Relatório de Stock
  </h2>
 
- {/* Cards de Mé©tricas */}
+ {/* Cards de Métricas */}
  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 rounded-xl shadow-sm border border-blue-200 dark:border-blue-800">
  <div className="flex items-center justify-between mb-2">
@@ -891,9 +891,9 @@ const StockReportRenderer: React.FC<{ data: StockReport; formatCurrency: (value:
  </div>
  </div>
 
- {/* Gré¡ficos */}
+ {/* Gráficos */}
  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
- {/* Gré¡fico de Status do Stock */}
+ {/* Gráfico de Status do Stock */}
  {stockStatusData.some(item => item.value > 0) && (
  <div className="bg-surface-raised rounded-xl shadow-sm border border-border-default p-6">
  <h3 className="text-lg font-semibold text-content-primary mb-4">Status do Stock</h3>
@@ -927,7 +927,7 @@ const StockReportRenderer: React.FC<{ data: StockReport; formatCurrency: (value:
  </div>
  )}
 
- {/* Gré¡fico de Stock Baixo */}
+ {/* Gráfico de Stock Baixo */}
  {lowStockChartData.length > 0 && (
  <div className="bg-surface-raised rounded-xl shadow-sm border border-border-default p-6">
  <h3 className="text-lg font-semibold text-content-primary mb-4">Produtos com Stock Baixo</h3>
@@ -950,7 +950,7 @@ const StockReportRenderer: React.FC<{ data: StockReport; formatCurrency: (value:
  }}
  />
  <Bar dataKey="stock" fill="#10b981" name="Stock Atual" radius={[0, 8, 8, 0]} />
- <Bar dataKey="minStock" fill="#f59e0b" name="Stock Mé­nimo" radius={[0, 8, 8, 0]} />
+ <Bar dataKey="minStock" fill="#f59e0b" name="Stock Mínimo" radius={[0, 8, 8, 0]} />
  </BarChart>
  </ResponsiveContainer>
  </div>
@@ -972,8 +972,8 @@ const StockReportRenderer: React.FC<{ data: StockReport; formatCurrency: (value:
  <tr>
  <th className="text-left py-4 px-6 text-sm font-semibold text-content-primary">Produto</th>
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Stock Atual</th>
- <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Stock Mé­nimo</th>
- <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Dé©fice</th>
+ <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Stock Mínimo</th>
+ <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Défice</th>
  <th className="text-left py-4 px-6 text-sm font-semibold text-content-primary">Unidade</th>
  <th className="w-40 py-4 px-6 text-sm font-semibold text-content-primary">Status</th>
  </tr>
@@ -1032,10 +1032,10 @@ const CustomersReportRenderer: React.FC<{ data: CustomersReport; formatCurrency:
  <div className="space-y-6">
  <h2 className="text-2xl font-bold text-content-primary mb-6 flex items-center gap-2">
  <Users className="w-7 h-7 text-brand-500" />
- Relaté³rio de Clientes
+ Relatório de Clientes
  </h2>
 
- {/* Cards de Mé©tricas */}
+ {/* Cards de Métricas */}
  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 rounded-xl shadow-sm border border-blue-200 dark:border-blue-800">
  <div className="flex items-center justify-between mb-2">
@@ -1060,14 +1060,14 @@ const CustomersReportRenderer: React.FC<{ data: CustomersReport; formatCurrency:
  </div>
  <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/20 rounded-xl shadow-sm border border-orange-200 dark:border-orange-800">
  <div className="flex items-center justify-between mb-2">
- <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Pontos de Fidelizaçéo</p>
+ <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Pontos de Fidelização</p>
  <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-400" />
  </div>
  <p className="text-3xl font-bold text-orange-700 dark:text-orange-300">{data.loyaltyStats.totalPoints.toLocaleString('pt-PT')}</p>
  </div>
  </div>
 
- {/* Gré¡ficos */}
+ {/* Gráficos */}
  {topCustomersChartData.length > 0 && (
  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
  <div className="bg-surface-raised rounded-xl shadow-sm border border-border-default p-6">
@@ -1192,7 +1192,7 @@ const CustomersReportRenderer: React.FC<{ data: CustomersReport; formatCurrency:
 const OrdersReportRenderer: React.FC<{ data: OrdersReport; formatCurrency: (value: number) => string }> = ({ data, formatCurrency }) => {
  const statusColors: Record<string, string> = {
  'Pendente': '#ef4444',
- 'Em Preparaçéo': '#f59e0b',
+ 'Em Preparação': '#f59e0b',
  'Pronto': '#10b981',
  'Entregue': '#3b82f6',
  'Cancelado': '#6b7280'
@@ -1209,10 +1209,10 @@ const OrdersReportRenderer: React.FC<{ data: OrdersReport; formatCurrency: (valu
  <div className="space-y-6">
  <h2 className="text-2xl font-bold text-content-primary mb-6 flex items-center gap-2">
  <ShoppingCart className="w-7 h-7 text-brand-500" />
- Relaté³rio de Pedidos
+ Relatório de Pedidos
  </h2>
 
- {/* Cards de Mé©tricas */}
+ {/* Cards de Métricas */}
  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 rounded-xl shadow-sm border border-blue-200 dark:border-blue-800">
  <div className="flex items-center justify-between mb-2">
@@ -1230,7 +1230,7 @@ const OrdersReportRenderer: React.FC<{ data: OrdersReport; formatCurrency: (valu
  </div>
  </div>
 
- {/* Gré¡fico de Status */}
+ {/* Gráfico de Status */}
  {statusChartData.length > 0 && (
  <div className="bg-surface-raised rounded-xl shadow-sm border border-border-default p-6">
  <h3 className="text-lg font-semibold text-content-primary mb-4">Pedidos por Status</h3>
@@ -1291,7 +1291,7 @@ const OrdersReportRenderer: React.FC<{ data: OrdersReport; formatCurrency: (valu
  {data.ordersByStatus.length > 0 && (
  <div className="bg-surface-raised rounded-xl shadow-sm border border-border-default overflow-hidden">
  <div className="px-6 py-4 border-b border-border-default">
- <h3 className="text-lg font-semibold text-content-primary">Distribuiçéo por Status</h3>
+ <h3 className="text-lg font-semibold text-content-primary">Distribuição por Status</h3>
  </div>
  <div className="overflow-x-auto">
  <table className="w-full">
@@ -1359,7 +1359,7 @@ const OrdersReportRenderer: React.FC<{ data: OrdersReport; formatCurrency: (valu
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Valor</th>
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Dias Pendentes</th>
  <th className="text-left py-4 px-6 text-sm font-semibold text-content-primary">Data</th>
- <th className="w-32 py-4 px-6 text-sm font-semibold text-content-primary">Urgéªncia</th>
+ <th className="w-32 py-4 px-6 text-sm font-semibold text-content-primary">Urgência</th>
  </tr>
  </thead>
  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">

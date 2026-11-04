@@ -2,6 +2,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { Calendar, Eye, Tag, ArrowLeft, Loader2, MessageCircle, Send, User, Trash2 } from 'lucide-react';
 import api from '../../core/services/apiClient';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 interface BlogPost {
   id: string; title: string; slug: string; summary?: string; content?: string;
@@ -20,6 +21,7 @@ interface BlogPostPageProps {
 }
 
 export const BlogPostPage: React.FC<BlogPostPageProps> = ({ currentUser }) => {
+ const confirm = useConfirm();
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({ currentUser }) => {
   };
 
   const handleDelete = async (commentId: string) => {
-    if (!confirm('Apagar comentário?')) return;
+    if (!(await confirm('O comentário será removido do artigo.', { title: 'Apagar comentário?', confirmLabel: 'Apagar', variant: 'danger' }))) return;
     setDeletingId(commentId);
     try {
       await api.delete(`/blog/${post!.id}/comments/${commentId}`);

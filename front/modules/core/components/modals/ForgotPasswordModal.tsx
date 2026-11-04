@@ -55,10 +55,10 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ onClos
  Email Enviado!
  </h2>
  <p className="text-content-secondary mb-4">
- Enviamos um link de recuperaçéo de senha para <strong>{email}</strong>
+ Enviamos um link de recuperação de senha para <strong>{email}</strong>
  </p>
  <p className="text-sm text-content-muted">
- Verifique sua caixa de entrada e siga as instruçéµes para redefinir sua senha.
+ Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.
  </p>
  </div>
  ) : (

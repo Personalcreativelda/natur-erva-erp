@@ -101,7 +101,7 @@ export const TestimonialsSection: React.FC = () => {
   return (
     <section className="py-10 sm:py-14 bg-surface-base">
       <div className="max-w-6xl mx-auto px-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-content-primary mb-1">
+        <h2 className="text-lg sm:text-2xl font-bold text-content-primary mb-1">
           O que dizem os nossos clientes
         </h2>
         <p className="text-content-muted text-sm mb-6 sm:mb-8">

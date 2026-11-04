@@ -27,6 +27,7 @@ import { PeriodFilter, type PeriodOption } from '../../core/components/forms/Per
 import { useMobile } from '../../core/hooks/useMobile';
 import { getDateRangeFromPeriod, formatDateWithOptions, formatDateOnly, toDateStringInTimezone } from '../../core/utils/dateUtils';
 import { useTrackAction } from '../../auth/components/TrackedPage';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 type SortField = 'date' | 'productName' | 'quantity' | 'reason' | 'notes' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
@@ -37,6 +38,7 @@ interface StockAdjustmentsPageProps {
 }
 
 export const StockAdjustmentsPage: React.FC<StockAdjustmentsPageProps> = ({ products, showToast }) => {
+ const confirm = useConfirm();
  const { t } = useLanguage();
  const isMobile = useMobile(768);
  const trackAction = useTrackAction();
@@ -218,7 +220,7 @@ export const StockAdjustmentsPage: React.FC<StockAdjustmentsPageProps> = ({ prod
 
  const handleDelete = async (adj: StockAdjustment) => {
  const message = t.stock.deleteAdjustmentConfirm || 'Eliminar este ajuste reverte o stock. Continuar?';
- if (!window.confirm(message)) return;
+ if (!(await confirm(message, { title: 'Eliminar ajuste?', confirmLabel: 'Eliminar', variant: 'danger' }))) return;
  setDeletingId(adj.id);
  try {
  const result = await stockAdjustmentService.deleteAdjustment(adj.id);
@@ -240,7 +242,7 @@ export const StockAdjustmentsPage: React.FC<StockAdjustmentsPageProps> = ({ prod
  const confirmMsg =
  t.stock.confirmDeleteAdjustments?.replace('{count}', String(count)) ||
  `Eliminar ${count} ajuste(s)? O stock será revertido para cada um. Continuar?`;
- if (!window.confirm(confirmMsg)) return;
+ if (!(await confirm(confirmMsg, { title: 'Eliminar ajustes?', confirmLabel: 'Eliminar', variant: 'danger' }))) return;
  setDeletingBulk(true);
  try {
  trackAction('delete', { entity: 'stock_adjustment', entityIds: Array.from(selectedIds) });

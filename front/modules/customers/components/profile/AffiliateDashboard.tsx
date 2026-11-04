@@ -28,7 +28,7 @@ export const AffiliateDashboard: React.FC<AffiliateDashboardProps> = ({
  color: 'text-blue-600'
  },
  {
- label: 'Converséµes',
+ label: 'Conversões',
  value: affiliateData.totalConversions.toString(),
  icon: TrendingUp,
  color: 'text-purple-600'
@@ -54,7 +54,7 @@ export const AffiliateDashboard: React.FC<AffiliateDashboardProps> = ({
  <div className="space-y-4">
  <div className="flex items-center space-x-3">
  <div className="flex-1 p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-xl border-2 border-border-default">
- <p className="text-sm font-medium text-content-secondary mb-2">Cé³digo de Afiliado:</p>
+ <p className="text-sm font-medium text-content-secondary mb-2">Código de Afiliado:</p>
  <p className="font-mono font-bold text-xl text-content-primary">{affiliateData.affiliateCode}</p>
  </div>
  <button
@@ -84,13 +84,13 @@ export const AffiliateDashboard: React.FC<AffiliateDashboardProps> = ({
  </div>
  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
  <p className="text-sm text-green-800 dark:text-green-300">
- ðŸ’¡ <strong>Dica:</strong> Partilhe este link e ganhe comisséµes quando algué©m fizer uma compra atravé©s dele!
+ ðŸ’¡ <strong>Dica:</strong> Partilhe este link e ganhe comissões quando alguém fizer uma compra através dele!
  </p>
  </div>
  </div>
  </div>
 
- {/* Estaté­sticas com Gradientes */}
+ {/* Estatísticas com Gradientes */}
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
  <StatsCard
  label="Total de Ganhos"
@@ -105,7 +105,7 @@ export const AffiliateDashboard: React.FC<AffiliateDashboardProps> = ({
  gradient="blue"
  />
  <StatsCard
- label="Converséµes"
+ label="Conversões"
  value={affiliateData.totalConversions.toString()}
  icon={TrendingUp}
  gradient="purple"
@@ -118,13 +118,13 @@ export const AffiliateDashboard: React.FC<AffiliateDashboardProps> = ({
  />
  </div>
 
- {/* Comisséµes */}
+ {/* Comissões */}
  <div className="bg-surface-raised rounded-2xl shadow-xl p-8 border border-border-default">
  <div className="flex items-center space-x-3 mb-6">
  <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
  <DollarSign className="w-6 h-6 text-white" />
  </div>
- <h3 className="text-2xl font-bold text-content-primary">Estrutura de Comisséµes</h3>
+ <h3 className="text-2xl font-bold text-content-primary">Estrutura de Comissões</h3>
  </div>
  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
  <div className="p-5 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border-2 border-green-200 dark:border-green-800 hover:scale-105 transition-transform">
@@ -161,7 +161,7 @@ export const AffiliateDashboard: React.FC<AffiliateDashboardProps> = ({
  </div>
  <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl border border-orange-200 dark:border-orange-800">
  <p className="text-content-secondary">
- Os materiais de marketing estaréo disponé­veis em breve. Use seu link de afiliado para partilhar e começar a ganhar comisséµes!
+ Os materiais de marketing estarão disponíveis em breve. Use seu link de afiliado para partilhar e começar a ganhar comissões!
  </p>
  </div>
  </div>

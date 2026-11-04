@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useState } from 'react';
-import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
+﻿import React, { useEffect, useRef, useState } from 'react';
+import { CheckCircle2, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -15,101 +15,66 @@ interface ToastProps {
  onClose: (id: string) => void;
 }
 
+/** Aparência única de todas as notificações da aplicação */
+const TOAST_STYLE: Record<ToastType, { title: string; icon: React.ElementType; chip: string; bar: string }> = {
+ success: { title: 'Sucesso', icon: CheckCircle2, chip: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300', bar: 'bg-green-500' },
+ error: { title: 'Erro', icon: XCircle, chip: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300', bar: 'bg-red-500' },
+ warning: { title: 'Atenção', icon: AlertTriangle, chip: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', bar: 'bg-amber-500' },
+ info: { title: 'Informação', icon: Info, chip: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300', bar: 'bg-blue-500' },
+};
+
 export const ToastComponent: React.FC<ToastProps> = ({ toast, onClose }) => {
- const [progress, setProgress] = useState(100);
- const duration = toast.duration || 5000;
+ // Erros ficam mais tempo no ecrã (são os que exigem leitura)
+ const duration = toast.duration || (toast.type === 'error' ? 7000 : 4500);
+ const [paused, setPaused] = useState(false);
+ const remainingRef = useRef(duration);
+ const startRef = useRef(Date.now());
+ const style = TOAST_STYLE[toast.type] || TOAST_STYLE.info;
+ const Icon = style.icon;
 
+ // Temporizador que pausa com o rato por cima / foco (para dar tempo de ler)
  useEffect(() => {
- const timer = setTimeout(() => {
- onClose(toast.id);
- }, duration);
-
- // Animaçéo de progresso
- const interval = setInterval(() => {
- setProgress((prev) => {
- const newProgress = prev - (100 / (duration / 100));
- return newProgress <= 0 ? 0 : newProgress;
- });
- }, 100);
-
- return () => {
- clearTimeout(timer);
- clearInterval(interval);
- };
- }, [toast.id, duration, onClose]);
-
- const icons = {
- success: <CheckCircle className="w-5 h-5" />,
- error: <XCircle className="w-5 h-5" />,
- warning: <AlertCircle className="w-5 h-5" />,
- info: <Info className="w-5 h-5" />
- };
-
- const iconColors = {
- success: 'text-green-600 dark:text-green-400',
- error: 'text-red-600 dark:text-red-400',
- warning: 'text-yellow-600 dark:text-yellow-400',
- info: 'text-blue-600 dark:text-blue-400'
- };
-
- const colors = {
- success: 'bg-surface-raised border-l-green-500 dark:border-l-green-400 text-content-primary',
- error: 'bg-surface-raised border-l-red-500 dark:border-l-red-400 text-content-primary',
- warning: 'bg-surface-raised border-l-yellow-500 dark:border-l-yellow-400 text-content-primary',
- info: 'bg-surface-raised border-l-blue-500 dark:border-l-blue-400 text-content-primary'
- };
-
- const progressColors = {
- success: 'bg-green-500',
- error: 'bg-red-500',
- warning: 'bg-yellow-500',
- info: 'bg-blue-500'
- };
+  if (paused) return;
+  startRef.current = Date.now();
+  const t = setTimeout(() => onClose(toast.id), remainingRef.current);
+  return () => {
+   clearTimeout(t);
+   remainingRef.current -= Date.now() - startRef.current;
+  };
+ }, [paused, toast.id, onClose]);
 
  return (
- <div 
- className={`${colors[toast.type]} border-l-4 rounded-xl p-4 shadow-2xl flex flex-col w-full md:w-auto md:min-w-[320px] max-w-md mb-3 transform transition-all duration-300 ease-out relative overflow-hidden`}
- style={{
- animation: 'slideInUp 0.3s ease-out',
- }}
- >
- <style dangerouslySetInnerHTML={{__html: `
- @keyframes slideInUp {
- from {
- transform: translateY(100%);
- opacity: 0;
- }
- to {
- transform: translateY(0);
- opacity: 1;
- }
- }
- `}} />
- 
- {/* Barra de progresso */}
- <div className="absolute top-0 left-0 right-0 h-1 bg-surface-base">
- <div 
- className={`h-full ${progressColors[toast.type]} transition-all duration-100 ease-linear`}
- style={{ width: `${progress}%` }}
- />
- </div>
-
- <div className="flex items-start gap-3 pt-1">
- <div className={`flex-shrink-0 mt-0.5 ${iconColors[toast.type]}`}>
- {icons[toast.type]}
- </div>
- <div className="flex-1 text-sm font-medium leading-relaxed">
- {toast.message}
- </div>
- <button
- onClick={() => onClose(toast.id)}
- className="flex-shrink-0 text-content-muted hover:text-content-secondary transition-colors p-1 rounded-lg hover:bg-surface-base"
- aria-label="Fechar notificaçéo"
- >
- <X className="w-4 h-4" />
- </button>
- </div>
- </div>
+  <div
+   role={toast.type === 'error' ? 'alert' : 'status'}
+   aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+   onMouseEnter={() => setPaused(true)}
+   onMouseLeave={() => setPaused(false)}
+   className="toast-enter relative w-full md:w-[360px] overflow-hidden rounded-2xl border border-border-default bg-surface-raised text-content-primary shadow-xl"
+  >
+   <div className="flex items-start gap-3 p-3.5 pr-2">
+    <span className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${style.chip}`}>
+     <Icon className="w-5 h-5" />
+    </span>
+    <div className="flex-1 min-w-0 pt-0.5">
+     <p className="text-sm font-semibold leading-5">{style.title}</p>
+     <p className="text-sm text-content-secondary leading-5 mt-0.5 break-words">{toast.message}</p>
+    </div>
+    <button
+     onClick={() => onClose(toast.id)}
+     className="shrink-0 w-8 h-8 !min-h-0 flex items-center justify-center rounded-lg text-content-muted hover:text-content-primary hover:bg-surface-base transition-colors"
+     aria-label="Fechar notificação"
+    >
+     <X className="w-4 h-4" />
+    </button>
+   </div>
+   {/* Tempo restante */}
+   <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-transparent">
+    <div
+     className={`h-full ${style.bar} toast-progress`}
+     style={{ animationDuration: `${duration}ms`, animationPlayState: paused ? 'paused' : 'running' }}
+    />
+   </div>
+  </div>
  );
 };
 
@@ -118,19 +83,20 @@ interface ToastContainerProps {
  onClose: (id: string) => void;
 }
 
+const MAX_VISIBLE = 3;
+
 export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onClose }) => {
  if (toasts.length === 0) return null;
+ const visible = toasts.slice(-MAX_VISIBLE);
 
  return (
- // Mobile: topo (abaixo do header, longe da barra inferior). Desktop: canto inferior direito
- <div className="fixed top-[68px] left-4 right-4 md:top-auto md:left-auto md:bottom-4 md:right-4 z-[9999] space-y-2 pointer-events-none flex flex-col items-stretch md:items-end">
- {toasts.map(toast => (
- <div key={toast.id} className="pointer-events-auto">
- <ToastComponent toast={toast} onClose={onClose} />
- </div>
- ))}
- </div>
+  // Mobile: topo (abaixo do cabeçalho, longe da barra inferior). Desktop: canto inferior direito
+  <div className="toast-stack fixed left-3 right-3 md:left-auto md:right-5 md:bottom-5 z-[10050] flex flex-col gap-2 pointer-events-none md:items-end">
+   {visible.map(toast => (
+    <div key={toast.id} className="pointer-events-auto w-full md:w-auto">
+     <ToastComponent toast={toast} onClose={onClose} />
+    </div>
+   ))}
+  </div>
  );
 };
-
-

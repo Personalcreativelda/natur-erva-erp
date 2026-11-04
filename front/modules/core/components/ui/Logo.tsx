@@ -5,7 +5,7 @@ interface LogoProps {
  className?: string;
  width?: number | string;
  height?: number | string;
- variant?: 'full' | 'icon'; // full = logo completo, icon = logo é­cone para sidebar fechado
+ variant?: 'full' | 'icon'; // full = logo completo, icon = logo ícone para sidebar fechado
  isDarkMode?: boolean; // Para determinar qual logo usar (light ou dark)
 }
 

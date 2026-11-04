@@ -132,7 +132,7 @@ export const Users: React.FC<{
  } catch (error: any) {
  console.error('Erro ao carregar permissões:', error);
  if (error.code === '42P01' || error.message?.includes('does not exist')) {
- // Néo mostrar toast aqui para evitar duplicação
+ // Não mostrar toast aqui para evitar duplicação
  setPermissions([]);
  } else {
  showToast(error.message || 'Erro ao carregar permissões', 'error');
@@ -226,7 +226,7 @@ export const Users: React.FC<{
  return;
  }
 
- // Validaçéo de email
+ // Validação de email
  if (updates.email !== undefined) {
  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  if (!updates.email.trim()) {
@@ -438,7 +438,7 @@ export const Users: React.FC<{
  );
  }
 
- // Se o usuário é cliente, não pode acessar a página de gestéo de usuários
+ // Se o usuário é cliente, não pode acessar a página de gestão de usuários
  if (currentUser && isClientUser(currentUser)) {
  return (
  <div className="flex flex-col items-center justify-center h-64 space-y-4 p-8">
@@ -1007,7 +1007,7 @@ const UserModal: React.FC<{
  />
  {user && (
  <p className="text-xs text-content-muted mt-1">
- O email será atualizado no sistema de autenticaçéo. O usuário precisará usar o novo email para fazer login.
+ O email será atualizado no sistema de autenticação. O usuário precisará usar o novo email para fazer login.
  </p>
  )}
  </div>

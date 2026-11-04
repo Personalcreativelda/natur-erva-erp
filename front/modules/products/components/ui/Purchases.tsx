@@ -1568,7 +1568,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  return filteredAndSortedPurchases.slice(start, start + itemsPerPage);
  }, [filteredAndSortedPurchases, currentPage, itemsPerPage]);
 
- // Funçéo para exportar compras para Excel
+ // Função para exportar compras para Excel
  const exportToExcel = async () => {
  try {
  if (filteredAndSortedPurchases.length === 0) {
@@ -1601,7 +1601,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  }
  filters.push({ label: 'Total de compras', value: filteredAndSortedPurchases.length.toString() });
 
- // Preparar dados para exportaçéo
+ // Preparar dados para exportação
  const exportData = filteredAndSortedPurchases.map(purchase => {
  const purchaseDate = new Date(purchase.date);
  const pending = purchase.totalAmount - (purchase.amountPaid || 0);
@@ -1658,7 +1658,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  }
  };
 
- // Funçéo para exportar compras para PDF
+ // Função para exportar compras para PDF
  const exportToPDF = async () => {
  try {
  if (filteredAndSortedPurchases.length === 0) {
@@ -1719,7 +1719,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  pdf.text(`Total: ${formatMoney(periodTotals.total)}`, margin, yPos);
  pdf.text(`Pago: ${formatMoney(periodTotals.paid)}`, margin + 60, yPos);
  pdf.text(`Pendente: ${formatMoney(periodTotals.pending)}`, margin + 120, yPos);
- pdf.text(`NÂº Compras: ${periodTotals.count}`, margin + 180, yPos);
+ pdf.text(`Nº Compras: ${periodTotals.count}`, margin + 180, yPos);
  yPos += 10;
 
  // Tabela de compras com cabeçalho destacado
@@ -2335,10 +2335,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
  )}
 
  {/* Sorting */}
- <div className="flex items-center justify-between gap-4">
- <div className="flex items-center gap-4">
- <span className="text-sm text-content-secondary font-medium">Ordenar por:</span>
- <div className="flex gap-2">
+ <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+ <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+ <span className="text-sm text-content-secondary font-medium whitespace-nowrap">Ordenar:</span>
+ <div className="flex gap-1.5 sm:gap-2">
  {(['date', 'totalAmount', 'supplier'] as SortField[]).map(field => (
  <button
  key={field}
@@ -2350,7 +2350,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  setSortDirection('desc');
  }
  }}
- className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-colors ${sortField === field
+ className={`px-3 h-9 sm:h-auto sm:py-1.5 !min-h-0 rounded-full sm:rounded-lg text-sm flex items-center gap-1 whitespace-nowrap transition-colors ${sortField === field
  ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 font-medium'
  : 'bg-surface-base text-content-secondary hover:bg-surface-base'
  }`}
@@ -2361,8 +2361,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
  ))}
  </div>
  </div>
- <div className="text-sm text-content-muted">
- Mostrando {paginatedPurchases.length} de {totalPurchasesCount ?? filteredAndSortedPurchases.length} compras
+ <div className="text-xs sm:text-sm text-content-muted tabular-nums">
+ {paginatedPurchases.length} de {totalPurchasesCount ?? filteredAndSortedPurchases.length} compras
  </div>
  </div>
 
@@ -2627,7 +2627,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  </div>
  )}
 
- {/* Totais e Paginaçéo */}
+ {/* Totais e Paginação */}
  <div className="mt-6 space-y-4">
  {/* Totais */}
  <div className="bg-surface-raised rounded-lg border border-border-default p-4">
@@ -2650,7 +2650,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  </div>
  <div className="flex items-center gap-2">
  <ShoppingCart className="w-5 h-5 text-blue-500" />
- <span className="text-sm text-content-secondary">NÂº Compras:</span>
+ <span className="text-sm text-content-secondary">Nº Compras:</span>
  <span className="text-lg font-semibold text-content-primary">{periodTotals.count}</span>
  </div>
  </div>

@@ -66,62 +66,39 @@ export const AdminBottomNavigation: React.FC<AdminBottomNavigationProps> = ({
  ) => {
   const isActive = activeId === id;
 
-  if (primary) {
-   return (
-    <button
-     key={id}
-     onClick={onClick}
-     aria-label={label}
-     aria-current={isActive ? 'page' : undefined}
-     className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[56px] touch-manipulation group"
-    >
-     <span
-      className={`flex items-center justify-center w-12 h-12 -mt-6 rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/30 ring-4 ring-surface-raised transition-transform duration-200 group-active:scale-95 ${isActive ? 'scale-105' : ''}`}
-      style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 20px -6px var(--brand-600)' }}
-     >
-      <Icon className="w-6 h-6" strokeWidth={2.25} />
-     </span>
-     <span className={`text-[11px] leading-none font-semibold ${isActive ? 'text-brand-600 dark:text-brand-400' : 'text-content-secondary'}`}>
-      {label}
-     </span>
-    </button>
-   );
-  }
-
+  // Material 3 navigation bar: todos os itens com a mesma estrutura (pílula 56×32 + rótulo),
+  // rótulos na mesma linha. "Vender" fica sempre com a pílula verde preenchida.
+  const pillClass = primary
+   ? 'bg-brand-600 text-white shadow-sm'
+   : isActive
+    ? 'bg-brand-600/10 dark:bg-brand-400/15 text-brand-700 dark:text-brand-300'
+    : 'text-content-muted';
+  const labelClass = isActive || primary
+   ? 'font-semibold text-brand-700 dark:text-brand-300'
+   : 'font-medium text-content-muted';
   return (
    <button
     key={id}
     onClick={onClick}
     aria-label={label}
     aria-current={isActive ? 'page' : undefined}
-    className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[56px] touch-manipulation group"
+    className="flex-1 min-w-0 flex flex-col items-center justify-start gap-1 h-14 !min-h-0 pt-1 touch-manipulation group"
    >
-    <span
-     className={`flex items-center justify-center w-14 h-8 rounded-full transition-all duration-200 group-active:scale-95 ${isActive
-      ? 'bg-brand-600/10 dark:bg-brand-400/15 text-brand-600 dark:text-brand-400'
-      : 'text-content-muted'
-      }`}
-    >
-     <Icon className="w-[22px] h-[22px]" strokeWidth={isActive ? 2.25 : 1.75} />
+    <span className={`flex items-center justify-center w-14 h-8 rounded-full transition-colors duration-200 group-active:scale-95 ${pillClass}`}>
+     <Icon className="w-[22px] h-[22px]" strokeWidth={isActive || primary ? 2.25 : 1.75} />
     </span>
-    <span className={`text-[11px] leading-none transition-colors ${isActive
-     ? 'font-semibold text-brand-600 dark:text-brand-400'
-     : 'font-medium text-content-muted'
-     }`}>
-     {label}
-    </span>
+    <span className={`text-xs leading-4 truncate max-w-full transition-colors ${labelClass}`}>{label}</span>
    </button>
   );
  };
 
  return (
   <nav
-   className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-raised/95 backdrop-blur-xl border-t border-border-default"
-   style={{ boxShadow: '0 -4px 24px -8px rgba(48,49,61,0.12)' }}
+   className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-raised border-t border-border-default"
    aria-label="Navegação principal"
   >
    <div
-    className="flex items-stretch justify-around px-2 pt-2"
+    className="flex items-stretch justify-around px-1 pt-2"
     style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
    >
     {items.map(item =>

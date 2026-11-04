@@ -8,7 +8,7 @@ import api from '../../core/services/apiClient';
 import { orderService } from '../../sales/services/orderService';
 import { useShopTracking } from '../../core/hooks/useShopTracking';
 import { useMobile } from '../../core/hooks/useMobile';
-import { ShoppingCart, Search, User, Package, X, MapPin, CheckCircle, Loader2, ChevronRight, Leaf, Droplet, Pill, Heart, Sparkles, Tag, Gift, Users, TrendingUp, XCircle, Copy, Check, Truck } from 'lucide-react';
+import { ShoppingCart, Search, User, Package, X, MapPin, CheckCircle, Loader2, ChevronRight, Leaf, Droplet, Pill, Heart, Sparkles, Tag, Gift, Users, TrendingUp, XCircle, Copy, Check, Truck, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { User as UserType } from '../../core/types/types';
 import { ToastContainer, Toast } from '../../core/components/ui/Toast';
 import { DeliveryZoneSelector } from '../../core/components/forms/DeliveryZoneSelector';
@@ -18,6 +18,9 @@ import { getSystemSettings, SystemSettings } from '../../core/services/systemSet
 import { useShopContext } from '../../../contexts/ShopContext';
 import { normalizeForSearch } from '../../core/services/serviceUtils';
 import { ShopBanner } from '../components/ShopBanner';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../core/lib/queryClient';
+import { useShopProducts, useShopCategories, useShopBlog, useShopSettings, useCategoryImages } from '../hooks/useShopData';
 import { uploadProductImage } from '../../../services/uploadService';
 import { FAQSection } from '../components/FAQSection';
 import { ProductCarousel } from '../components/ProductCarousel';
@@ -55,6 +58,10 @@ interface ShopProps {
   onLogin?: (user: UserType) => void;
   onLogout?: () => void;
 }
+
+const EMPTY_PRODUCTS: Product[] = [];
+const EMPTY_LIST: any[] = [];
+const EMPTY_SETTINGS: SystemSettings = {};
 
 const SORT_OPTIONS = [
   { value: 'popular', label: 'Mais populares' },
@@ -116,11 +123,16 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderConfirmation, setOrderConfirmation] = useState<OrderConfirmation | null>(null);
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<Array<{ id: string; name: string; color: string; imageUrl?: string; isActive: boolean }>>([]);
-  const [blogPosts, setBlogPosts] = useState<Array<{ id: string; title: string; slug: string; summary?: string; coverImage?: string; tags: string[]; publishedAt?: string; createdAt: string }>>([]);
-  const [settings, setSettings] = useState<SystemSettings>({});
+  // Dados com cache persistente: aparecem logo e actualizam-se em segundo plano (sem recarregar a página)
+  const queryClient = useQueryClient();
+  const productsQuery = useShopProducts();
+  const products = productsQuery.data ?? EMPTY_PRODUCTS;
+  // Esqueletos só na primeira visita (sem nada em cache)
+  const loading = productsQuery.isPending;
+  const categories = useShopCategories().data ?? EMPTY_LIST;
+  const blogPosts = useShopBlog().data ?? EMPTY_LIST;
+  const settings: SystemSettings = useShopSettings().data ?? EMPTY_SETTINGS;
+  const categoryImage = useCategoryImages(products);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -130,6 +142,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
   const CHUNK = chunkSizeFor(gridCols);
   const PAGE_SIZE = CHUNK * 2; // 16 / 18 / 16 / 20 produtos por página
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [blogSlide, setBlogSlide] = useState(0);
 
   const [darkMode, setDarkMode] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -205,31 +218,10 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
   useEffect(() => { shopContext.setHasActiveFilters(selectedCategory !== 'all'); }, [selectedCategory, shopContext]);
 
   // ── Carregamento de dados ─────────────────────────────────────────────────
-  const loadProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const allProducts = await productService.getProducts();
-      // Mostrar todos os produtos visíveis na loja, incluindo esgotados (com badge Esgotado)
-      setProducts(allProducts.filter(p => p.showInShop !== false));
-    } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
-      showToast('Erro ao carregar produtos. Tente novamente.', 'error');
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [showToast]);
-
+  // Erro só quando não há nada em cache para mostrar
   useEffect(() => {
-    loadProducts();
-    api.get<any[]>('/categories')
-      .then(data => setCategories((data || []).filter((c: any) => c.isActive !== false)))
-      .catch(() => { /* a loja funciona sem categorias */ });
-    api.get<any[]>('/blog')
-      .then(data => setBlogPosts((data || []).filter((p: any) => p.status === 'published').slice(0, 3)))
-      .catch(() => {});
-    getSystemSettings().then(setSettings).catch(err => console.error('Erro ao carregar configurações:', err));
-  }, [loadProducts]);
+    if (productsQuery.isError && !productsQuery.data) showToast('Erro ao carregar produtos. Tente novamente.', 'error');
+  }, [productsQuery.isError, productsQuery.data, showToast]);
 
   // Utilizador: vindo do App (prop) ou sessão existente
   const onLoginRef = useRef(onLogin);
@@ -397,7 +389,9 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
 
     const user = currentUserRef.current;
     if (!user) {
-      setLoginMessage('Inicie sessão para finalizar o pedido. Pode entrar com Google ou criar uma conta em segundos.');
+      setLoginMessage(import.meta.env.VITE_GOOGLE_CLIENT_ID
+        ? 'Inicie sessão para finalizar o pedido. Pode entrar com Google ou criar uma conta em segundos.'
+        : 'Inicie sessão para finalizar o pedido, ou crie uma conta em segundos.');
       setShowLogin(true);
       setPendingCheckout(true);
       return;
@@ -533,8 +527,8 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
         total: Number(result.order.totalAmount ?? totalAmount),
         isDelivery: deliveryInfo.isDelivery,
       });
-      // Stock mudou — recarregar para os cartões mostrarem o valor actual
-      loadProducts();
+      // Stock mudou — actualizar o catálogo em segundo plano (sem esqueletos)
+      queryClient.invalidateQueries({ queryKey: queryKeys.shop.products });
     } catch (error: any) {
       console.error('Erro ao criar pedido:', error);
       const msg = String(error?.message || '');
@@ -583,16 +577,54 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
         </div>
       )}
 
-      {/* ── HERO / BANNER ── */}
-      {!isMobile && (
-        <ShopBanner isAdmin={isAdmin} products={products} uploadImage={uploadProductImage} />
+      {/* ── HERO / BANNER (mobile: cartão arredondado com margem; desktop: largura total) ── */}
+      <ShopBanner isAdmin={isAdmin} products={products} uploadImage={uploadProductImage} />
+
+      {/* ── CATEGORIAS (mobile: círculos deslizáveis, como nas apps de lojas) ── */}
+      {isMobile && categories.some(c => (categoryCounts.get(c.name.toLowerCase()) || 0) > 0) && (
+        <section className="pt-5" aria-label="Categorias">
+          <div className="chips-fade overflow-x-auto scrollbar-hide">
+            <div className="flex gap-4 px-4 w-max">
+              {categories.filter(c => (categoryCounts.get(c.name.toLowerCase()) || 0) > 0).map((cat, idx) => {
+                const Icon = CATEGORY_ICONS[idx % CATEGORY_ICONS.length];
+                const active = selectedCategory === cat.name;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => selectCategory(cat.name)}
+                    aria-pressed={active}
+                    className="w-[72px] flex flex-col items-center gap-1.5 !min-h-0"
+                  >
+                    {(() => {
+                      const img = categoryImage(cat.name, cat.imageUrl);
+                      return (
+                        <span
+                          className={`w-16 h-16 rounded-full overflow-hidden flex items-center justify-center border transition-shadow ${img ? 'bg-white border-border-default' : 'border-transparent'} ${active ? 'ring-2 ring-offset-2 ring-green-600 ring-offset-surface-base' : ''}`}
+                          style={img ? undefined : { backgroundColor: cat.color || '#22c55e' }}
+                        >
+                          {img
+                            ? <img src={img} alt="" className={`w-full h-full ${cat.imageUrl ? 'object-cover' : 'object-contain p-1.5'}`} loading="lazy" />
+                            : <Icon className="w-7 h-7 text-white" />}
+                        </span>
+                      );
+                    })()}
+                    <span className={`text-[11px] leading-tight text-center line-clamp-2 ${active ? 'font-semibold text-green-700 dark:text-green-400' : 'text-content-secondary'}`}>
+                      {cat.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
       )}
 
       {/* ── CATEGORIAS (desktop: cartões) ── */}
       {categories.length > 0 && !isMobile && (
         <section className="max-w-7xl mx-auto px-4 relative z-10 -mt-16">
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
-            {categories.map((cat, idx) => {
+          {/* Centradas: só aparecem categorias com produtos, por isso o nº varia */}
+          <div className="flex flex-wrap justify-center gap-3 lg:gap-4">
+            {categories.filter(c => loading || (categoryCounts.get(c.name.toLowerCase()) || 0) > 0).map((cat, idx) => {
               const Icon = CATEGORY_ICONS[idx % CATEGORY_ICONS.length];
               const count = categoryCounts.get(cat.name.toLowerCase()) || 0;
               return (
@@ -600,16 +632,21 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
                   key={cat.id}
                   onClick={() => selectCategory(cat.name)}
                   aria-pressed={selectedCategory === cat.name}
-                  className={`bg-surface-raised rounded-2xl p-6 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 w-full ${selectedCategory === cat.name ? 'ring-2 ring-green-500' : ''}`}
+                  className={`group bg-surface-raised rounded-2xl p-5 lg:p-6 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 w-[calc(33.333%-0.5rem)] lg:w-44 ${selectedCategory === cat.name ? 'ring-2 ring-green-500' : ''}`}
                 >
-                  <div
-                    className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center mx-auto mb-4"
-                    style={{ backgroundColor: cat.color || '#22c55e' }}
-                  >
-                    {cat.imageUrl
-                      ? <img src={cat.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-                      : <Icon className="w-8 h-8 text-white" />}
-                  </div>
+                  {(() => {
+                    const img = categoryImage(cat.name, cat.imageUrl);
+                    return (
+                      <div
+                        className={`w-20 h-20 rounded-full overflow-hidden flex items-center justify-center mx-auto mb-3 border ${img ? 'bg-white border-border-default' : 'border-transparent'}`}
+                        style={img ? undefined : { backgroundColor: cat.color || '#22c55e' }}
+                      >
+                        {img
+                          ? <img src={img} alt="" className={`w-full h-full ${cat.imageUrl ? 'object-cover' : 'object-contain p-2'} group-hover:scale-105 transition-transform duration-300`} loading="lazy" />
+                          : <Icon className="w-8 h-8 text-white" />}
+                      </div>
+                    );
+                  })()}
                   <h3 className="text-base font-semibold mb-1 text-content-primary">{cat.name}</h3>
                   <p className="text-sm text-content-muted">
                     {loading ? ' ' : `${count} ${count === 1 ? 'produto' : 'produtos'}`}
@@ -622,26 +659,30 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
       )}
 
       {/* ── BANNER PROMOCIONAL ── */}
-      <section className={`max-w-7xl mx-auto px-4 ${isMobile ? 'mt-6' : 'mt-16'}`}>
-        <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-3xl p-6 sm:p-8 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold mb-2">Primeira compra?</h2>
-            <p className="text-green-50">Fale connosco e descubra promoções exclusivas para novos clientes.</p>
-          </div>
-          <a
-            href={`https://wa.me/${whatsappNumber}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="self-start md:self-auto shrink-0 bg-white text-green-700 font-semibold px-6 py-3 rounded-xl hover:bg-green-50 transition-colors"
-          >
+      <section className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isMobile ? 'mt-5' : 'mt-12'}`}>
+        <a
+          href={`https://wa.me/${whatsappNumber}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-3 sm:gap-4 rounded-2xl bg-gradient-to-r from-green-600 to-green-500 px-4 py-3 sm:px-6 sm:py-4 text-white shadow-sm"
+        >
+          <span className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 flex items-center justify-center">
+            <Gift className="w-5 h-5 sm:w-6 sm:h-6" />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm sm:text-lg font-semibold leading-tight">Primeira compra?</span>
+            <span className="block text-xs sm:text-sm text-green-50 leading-snug mt-0.5">Fale connosco e receba uma oferta exclusiva.</span>
+          </span>
+          <span className="hidden sm:inline-flex shrink-0 items-center h-11 px-5 rounded-xl bg-white text-green-700 font-semibold text-sm group-hover:bg-green-50 transition-colors">
             Falar connosco
-          </a>
-        </div>
+          </span>
+          <ChevronRight className="sm:hidden w-5 h-5 shrink-0 text-white/80" />
+        </a>
       </section>
 
       {/* ── CARROSSÉIS ── */}
       {!loading && isBrowsingAll && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-8 pt-10 pb-2 space-y-10">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-8 sm:space-y-12">
           <ProductCarousel
             title="Em promoção"
             products={promoProducts}
@@ -675,10 +716,10 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
       <ShopMidBanner isAdmin={isAdmin} products={products} uploadImage={uploadProductImage} />
 
       {/* ── CATÁLOGO ── */}
-      <section id="produtos-section" ref={productsSectionRef} className="max-w-7xl mx-auto px-4 sm:px-8 py-12 sm:py-16 scroll-mt-20">
+      <section id="produtos-section" ref={productsSectionRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14 scroll-mt-20">
         <div className="flex items-end justify-between gap-4 mb-5">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-content-primary">
+            <h2 className="text-lg sm:text-2xl font-bold text-content-primary">
               {selectedCategory !== 'all' ? selectedCategory : 'Todos os produtos'}
             </h2>
             {!loading && (
@@ -700,7 +741,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
               onChange={e => setSearchTerm(e.target.value)}
               placeholder={isMobile ? 'Pesquisar' : 'Pesquisar produtos...'}
               aria-label="Pesquisar produtos"
-              className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-border-default bg-surface-raised text-content-primary placeholder-content-muted text-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition"
+              className="w-full h-11 pl-10 pr-10 rounded-xl border border-border-default bg-surface-raised text-content-primary placeholder-content-muted text-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition"
             />
             {searchTerm && (
               <button onClick={() => setSearchTerm('')} className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-content-muted hover:text-content-primary" aria-label="Limpar pesquisa">
@@ -708,38 +749,57 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
               </button>
             )}
           </div>
-          <select
-            value={sortOrder}
-            onChange={e => setSortOrder(e.target.value)}
-            aria-label="Ordenar produtos"
-            className="shrink-0 max-w-[40%] sm:max-w-none px-3 py-2.5 rounded-xl border border-border-default bg-surface-raised text-content-secondary text-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
-          >
-            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+          {/* Ordenação: botão compacto com o select nativo invisível por cima (abre o seletor do sistema) */}
+          <div className="relative shrink-0 h-11 flex items-center gap-1.5 pl-3 pr-2.5 rounded-xl border border-border-default bg-surface-raised text-content-secondary text-sm focus-within:ring-2 focus-within:ring-green-500/30 focus-within:border-green-500">
+            <ArrowUpDown className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">{SORT_OPTIONS.find(o => o.value === sortOrder)?.label}</span>
+            <span className="sm:hidden">Ordenar</span>
+            <ChevronDown className="w-4 h-4 shrink-0 text-content-muted" />
+            <select
+              value={sortOrder}
+              onChange={e => setSortOrder(e.target.value)}
+              aria-label="Ordenar produtos"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            >
+              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
         </div>
 
         {/* Categorias em chips — o único acesso a categorias no mobile */}
-        {categories.length > 0 && (
-          <div className="-mx-4 sm:mx-0 mb-6 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 px-4 sm:px-0 sm:flex-wrap w-max sm:w-auto" role="group" aria-label="Filtrar por categoria">
-              {[{ id: 'all', name: 'all', label: 'Todos' }, ...categories.map(c => ({ id: c.id, name: c.name, label: c.name }))].map(c => {
-                const active = selectedCategory === c.name;
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedCategory(c.name === 'all' ? 'all' : (active ? 'all' : c.name))}
-                    aria-pressed={active}
-                    className={`shrink-0 px-4 h-10 rounded-full text-sm font-medium border transition-colors whitespace-nowrap ${active
-                      ? 'bg-green-600 border-green-600 text-white'
-                      : 'bg-surface-raised border-border-default text-content-secondary hover:border-green-500 hover:text-green-700 dark:hover:text-green-400'}`}
-                  >
-                    {c.label}
-                  </button>
-                );
-              })}
+        {categories.length > 0 && (() => {
+          // Nº de produtos por categoria; categorias vazias não aparecem
+          const counts = new Map<string, number>();
+          products.forEach(p => { if (p.category) counts.set(p.category, (counts.get(p.category) || 0) + 1); });
+          const chips = [
+            { id: 'all', name: 'all', label: 'Todos', count: products.length },
+            ...categories.filter(c => (counts.get(c.name) || 0) > 0).map(c => ({ id: c.id, name: c.name, label: c.name, count: counts.get(c.name) || 0 })),
+          ];
+          return (
+            <div className="chips-fade -mx-4 sm:mx-0 mb-5 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 px-4 sm:px-0 sm:flex-wrap w-max sm:w-auto" role="group" aria-label="Filtrar por categoria">
+                {chips.map(c => {
+                  const active = selectedCategory === c.name;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedCategory(c.name === 'all' ? 'all' : (active ? 'all' : c.name))}
+                      aria-pressed={active}
+                      className={`shrink-0 inline-flex items-center gap-1.5 h-9 !min-h-0 pl-3.5 pr-2 rounded-full text-[13px] font-medium border transition-colors whitespace-nowrap ${active
+                        ? 'bg-green-600 border-green-600 text-white shadow-sm'
+                        : 'bg-surface-raised border-border-default text-content-secondary hover:border-green-500 hover:text-green-700 dark:hover:text-green-400'}`}
+                    >
+                      {c.label}
+                      <span className={`min-w-[22px] h-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums flex items-center justify-center ${active ? 'bg-white/25 text-white' : 'bg-surface-base text-content-muted'}`}>
+                        {c.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {loading ? (
           <div className={gridClass}>
@@ -813,21 +873,21 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
       <TestimonialsSection />
 
       {/* ── PROGRAMA DE AFILIADOS ── */}
-      <section className="px-4 py-6 sm:py-10">
+      <section className="px-4 sm:px-6 lg:px-8 py-4 sm:py-10">
         <div className="max-w-4xl mx-auto">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-600 to-emerald-700 p-6 sm:p-8 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-600 to-emerald-700 p-5 sm:p-8 text-white shadow-sm">
             <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-white/5 pointer-events-none" />
             <div className="absolute -right-4 bottom-0 w-32 h-32 rounded-full bg-white/5 pointer-events-none" />
-            <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
-                <Gift className="w-7 h-7 text-white" />
+            <div className="relative flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-4 sm:gap-6">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
+                <Gift className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
               </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold mb-1">Programa de Afiliados</h2>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl font-bold mb-1">Programa de Afiliados</h2>
                 <p className="text-green-100 text-sm leading-relaxed max-w-lg">
                   Partilhe o seu link exclusivo e ganhe <strong className="text-white">5% de comissão</strong> em cada compra dos seus referidos. Sem limite de ganhos!
                 </p>
-                <div className="flex flex-wrap gap-4 mt-3 text-xs text-green-200">
+                <div className="hidden sm:flex flex-wrap gap-4 mt-3 text-xs text-green-200">
                   <span className="flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5" /> Comissões ilimitadas</span>
                   <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" /> Partilhe com amigos e família</span>
                   <span className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5" /> Pagamento rápido</span>
@@ -835,7 +895,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
               </div>
               <button
                 onClick={() => (currentUser ? navigate('/minha-conta/afiliado') : setShowLogin(true))}
-                className="w-full sm:w-auto shrink-0 px-6 py-3 bg-white text-green-700 font-semibold rounded-xl hover:bg-green-50 transition-colors text-sm whitespace-nowrap"
+                className="w-full sm:w-auto shrink-0 px-6 h-11 bg-white text-green-700 font-semibold rounded-xl hover:bg-green-50 transition-colors text-sm whitespace-nowrap"
               >
                 {currentUser ? 'Ver o meu painel' : 'Aderir agora'}
               </button>
@@ -846,10 +906,10 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
 
       {/* ── BLOG ── */}
       {blogPosts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 py-10 sm:py-14">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
           <div className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-content-primary">Os nossos artigos</h2>
+              <h2 className="text-lg sm:text-2xl font-bold text-content-primary">Os nossos artigos</h2>
               <p className="text-content-muted text-sm mt-1">Dicas de saúde e bem-estar natural</p>
             </div>
             <Link to="/blog" className="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400 hover:underline">
@@ -857,27 +917,34 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
             </Link>
           </div>
           {/* Mobile: carrossel deslizável; desktop: 3 colunas */}
-          <div className="-mx-4 px-4 md:mx-0 md:px-0 flex md:grid md:grid-cols-3 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-2">
+          <div
+            className="-mx-4 px-4 scroll-px-4 md:mx-0 md:px-0 md:scroll-px-0 flex md:grid md:grid-cols-3 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-2"
+            onScroll={e => {
+              const el = e.currentTarget;
+              const first = el.firstElementChild as HTMLElement | null;
+              if (first) setBlogSlide(Math.round(el.scrollLeft / (first.offsetWidth + 16)));
+            }}
+          >
             {blogPosts.map(post => (
               <Link key={post.id} to={`/blog/${post.slug}`}
-                className="group snap-start shrink-0 w-[80%] sm:w-[60%] md:w-auto bg-surface-raised rounded-2xl overflow-hidden border border-border-default shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col">
+                className="group snap-start shrink-0 w-full sm:w-[48%] md:w-auto bg-surface-raised rounded-2xl overflow-hidden border border-border-default shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col">
                 {post.coverImage ? (
-                  <img src={post.coverImage} alt={post.title} loading="lazy" className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={post.coverImage} alt={post.title} loading="lazy" className="w-full aspect-[16/10] object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
-                  <div className="w-full h-44 bg-gradient-to-br from-green-100 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/20 flex items-center justify-center">
+                  <div className="w-full aspect-[16/10] bg-gradient-to-br from-green-100 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/20 flex items-center justify-center">
                     <Leaf className="w-10 h-10 text-green-400 opacity-40" />
                   </div>
                 )}
-                <div className="p-5 flex flex-col flex-1">
-                  {post.tags?.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {post.tags.slice(0, 2).map((t: string) => (
-                        <span key={t} className="px-2 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-[10px] font-medium">{t}</span>
-                      ))}
-                    </div>
-                  )}
+                <div className="p-4 sm:p-5 flex flex-col flex-1">
+                  {/* Linha das etiquetas sempre reservada → títulos alinhados entre cartões */}
+                  <div className="flex gap-1 h-5 mb-2 overflow-hidden">
+                    {(post.tags || []).slice(0, 2).map((t: string) => (
+                      <span key={t} className="px-2 leading-5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-[11px] font-medium truncate">{t}</span>
+                    ))}
+                  </div>
                   <h3 className="font-bold text-content-primary text-base leading-snug line-clamp-2 mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{post.title}</h3>
-                  {post.summary && <p className="text-content-muted text-sm line-clamp-2 flex-1">{post.summary}</p>}
+                  {post.summary && <p className="text-content-muted text-sm leading-relaxed line-clamp-2">{post.summary}</p>}
+                  <div className="flex-1" />
                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-border-default text-xs text-content-muted">
                     <span>{new Date(post.publishedAt || post.createdAt).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                     <span className="text-green-600 dark:text-green-400 font-medium group-hover:underline">Ler artigo →</span>
@@ -886,11 +953,19 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
               </Link>
             ))}
           </div>
+          {/* Indicadores (mobile: 1 artigo por slide) */}
+          {blogPosts.length > 1 && (
+            <div className="md:hidden flex justify-center gap-1.5 mt-3" aria-hidden="true">
+              {blogPosts.map((post, i) => (
+                <span key={post.id} className={`h-1.5 rounded-full transition-all duration-300 ${i === blogSlide ? 'w-5 bg-green-600' : 'w-1.5 bg-gray-300 dark:bg-gray-600'}`} />
+              ))}
+            </div>
+          )}
         </section>
       )}
 
       {/* ── RASTREAR ENCOMENDA (atalho para /rastrear-encomenda) ── */}
-      <section className="py-6 sm:py-10 px-4">
+      <section className="py-4 sm:py-10 px-4 sm:px-6 lg:px-8">
         <form onSubmit={handleTrackOrder} className="max-w-2xl mx-auto bg-surface-raised rounded-3xl shadow-sm border border-border-default p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-11 h-11 rounded-2xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -906,7 +981,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
               type="text"
               value={trackingInput}
               onChange={e => setTrackingInput(e.target.value.toUpperCase())}
-              placeholder="Ex: NE-20260522-ABC123"
+              placeholder={isMobile ? 'Código de rastreio' : 'Ex: NE-20260522-ABC123'}
               aria-label="Código de rastreio"
               className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border border-border-default bg-surface-base text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-500/40"
             />

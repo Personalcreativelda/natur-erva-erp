@@ -22,6 +22,7 @@ import { normalizeForSearch, normalizeOrderStatus, hasPaymentProof, getPaidAmoun
 import { useTrackAction } from '../../auth/components/TrackedPage';
 import { appSystemConfig } from '../../../config/appConfig';
 import { downloadBlob } from '../../core/services/apiClient';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 interface OrdersProps {
  orders: Order[];
@@ -48,6 +49,7 @@ type SortField = 'date' | 'customer' | 'amount' | 'status' | 'id' | 'sales' | 'd
 type SortDirection = 'asc' | 'desc';
 
 export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, totalOrdersCount, currentUser, onAddOrder, onUpdateStatus, onDeleteOrder, onDeleteOrders, onEditOrder, onImportComplete, showToast }) => {
+ const confirm = useConfirm();
  // Hook para detectar mobile
  const isMobile = useMobile(768);
  const trackAction = useTrackAction();
@@ -361,7 +363,7 @@ export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, tot
  const normalizedPhone = phone.replace(/\D/g, '');
  const normalizedName = normalizeString(name);
 
- // 1. Tentar encontrar por telefone (se tiver mais de 5 dé­gitos)
+ // 1. Tentar encontrar por telefone (se tiver mais de 5 dígitos)
  if (normalizedPhone.length > 5) {
  const foundByPhone = customers.find(c => {
  const customerPhone = c.phone.replace(/\D/g, '');
@@ -430,9 +432,9 @@ export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, tot
  .trim()
  .replace(/\s+/g, ' ')
  .replace(/é/g, 'A')
- .replace(/é‰/g, 'E')
+ .replace(/É/g, 'E')
  .replace(/é/g, 'I')
- .replace(/é“/g, 'O')
+ .replace(/Ó/g, 'O')
  .replace(/éš/g, 'U')
  .replace(/é‡/g, 'C')
  .replace(/éƒ/g, 'A')
@@ -639,7 +641,7 @@ export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, tot
  // Comparação numérica se ambos têm números
  comparison = parseInt(aNumeric, 10) - parseInt(bNumeric, 10);
  } else {
- // Fallback para comparaçéo de strings
+ // Fallback para comparação de strings
  comparison = aOrderNumber.toString().localeCompare(bOrderNumber.toString());
  }
  break;
@@ -903,7 +905,7 @@ export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, tot
 
  duplicateGroups.forEach(group => {
  if (group.keepOrderId) {
- // Adicionar todos os outros pedidos do grupo para remoçéo
+ // Adicionar todos os outros pedidos do grupo para remoção
  group.orders
  .filter(o => o.id !== group.keepOrderId)
  .forEach(o => ordersToDelete.push(o.id));
@@ -1130,10 +1132,10 @@ export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, tot
  );
 
  if (unmatchedItems > 0) {
- const proceed = window.confirm(
- `âš ï¸ ${unmatchedItems} produto(s) não estão associados a produtos do sistema.\n\n` +
- `Os pedidos serão salvos, mas esses itens não terão referência ao produto.\n\n` +
- `Deseja continuar mesmo assim?`
+ const proceed = await confirm(
+ `${unmatchedItems} produto(s) não estão associados a produtos do sistema.\n\n` +
+ `Os pedidos serão guardados, mas esses itens não terão referência ao produto.`,
+ { title: 'Continuar a importação?', confirmLabel: 'Continuar', variant: 'warning' }
  );
  if (!proceed) return;
  }
@@ -1304,7 +1306,7 @@ export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, tot
  customersUpdated: customersUpdatedCount
  });
 
- // Mostrar notificaçéo de conclusão
+ // Mostrar notificação de conclusão
  let message = '';
  if (successCount > 0) {
  message = `âœ… ${successCount} pedido(s) salvos com sucesso!`;
@@ -1547,7 +1549,7 @@ export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, tot
 
  const product = products.find(p => p.id === item.productId);
  if (!product) {
- // Se néo encontrar o produto, permitir atualizar mesmo assim (pode ser produto removido)
+ // Se não encontrar o produto, permitir atualizar mesmo assim (pode ser produto removido)
  setSelectedItems(selectedItems.map((item, i) =>
  i === itemIndex ? { ...item, quantity } : item
  ));
@@ -2082,7 +2084,7 @@ export const Orders: React.FC<OrdersProps> = ({ orders, products, customers, tot
 
  const product = products.find(p => p.id === item.productId);
  if (!product) {
- // Se néo encontrar o produto, permitir atualizar mesmo assim (pode ser produto removido)
+ // Se não encontrar o produto, permitir atualizar mesmo assim (pode ser produto removido)
  handleEditItemChange(index, 'quantity', quantity);
  return;
  }
@@ -2287,7 +2289,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  const startStr = toDateStringInTimezone(start);
  const endStr = toDateStringInTimezone(end);
 
- // Preparar Informações do peré­odo e filtros
+ // Preparar Informações do período e filtros
  const periodLabel = filterPeriod === 'custom'
  ? `${formatDateOnly(start)} a ${formatDateOnly(end)}`
  : filterPeriod === 'today' ? 'Hoje'
@@ -2318,7 +2320,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  }
  filters.push({ label: 'Total de pedidos', value: filteredAndSortedOrders.length.toString() });
 
- // Preparar dados para exportaçéo
+ // Preparar dados para exportação
  const exportData = filteredAndSortedOrders.map(order => {
  const orderDate = new Date(order.createdAt);
  const normalizedStatus = normalizeOrderStatus(order);
@@ -2377,7 +2379,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  : filterPeriod;
  const filename = `pedidos_${periodLabelFile}_${getTodayDateString()}.xlsx`;
  await writeWorkbookToFile(wb, filename);
- showToast(`Exportaçéo para Excel conclué­da: ${filteredAndSortedOrders.length} pedidos`, 'success');
+ showToast(`Exportação para Excel concluída: ${filteredAndSortedOrders.length} pedidos`, 'success');
  } catch (error: any) {
  console.error('Erro ao exportar para Excel:', error);
  showToast('Erro ao exportar para Excel', 'error');
@@ -2403,7 +2405,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  const pdfHeight = pdf.internal.pageSize.getHeight();
  const margin = 10;
 
- // Preparar Informações do peré­odo e filtros
+ // Preparar Informações do período e filtros
  const periodLabel = filterPeriod === 'custom'
  ? `${formatDateOnly(start)} a ${formatDateOnly(end)}`
  : filterPeriod === 'today' ? 'Hoje'
@@ -2561,7 +2563,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
 
  // Salvar arquivo
  pdf.save(filename);
- showToast(`Exportaçéo para PDF conclué­da: ${filteredAndSortedOrders.length} pedidos`, 'success');
+ showToast(`Exportação para PDF concluída: ${filteredAndSortedOrders.length} pedidos`, 'success');
  } catch (error: any) {
  console.error('Erro ao exportar para PDF:', error);
  showToast('Erro ao exportar para PDF', 'error');
@@ -2599,7 +2601,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <FileText className="w-5 h-5 mr-2" />
  <span className="hidden sm:inline">PDF</span>
  </button>
- {/* Botéo Filtros - Apenas no Mobile */}
+ {/* Botão Filtros - Apenas no Mobile */}
  {isMobile && (
  <button
  onClick={() => setShowFilters(!showFilters)}
@@ -2729,7 +2731,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  />
  </div>
 
- {/* Filtro Peré­odo - Oculto no Mobile */}
+ {/* Filtro Período - Oculto no Mobile */}
  <div className="hidden sm:block flex-shrink-0 relative" style={{ zIndex: 50 }}>
  <PeriodFilter
  selectedPeriod={filterPeriod}
@@ -2751,7 +2753,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  />
  </div>
 
- {/* Botéo Limpar Filtros - Oculto no Mobile */}
+ {/* Botão Limpar Filtros - Oculto no Mobile */}
  {(searchQuery || filterPeriod !== 'today' || filterDateFrom || filterDateTo || filterStatus !== 'ALL' || filterDelivery !== 'all' || filterCreatedBy !== 'ALL' || filterPayment !== 'ALL') && (
  <button
  onClick={() => {
@@ -2853,10 +2855,10 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  />
  </div>
 
- {/* Filtro Peré­odo */}
+ {/* Filtro Período */}
  <div>
  <label className="block text-xs font-medium text-content-secondary dark:text-content-secondary mb-2">
- Peré­odo
+ Período
  </label>
  <PeriodFilter
  selectedPeriod={filterPeriod}
@@ -2879,7 +2881,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  </div>
  </div>
 
- {/* Botéo Limpar Filtros */}
+ {/* Botão Limpar Filtros */}
  {(searchQuery || filterPeriod !== 'today' || filterDateFrom || filterDateTo || filterStatus !== 'ALL' || filterDelivery !== 'all' || filterCreatedBy !== 'ALL' || filterPayment !== 'ALL') && (
  <button
  onClick={() => {
@@ -2920,7 +2922,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  notes = notesMatch[1];
  }
  }
- // Remover a parte das notas do externalId para exibiçéo
+ // Remover a parte das notas do externalId para exibição
  const displayExternalId = order.externalId ? order.externalId.split('|NOTAS:')[0] : null;
 
  const toggleItems = (e: React.MouseEvent) => {
@@ -3042,7 +3044,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  })()}
  </div>
 
- {/* Botéo para mostrar/ocultar itens com valores */}
+ {/* Botão para mostrar/ocultar itens com valores */}
  <button
  onClick={toggleItems}
  className="w-full flex items-center justify-between text-sm text-content-secondary hover:text-content-primary mb-2 p-2 rounded-lg hover:bg-surface-base dark:hover:bg-surface-base/50 transition-colors"
@@ -3147,7 +3149,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  )}
  </div>
 
- {/* Footer com açéo */}
+ {/* Footer com ação */}
  <div className="pt-4 border-t border-border-default flex justify-between items-center">
  <span className="text-2xl font-bold text-brand-600 dark:text-brand-400">{formatMoney(order.totalAmount)}</span>
  <Eye className="w-5 h-5 text-content-muted" />
@@ -4321,7 +4323,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  />
  {editOrderData.amountPaid && editOrderData.amountPaid < editOrderData.totalAmount && (
  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
- Dé­vida: {formatMoney(editOrderData.totalAmount - (editOrderData.amountPaid || 0))}
+ Dívida: {formatMoney(editOrderData.totalAmount - (editOrderData.amountPaid || 0))}
  </p>
  )}
  </div>
@@ -4997,7 +4999,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  />
  </div>
 
- {/* Ordenaçéo */}
+ {/* Ordenação */}
  <div className="flex gap-2 mb-4">
  <button
  onClick={() => setVariantSortBy('name')}
@@ -5328,7 +5330,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <div className="text-sm text-content-secondary">
  <strong className="text-content-primary">
  {duplicateGroups.reduce((sum, g) => sum + g.orders.length - 1, 0)} pedido(s)
- </strong> seréo removidos
+ </strong> serão removidos
  </div>
  <div className="flex gap-3">
  <button
@@ -5482,7 +5484,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <div className="text-sm text-content-secondary">
  <strong className="text-content-primary">
  {duplicateGroups.reduce((sum, g) => sum + g.orders.length - 1, 0)} pedido(s)
- </strong> seréo removidos
+ </strong> serão removidos
  </div>
  <div className="flex gap-3">
  <button

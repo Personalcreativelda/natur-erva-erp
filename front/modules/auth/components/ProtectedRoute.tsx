@@ -6,8 +6,8 @@ import { Lock, AlertCircle } from 'lucide-react';
 interface ProtectedRouteProps {
   user: User | null;
   permission?: string;
-  permissions?: string[]; // Para verificar méºltiplas permisséµes (OR)
-  requireAll?: boolean; // Se true, requer todas as permisséµes (AND), senéo requer qualquer uma (OR)
+  permissions?: string[]; // Para verificar múltiplas permissões (OR)
+  requireAll?: boolean; // Se true, requer todas as permissões (AND), senão requer qualquer uma (OR)
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
@@ -26,7 +26,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
         <Lock className="h-12 w-12 text-gray-400" />
-        <p className="text-gray-600 dark:text-gray-400">Vocéª precisa estar autenticado para acessar esta pé¡gina.</p>
+        <p className="text-gray-600 dark:text-gray-400">Você precisa estar autenticado para acessar esta página.</p>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       hasAccess = hasAnyPermission(permissions);
     }
   } else {
-    // Se néo especificou permissão, permitir acesso (compatibilidade)
+    // Se não especificou permissão, permitir acesso (compatibilidade)
     hasAccess = true;
   }
 
@@ -71,7 +71,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
                 Acesso Negado
               </h3>
               <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
-                <p>Vocéª néo tem permissão para acessar esta pé¡gina.</p>
+                <p>Você não tem permissão para acessar esta página.</p>
                 <p className="mt-2">Entre em contato com o administrador para solicitar acesso.</p>
               </div>
             </div>

@@ -40,7 +40,7 @@ const setCached = <T>(key: string, data: T): void => {
 };
 
 const getOrSetCache = async <T>(key: string, fetcher: () => Promise<T>): Promise<T> => {
-  // Verificar se jé¡ existe uma requisiçéo em andamento
+  // Verificar se já existe uma requisição em andamento
   const existing = cache.get(key);
   if (existing?.promise) {
     return existing.promise;
@@ -52,7 +52,7 @@ const getOrSetCache = async <T>(key: string, fetcher: () => Promise<T>): Promise
     return cached;
   }
 
-  // Criar nova requisiçéo
+  // Criar nova requisição
   const promise = fetcher();
   cache.set(key, {
     data: null as any,
@@ -63,7 +63,7 @@ const getOrSetCache = async <T>(key: string, fetcher: () => Promise<T>): Promise
   try {
     const data = await promise;
     setCached(key, data);
-    // Remover promise do cache apé³s completar
+    // Remover promise do cache após completar
     const entry = cache.get(key);
     if (entry) {
       entry.promise = undefined;
@@ -91,12 +91,12 @@ const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}
 const handleSupabaseError = (context: string, error: any) => {
   // Error 42P01: relation (table) does not exist
   if (error?.code === '42P01') {
-    console.warn(`[${context}] Tabelas néo encontradas no Supabase. A usar dados Mock. Execute o SQL em ConfiguraçéƒÂµes.`);
+    console.warn(`[${context}] Tabelas não encontradas no Supabase. A usar dados Mock. Execute o SQL em ConfiguraçéƒÂµes.`);
     return true; // Indicates handled as "missing table"
   }
   // Error PGRST205: table not found in schema cache (PostgREST/Supabase specific)
   if (error?.code === 'PGRST205' || (error?.message && error.message.includes('Could not find the table'))) {
-    console.warn(`[${context}] Tabela néo encontrada no schema cache do Supabase. Execute a migraçéo SQL necessé¡ria.`);
+    console.warn(`[${context}] Tabela não encontrada no schema cache do Supabase. Execute a migração SQL necessária.`);
     return true; // Indicates handled as "missing table"
   }
   // Error 42703: column does not exist

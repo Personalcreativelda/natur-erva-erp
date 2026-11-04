@@ -930,7 +930,7 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  {/* Products View - Cards or Table */}
  {viewMode === 'cards' ? (
  /* Cards View */
- <div key={gridKey} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+ <div key={gridKey} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
  {loading ? (
  <div className="col-span-full text-center py-10 text-content-muted">A carregar...</div>
  ) : filteredAndSortedProducts.length === 0 ? (
@@ -944,78 +944,74 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  const isLowStock = totalStock < minStock;
 
  return (
+ /* Mobile: linha compacta (miniatura + dados + acções). sm+: cartão em grelha */
  <div
  key={product.id}
- className={`bg-surface-raised rounded-lg shadow-md overflow-hidden border-2 transition-all ${isSelected ? 'border-brand-500 dark:border-brand-400' : 'border-transparent'
- }`}
+ className={`bg-surface-raised rounded-2xl overflow-hidden border transition-colors flex sm:flex-col ${isSelected ? 'border-brand-500 ring-1 ring-brand-500' : 'border-border-default'}`}
  >
- <div className="relative aspect-[4/3] bg-surface-base /60">
+ <div className="relative shrink-0 w-24 sm:w-full self-stretch sm:self-auto sm:aspect-[4/3] bg-white dark:bg-surface-base border-r sm:border-r-0 sm:border-b border-border-default">
  {product.image && !brokenImages.has(product.image) ? (
  <img
  src={uploadService.getPublicUrl(product.image)}
  alt={product.name}
- className="w-full h-full object-contain p-2"
+ className="absolute inset-0 w-full h-full object-contain p-1.5 sm:p-3"
+ loading="lazy"
  onError={() => handleImageError(product.image)}
  />
  ) : (
- <div className="w-full h-full flex items-center justify-center">
- <Sprout className="w-12 h-12 text-brand-600 dark:text-brand-400 opacity-40" />
+ <div className="absolute inset-0 flex items-center justify-center">
+ <Sprout className="w-8 h-8 sm:w-12 sm:h-12 text-brand-600 dark:text-brand-400 opacity-40" />
  </div>
  )}
- <div className="absolute top-2 left-2">
+ <label className="absolute top-1 left-1 w-8 h-8 flex items-center justify-center cursor-pointer" aria-label={`Seleccionar ${product.name}`}>
  <input
  type="checkbox"
  checked={isSelected}
  onChange={() => toggleProductSelection(product.id)}
  className="w-4 h-4 text-brand-600 border-border-default rounded focus:ring-brand-500"
  />
+ </label>
  </div>
- </div>
- <div className="p-4">
- <div className="flex items-start justify-between mb-2">
- <div className="flex-1">
- <h3 className="font-semibold text-content-primary">{product.name}</h3>
- <p className="text-sm text-content-muted">{product.category}</p>
- {hasVariants && (
- <p className="text-xs text-brand-600 dark:text-brand-400 mt-1">
- ({product.variants?.length || 0} variações)
+ <div className="flex-1 min-w-0 p-3 sm:p-4 flex flex-col gap-1">
+ <h3 className="text-sm sm:text-base font-semibold text-content-primary leading-snug line-clamp-2">{product.name}</h3>
+ <p className="text-xs text-content-muted truncate">
+ {product.category}
+ {hasVariants && <span className="text-brand-600 dark:text-brand-400"> · {product.variants?.length || 0} variações</span>}
  </p>
- )}
- </div>
- </div>
- <div className="flex items-center justify-between mb-3">
- <div>
- <p className="text-lg font-bold text-content-primary">
+ <div className="flex items-center justify-between gap-2 mt-1">
+ <p className="text-base sm:text-lg font-bold text-content-primary tabular-nums whitespace-nowrap">
  {product.price.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' }).replace(/MZN/gi, 'MT')}
  </p>
- <p className={`text-sm font-medium ${isLowStock
- ? 'text-red-600 dark:text-red-400'
- : totalStock === 0
- ? 'text-content-muted'
- : 'text-content-secondary'
+ <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums ${totalStock === 0
+ ? 'bg-surface-base text-content-muted'
+ : isLowStock
+ ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+ : 'bg-brand-50 text-brand-700 dark:bg-brand-900/20 dark:text-brand-300'
  }`}>
- Stock: {totalStock.toLocaleString('pt-MZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
- </p>
+ Stock {totalStock.toLocaleString('pt-MZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+ </span>
  </div>
- </div>
- <div className="flex items-center gap-2">
+ <div className="flex items-center gap-2 mt-auto pt-2">
  <button
  onClick={() => handleEdit(product)}
- className="flex-1 px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors"
+ className="flex-1 h-10 !min-h-0 inline-flex items-center justify-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition-colors"
  >
- <Edit2 className="w-4 h-4 inline mr-1" />
+ <Edit2 className="w-4 h-4" />
  Editar
  </button>
  <button
  onClick={() => openVariantModal(product)}
- className="px-3 py-2 bg-gray-600 hover:bg-border-strong text-white rounded-lg text-sm font-medium transition-colors"
+ className="w-10 h-10 !min-h-0 inline-flex items-center justify-center bg-surface-base hover:bg-surface-overlay text-content-secondary border border-border-default rounded-xl transition-colors"
  title="Gerir variações"
+ aria-label="Gerir variações"
  >
  <Layers className="w-4 h-4" />
  </button>
  <button
  onClick={() => handleDelete(product.id)}
- className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+ className="w-10 h-10 !min-h-0 inline-flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-xl transition-colors"
+ title="Eliminar"
+ aria-label="Eliminar produto"
  >
  <Trash2 className="w-4 h-4" />
  </button>

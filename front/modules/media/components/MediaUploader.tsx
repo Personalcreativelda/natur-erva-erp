@@ -38,12 +38,12 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
  const newFiles: FileWithPreview[] = [];
  const newErrors: { file: File; error: string }[] = [];
 
- // Validar néºmero mé¡ximo de arquivos
+ // Validar número máximo de arquivos
  const totalFiles = files.length + fileArray.length;
  if (totalFiles > maxFiles) {
  newErrors.push({
  file: fileArray[0],
- error: `Mé¡ximo de ${maxFiles} arquivos permitidos.`
+ error: `Máximo de ${maxFiles} arquivos permitidos.`
  });
  setErrors(prev => [...prev, ...newErrors]);
  return;
@@ -52,7 +52,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
  fileArray.forEach((file) => {
  const validation = validateMediaFile(file);
  if (!validation.valid) {
- newErrors.push({ file, error: validation.error || 'Arquivo invé¡lido' });
+ newErrors.push({ file, error: validation.error || 'Arquivo inválido' });
  return;
  }
 
@@ -119,7 +119,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
  try {
  await onUpload(files);
- // Limpar arquivos apé³s upload bem-sucedido
+ // Limpar arquivos após upload bem-sucedido
  files.forEach(file => {
  if (file.preview) {
  URL.revokeObjectURL(file.preview);
@@ -186,7 +186,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
  </button>
  </p>
  <p className="text-xs text-content-muted mt-1">
- Imagens (JPEG, PNG, WEBP, GIF, SVG, ICO) até© 5MB ou Documentos (PDF, Word, Excel, PowerPoint, TXT, RTF) até© 10MB
+ Imagens (JPEG, PNG, WEBP, GIF, SVG, ICO) até 5MB ou Documentos (PDF, Word, Excel, PowerPoint, TXT, RTF) até 10MB
  </p>
  </div>
  </div>
@@ -274,7 +274,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
  {errors.length > 0 && (
  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
  <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
- Erros de validaçéo:
+ Erros de validação:
  </p>
  <ul className="list-disc list-inside space-y-1 text-xs text-red-700 dark:text-red-300">
  {errors.map((error, index) => (

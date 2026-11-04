@@ -26,6 +26,7 @@ import { LotDetailModal } from '../components/modals/LotDetailModal';
 import { LotEditModal } from '../components/modals/LotEditModal';
 import { LotIntegrityModal } from '../components/modals/LotIntegrityModal';
 import { ConfirmDialog } from '../../core/components/ui/ConfirmDialog';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 interface StockLotsPageProps {
  products: Product[];
@@ -36,6 +37,7 @@ type SortField = 'productName' | 'variantName' | 'quantity' | 'unitCost' | 'tota
 type GroupBy = 'none' | 'product' | 'source' | 'date';
 
 export const StockLotsPage: React.FC<StockLotsPageProps> = ({ products, showToast }) => {
+ const confirm = useConfirm();
  const isMobile = useMobile(768);
  const [lots, setLots] = useState<StockLotRow[]>([]);
  const [loading, setLoading] = useState(true);
@@ -259,7 +261,7 @@ export const StockLotsPage: React.FC<StockLotsPageProps> = ({ products, showToas
  };
 
  const handleDeleteSingle = async (lot: StockLotRow) => {
- if (!window.confirm(`Eliminar o lote "${lot.productName} - ${lot.variantName}"? Esta acção é irreversível.`)) return;
+ if (!(await confirm(`O lote "${lot.productName} - ${lot.variantName}" será eliminado. Esta acção é irreversível.`, { title: 'Eliminar lote?', confirmLabel: 'Eliminar', variant: 'danger' }))) return;
  setDeletingId(lot.id);
  try {
  const result = await stockLotsService.deleteLot(lot.id);

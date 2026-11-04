@@ -366,7 +366,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
  },
  ];
 
- // Filtrar itens baseado apenas nas permisséµes (sistema simplificado)
+ // Filtrar itens baseado apenas nas permissões (sistema simplificado)
  const filteredMenuItems = useMemo(() => {
  return allMenuItems.filter(item => {
  // 1. Check Module status

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import { Header } from '../../modules/core/components/layout/Header';
 import { Footer } from '../../modules/core/components/layout/Footer';
@@ -75,7 +76,10 @@ const PublicLayoutContent: React.FC<PublicLayoutProps> = ({
         onProfileClick={effectiveOnProfileClick}
       />
       <main className="flex-1 shop-main-offset">
-        <Outlet />
+        {/* Só o conteúdo mostra o carregamento; o cabeçalho e o rodapé ficam no lugar */}
+        <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center" role="status" aria-label="A carregar"><Loader2 className="w-7 h-7 animate-spin text-green-600" /></div>}>
+          <Outlet />
+        </Suspense>
       </main>
       <Footer isShopMode={true} />
       <CartDrawer />

@@ -100,7 +100,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
  if (newCustomer) {
  foundCustomer = newCustomer;
 
- // Vincular cliente ao perfil do usué¡rio
+ // Vincular cliente ao perfil do usuário
  if (supabase && isSupabaseConfigured()) {
  const { error: updateError } = await supabase
  .from('profiles')
@@ -118,7 +118,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
  }
  } catch (error) {
  console.warn('Erro ao criar cliente automaticamente:', error);
- // Continuar sem cliente - seré¡ mostrada mensagem apropriada
+ // Continuar sem cliente - será mostrada mensagem apropriada
  }
  }
 
@@ -187,7 +187,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
  <div className={`bg-surface-raised rounded-lg shadow ${isMobile ? 'p-4' : 'p-8'} text-center`}>
  <UserIcon className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-content-muted mx-auto ${isMobile ? 'mb-3' : 'mb-4'}`} />
  <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-content-primary ${isMobile ? 'mb-2' : 'mb-2'}`}>
- Perfil néo vinculado a um cliente
+ Perfil não vinculado a um cliente
  </h2>
  <p className={`${isMobile ? 'text-sm' : 'text-base'} text-content-secondary ${isMobile ? 'mb-4' : 'mb-6'}`}>
  Para acessar todas as funcionalidades do perfil (pontos, conquistas, afiliados), é necessário vincular sua conta a um cliente no sistema.
@@ -226,7 +226,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
 
  return (
  <>
- {/* Toast Container - apenas se néo tiver showToast externo */}
+ {/* Toast Container - apenas se não tiver showToast externo */}
  {!showToast && <ToastContainer toasts={toasts} onClose={removeToast} />}
 
  {/* Content - O header e footer são fornecidos pelo Shop */}
@@ -265,7 +265,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
  <p className={`${isMobile ? 'text-xs' : 'text-base'} text-content-secondary truncate`}>{user.email || user.phone}</p>
  </div>
  </div>
- {/* Botéo de Logout - Mobile */}
+ {/* Botão de Logout - Mobile */}
  {onLogout && (
  <button
  onClick={onLogout}

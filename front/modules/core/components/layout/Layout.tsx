@@ -42,10 +42,10 @@ export const Layout: React.FC<LayoutProps> = ({
  // Removed duplicate state
 
 
- // Estado do sidebar com persistéªncia no localStorage
+ // Estado do sidebar com persistência no localStorage
  const [sidebarOpen, setSidebarOpen] = useState(() => {
  const saved = localStorage.getItem('sidebarOpen');
- return saved ? saved === 'true' : false; // Padréo: fechado
+ return saved ? saved === 'true' : false; // Padrão: fechado
  });
 
  // Salvar estado do sidebar no localStorage quando mudar
@@ -319,7 +319,7 @@ export const Layout: React.FC<LayoutProps> = ({
  return enabledModules[configId] !== false;
  };
 
- // Mé³dulos administrativos que sempre aparecem para admins (mesmo com "all" selecionado)
+ // Módulos administrativos que sempre aparecem para admins (mesmo com "all" selecionado)
  const adminModules = new Set(['users', 'roles', 'locations-management', 'admin-tracking', 'media', 'profile']);
 
  // Filtrar itens baseado apenas nas permissões (sincronizado com o Sidebar)
@@ -675,7 +675,7 @@ export const Layout: React.FC<LayoutProps> = ({
  </button>
  </div>
 
- {/* Botéo Voltar ao Site */}
+ {/* Botão Voltar ao Site */}
  <button
  onClick={() => {
  setMobileMenuOpen(false);
@@ -687,7 +687,7 @@ export const Layout: React.FC<LayoutProps> = ({
  <span>Voltar ao Site</span>
  </button>
 
- {/* Botéo Sair */}
+ {/* Botão Sair */}
  <button
  onClick={handleLogout}
  className="w-full flex items-center space-x-2 px-3 py-2 border border-border-default rounded-lg text-sm font-medium text-content-secondary hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 hover:border-red-100 transition-colors"

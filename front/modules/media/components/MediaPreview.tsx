@@ -120,7 +120,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
  </div>
  </div>
 
- {/* Conteéºdo */}
+ {/* Conteúdo */}
  <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-surface-base">
  {isImage ? (
  <img
@@ -137,7 +137,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
  ) : (
  <div className="text-center py-12">
  <p className="text-content-muted mb-4">
- Preview néo disponé­vel para este tipo de arquivo
+ Preview não disponível para este tipo de arquivo
  </p>
  <div className="flex gap-2 justify-center">
  <button

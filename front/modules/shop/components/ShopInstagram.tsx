@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Instagram, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { FaInstagram } from 'react-icons/fa6';
 
 const API_URL = (import.meta.env.VITE_API_URL as string) || '';
 
@@ -79,18 +80,18 @@ export const ShopInstagram: React.FC = () => {
   const next = () => { stopAuto(); scrollToIndex(activeDot + 1); };
 
   return (
-    <section className="py-10 sm:py-14 bg-surface-base">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="py-8 sm:py-14 bg-surface-base">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
         <a
           href={`https://www.instagram.com/${data.username}/`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 mb-8 group"
+          className={`${data.configured && posts.length > 0 ? 'flex' : 'hidden'} items-center justify-center gap-2 mb-6 sm:mb-8 group`}
         >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center">
-            <Instagram className="w-4 h-4 text-white" />
+            <FaInstagram className="w-4 h-4 text-white" />
           </div>
           <span className="text-lg font-semibold text-gray-800 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
             Siga @{data.username}
@@ -134,7 +135,7 @@ export const ShopInstagram: React.FC = () => {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover/post:bg-black/25 transition-colors flex items-center justify-center">
-                    <Instagram className="w-7 h-7 text-white opacity-0 group-hover/post:opacity-100 transition-opacity drop-shadow-lg" />
+                    <FaInstagram className="w-7 h-7 text-white opacity-0 group-hover/post:opacity-100 transition-opacity drop-shadow-lg" />
                   </div>
                 </a>
               ))}
@@ -173,24 +174,23 @@ export const ShopInstagram: React.FC = () => {
 
         ) : (
           /* Fallback — token não configurado */
-          <div className="flex flex-col items-center gap-5 py-6">
-            <a
-              href={`https://www.instagram.com/${data.username}/`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex flex-col items-center gap-4"
-            >
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center group-hover:scale-105 transition-transform shadow-xl shadow-pink-400/30">
-                <Instagram className="w-12 h-12 text-white" />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-gray-800 dark:text-white text-lg">@{data.username}</p>
-                <p className="text-sm text-pink-600 dark:text-pink-400 mt-1 group-hover:underline">
-                  Ver publicações no Instagram →
-                </p>
-              </div>
-            </a>
-          </div>
+          <a
+            href={`https://www.instagram.com/${data.username}/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group max-w-2xl mx-auto flex items-center gap-3 sm:gap-4 rounded-2xl bg-surface-raised border border-border-default p-3 sm:p-4 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <span className="shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center">
+              <FaInstagram className="w-6 h-6 text-white" />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm sm:text-base font-semibold text-content-primary truncate">Siga @{data.username}</span>
+              <span className="block text-xs sm:text-sm text-content-muted">Novidades, dicas e promoções no Instagram</span>
+            </span>
+            <span className="shrink-0 inline-flex items-center h-10 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold">
+              Seguir
+            </span>
+          </a>
         )}
       </div>
     </section>

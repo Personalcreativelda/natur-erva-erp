@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Minus, ShoppingCart, CheckCircle, X, Printer, Store, LogOut, Clock, ScanLine, Smartphone, Wifi, ChevronLeft } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, CheckCircle, X, Printer, Store, LogOut, Clock, ScanLine, Smartphone, Wifi, ChevronLeft, Trash2 } from 'lucide-react';
 import api from '../../core/services/apiClient';
 import { useConfirm } from '../../core/contexts/ConfirmContext';
 import { orderService } from '../services/orderService';
@@ -691,10 +691,12 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
 
  // ── POS Principal ─────────────────────────────────────────────────────────────
  return (
- <div className="flex flex-col overflow-hidden bg-surface-base -mx-4 -mt-4 md:mx-0 md:mt-0 md:h-[calc(100vh-64px)]">
+ // Mobile: ecrã fixo entre o cabeçalho e a barra de navegação (.pos-mobile-viewport em index.html) —
+ // só a grelha desliza e a barra do carrinho fica sempre visível
+ <div className="pos-mobile-viewport flex flex-col overflow-hidden bg-surface-base md:h-[calc(100vh-64px)]">
 
  {/* Barra de sessão */}
- <div className="flex items-center gap-2 px-3 md:px-4 py-2 bg-brand-600 text-white text-sm shrink-0">
+ <div className="flex items-center gap-2 px-4 h-11 bg-brand-600 text-white text-sm shrink-0">
  <Store className="w-4 h-4 shrink-0" />
  <span className="font-medium truncate max-w-[110px] sm:max-w-none">{(session as PosSession).cashier_name}</span>
  <span className="hidden md:inline text-brand-200">·</span>
@@ -703,7 +705,7 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  <span className="hidden md:inline text-brand-200">·</span>
  <span className="hidden md:inline text-brand-100">Fundo: {fmt((session as PosSession).initial_amount)}</span>
  <button onClick={handleCloseSession} disabled={closingSession}
- className="ml-auto flex items-center gap-1.5 px-3 py-1 bg-surface-raised/15 hover:bg-surface-raised/25 rounded-lg transition-colors disabled:opacity-50 text-xs font-medium whitespace-nowrap">
+ className="ml-auto flex items-center gap-1.5 h-8 !min-h-0 px-3 bg-white/15 hover:bg-white/25 rounded-full transition-colors disabled:opacity-50 text-xs font-semibold whitespace-nowrap">
  <LogOut className="w-3.5 h-3.5" />
  <span className="hidden sm:inline">{closingSession ? 'A fechar...' : 'Fechar Caixa'}</span>
  <span className="sm:hidden">{closingSession ? '...' : 'Fechar'}</span>
@@ -865,32 +867,37 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  <div className="flex flex-col flex-1 overflow-hidden min-h-0">
  {/* Pesquisa + scan */}
  <div className="flex gap-2 px-3 pt-3 pb-2 shrink-0">
- <div className="relative flex-1">
- <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted" />
- <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar produto..."
- className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-border-default bg-surface-raised text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+ <div className="relative flex-1 min-w-0">
+ <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted pointer-events-none" />
+ <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar produto"
+ className="w-full h-11 pl-9 pr-3 rounded-xl border border-border-default bg-surface-raised text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none" />
  </div>
- <button onClick={() => setShowScanner(true)} title="Câmera"
- className="px-3 py-2 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-lg transition-colors shrink-0">
+ <button onClick={() => setShowScanner(true)} title="Câmera" aria-label="Ler código com a câmara"
+ className="w-11 h-11 flex items-center justify-center bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl transition-colors shrink-0">
  <ScanLine className="w-5 h-5" />
  </button>
- <button onClick={() => remoteSession ? setShowRemoteModal(true) : startRemoteScanner()} title="Scanner remoto"
- className={`px-3 py-2 rounded-lg transition-colors shrink-0 ${remoteSession ? 'bg-green-600 text-white' : 'bg-surface-base text-content-secondary'}`}>
+ <button onClick={() => remoteSession ? setShowRemoteModal(true) : startRemoteScanner()} title="Scanner remoto" aria-label="Scanner remoto pelo telemóvel"
+ className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-colors shrink-0 ${remoteSession ? 'bg-green-600 border-green-600 text-white' : 'bg-surface-raised border-border-default text-content-secondary'}`}>
  {remoteSession ? <Wifi className="w-5 h-5" /> : <Smartphone className="w-5 h-5" />}
  </button>
  </div>
 
  {/* Grelha de produtos */}
  <div className="flex-1 overflow-y-auto min-h-0 px-3 pb-2">
- <div className="grid grid-cols-2 gap-2.5">
- {filtered.map(p => (
- <button key={p.id}
+ <div className="grid grid-cols-2 gap-2">
+ {filtered.map(p => {
+ const inCart = cart.filter(c => c.productId === p.id).reduce((sum, c) => sum + c.quantity, 0);
+ // Última linha do carrinho deste produto (para o botão "−" no cartão)
+ const lastIdx = cart.map(c => c.productId).lastIndexOf(p.id);
+ return (
+ <div key={p.id} className="relative">
+ <button
  onClick={() => p.hasVariants && p.variants?.length ? setVariantPicker(p) : (() => { const ep = getEffectivePrice(p); addItem(p.id, p.name, ep.price, p.unit, p.stock, undefined, undefined, p.image, ep.isPromo, ep.originalPrice); })()}
- className="bg-surface-raised rounded-xl border border-border-default p-2.5 text-left active:scale-95 transition-transform">
+ className={`w-full h-full bg-surface-raised rounded-2xl border p-2 text-left active:scale-[0.97] transition-transform ${inCart > 0 ? 'border-brand-500 ring-1 ring-brand-500' : 'border-border-default'}`}>
  {p.image
- ? <img src={p.image} alt={p.name} className="w-full aspect-square object-cover rounded-lg mb-2" />
- : <div className="w-full aspect-square bg-surface-base rounded-lg mb-2 flex items-center justify-center text-2xl">🌿</div>}
- <p className="text-xs font-medium text-content-primary truncate">{p.name}</p>
+ ? <img src={p.image} alt={p.name} loading="lazy" className="w-full aspect-[4/3] object-contain bg-white rounded-xl mb-2" />
+ : <div className="w-full aspect-[4/3] bg-surface-base rounded-xl mb-2 flex items-center justify-center text-2xl">🌿</div>}
+ <p className="text-[13px] font-medium text-content-primary leading-snug line-clamp-2 min-h-[2.4em]">{p.name}</p>
  {(() => { const ep = getEffectivePrice(p); return ep.isPromo ? (
  <div className="mt-0.5">
  <span className="text-xs text-orange-600 font-bold">{fmt(ep.price)}</span>
@@ -898,28 +905,45 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  <span className="ml-1 text-[9px] bg-orange-100 text-orange-600 px-1 rounded font-medium">PROMO</span>
  </div>
  ) : <p className="text-xs text-brand-600 font-semibold mt-0.5">{fmt(p.price)}</p>; })()}
- <p className="text-[10px] text-content-muted mt-0.5">Stock: {p.stock} {p.unit}</p>
+ <p className={`text-[11px] mt-0.5 ${p.stock <= 0 ? 'text-red-600' : 'text-content-muted'}`}>Stock: {p.stock} {p.unit}</p>
  </button>
- ))}
+ {/* No carrinho: "−" retira uma unidade (chegando a 0 remove o produto) */}
+ {inCart > 0 && lastIdx >= 0 && (
+ <div className="absolute top-1.5 right-1.5 z-10 flex items-center h-8 rounded-full bg-brand-600 text-white shadow-md">
+ <button
+ type="button"
+ onClick={() => setQty(lastIdx, cart[lastIdx].quantity - 1)}
+ className="w-8 h-8 !min-h-0 flex items-center justify-center rounded-full active:bg-brand-800"
+ aria-label={`Retirar uma unidade de ${p.name}`}
+ >
+ {inCart === 1 ? <Trash2 className="w-3.5 h-3.5" /> : <Minus className="w-4 h-4" />}
+ </button>
+ <span className="pr-3 pl-0.5 text-sm font-bold tabular-nums">{inCart}</span>
+ </div>
+ )}
+ </div>
+ );
+ })}
  {filtered.length === 0 && <p className="col-span-full text-center text-content-muted py-12 text-sm">Nenhum produto encontrado</p>}
  </div>
  </div>
 
  {/* Barra inferior → abre carrinho */}
- <div className="shrink-0 bg-surface-raised border-t border-border-default px-3 py-3">
- <button onClick={() => setMobileCartOpen(true)}
- className="w-full flex items-center gap-3 px-4 py-3 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl transition-colors">
- <div className="relative">
- <ShoppingCart className="w-5 h-5" />
- {cart.length > 0 && (
- <span className="absolute -top-2 -right-2 bg-surface-raised text-brand-600 text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
- {cart.reduce((s, c) => s + c.quantity, 0)}
- </span>
- )}
+ <div className="shrink-0 bg-surface-raised border-t border-border-default px-3 py-2.5">
+ {cart.length === 0 ? (
+ <div className="h-12 flex items-center justify-center gap-2 rounded-xl bg-surface-base text-content-muted text-sm">
+ <ShoppingCart className="w-4 h-4" /> Toque num produto para o adicionar
  </div>
- <span className="font-semibold flex-1 text-left">Ver Carrinho</span>
- <span className="font-bold text-base">{fmt(total)}</span>
+ ) : (
+ <button onClick={() => setMobileCartOpen(true)}
+ className="w-full h-12 flex items-center gap-3 pl-3 pr-4 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl transition-colors">
+ <span className="min-w-[28px] h-7 px-2 rounded-lg bg-white/20 flex items-center justify-center text-sm font-bold tabular-nums">
+ {cart.reduce((sum, c) => sum + c.quantity, 0)}
+ </span>
+ <span className="font-semibold flex-1 text-left">Ver carrinho</span>
+ <span className="font-bold text-base tabular-nums">{fmt(total)}</span>
  </button>
+ )}
  </div>
  </div>
  ) : (

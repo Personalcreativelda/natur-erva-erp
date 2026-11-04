@@ -12,6 +12,7 @@ import { useLanguage } from '../../core/contexts/LanguageContext';
 import { useAppAuth } from '../../auth/hooks/useAppAuth';
 import { formatDateOnly, formatDateTime } from '../../core/utils/dateUtils';
 import { PageShell } from '../../core/components/layout/PageShell';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 interface StockAuditProps {
  products: Product[];
@@ -37,6 +38,7 @@ const STATUS_COLORS: Record<StockAuditStatus, string> = {
 };
 
 export const StockAuditPage: React.FC<StockAuditProps> = ({ products, showToast }) => {
+ const confirm = useConfirm();
  const navigate = useNavigate();
  const { t } = useLanguage();
  const { currentUser } = useAppAuth();
@@ -79,7 +81,7 @@ export const StockAuditPage: React.FC<StockAuditProps> = ({ products, showToast 
  const message = audit.status !== StockAuditStatus.DRAFT && isSuperAdmin
  ? (t.stock.confirmDeleteAuditAnyStatus || 'Eliminar esta auditoria? Esta ação não pode ser desfeita.')
  : `${t.stock.confirmDeleteAudit} ${audit.auditDate}?`;
- if (!window.confirm(message)) return;
+ if (!(await confirm(message, { title: 'Eliminar auditoria?', confirmLabel: 'Eliminar', variant: 'danger' }))) return;
 
  const allowAnyStatus = isSuperAdmin && audit.status !== StockAuditStatus.DRAFT;
  const result = await stockAuditService.deleteAudit(audit.id, { allowAnyStatus });

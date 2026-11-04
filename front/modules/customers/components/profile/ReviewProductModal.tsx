@@ -3,7 +3,7 @@ import { X, Star, Save } from 'lucide-react';
 import { dataService } from '../../../core/services/dataService';
 import { customerProfileService } from '../../services/customerProfileService';
 import { Product, Order } from '../../../core/types/types';
-import { Toast } from '../ui/Toast';
+import type { Toast } from '../../../core/components/ui/Toast';
 
 interface ReviewProductModalProps {
  customerId: string;
@@ -36,7 +36,7 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  o => o.customerId === customerId || o.customerPhone === customerId
  );
 
- // Extrair produtos éºnicos dos pedidos
+ // Extrair produtos únicos dos pedidos
  const purchasedProductIds = new Set<string>();
  customerOrders.forEach(order => {
  if (order.items) {
@@ -57,9 +57,9 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  setProducts(purchasedProducts);
  } catch (error) {
  console.error('Erro ao carregar produtos comprados:', error);
- // Fallback: mostrar todos os produtos se néo conseguir filtrar
+ // Fallback: mostrar todos os produtos se não conseguir filtrar
  dataService.getProducts().then(ps => setProducts(ps));
- showToast?.('Carregando produtos disponé­veis...', 'info');
+ showToast?.('Carregando produtos disponíveis...', 'info');
  }
  };
 
@@ -72,7 +72,7 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  }
 
  if (rating < 1 || rating > 5) {
- showToast?.('Avaliaçéo deve ser entre 1 e 5 estrelas', 'warning');
+ showToast?.('Avaliação deve ser entre 1 e 5 estrelas', 'warning');
  return;
  }
 
@@ -87,7 +87,7 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  );
 
  if (reviewResult) {
- // Registrar açéo de avaliar produto
+ // Registrar ação de avaliar produto
  const actionResult = await customerProfileService.recordAction(
  customerId,
  'avaliar_produto',
@@ -96,16 +96,16 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  );
 
  if (actionResult) {
- showToast?.('Avaliaçéo enviada! Ganhou 20 pontos.', 'success');
+ showToast?.('Avaliação enviada! Ganhou 20 pontos.', 'success');
  onSuccess();
  onClose();
  } else {
- showToast?.('Avaliaçéo criada, mas houve erro ao registrar pontos. Tente novamente.', 'warning');
+ showToast?.('Avaliação criada, mas houve erro ao registrar pontos. Tente novamente.', 'warning');
  onSuccess();
  onClose();
  }
  } else {
- showToast?.('Erro ao criar avaliaçéo. Tente novamente.', 'error');
+ showToast?.('Erro ao criar avaliação. Tente novamente.', 'error');
  }
  } catch (error: any) {
  console.error('Erro ao avaliar produto:', error);
@@ -162,7 +162,7 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  ))
  ) : (
  <p className="text-center text-content-muted py-8">
- Nenhum produto comprado encontrado. Vocéª precisa comprar produtos antes de avaliar.
+ Nenhum produto comprado encontrado. Você precisa comprar produtos antes de avaliar.
  </p>
  )}
  </div>
@@ -173,7 +173,7 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  <>
  <div>
  <label className="block text-sm font-medium text-content-secondary mb-2">
- Avaliaçéo *
+ Avaliação *
  </label>
  <div className="flex items-center space-x-2">
  {[1, 2, 3, 4, 5].map(star => (
@@ -201,13 +201,13 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  {/* Comment */}
  <div>
  <label className="block text-sm font-medium text-content-secondary mb-2">
- Comenté¡rio (opcional)
+ Comentário (opcional)
  </label>
  <textarea
  value={comment}
  onChange={(e) => setComment(e.target.value)}
  className="w-full px-4 py-2 border border-border-default rounded-lg bg-surface-raised text-content-primary focus:ring-2 focus:ring-green-500 focus:border-transparent"
- placeholder="Compartilhe sua opiniéo sobre este produto..."
+ placeholder="Compartilhe sua opinião sobre este produto..."
  rows={4}
  />
  </div>
@@ -217,7 +217,7 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  {/* Reward info */}
  <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
  <p className="text-sm text-green-800 dark:text-green-300">
- ðŸŽ <strong>Recompensa:</strong> Ao avaliar um produto, vocéª ganharé¡ <strong>20 pontos</strong>!
+ ðŸŽ <strong>Recompensa:</strong> Ao avaliar um produto, você ganhará <strong>20 pontos</strong>!
  </p>
  </div>
 
@@ -243,7 +243,7 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  ) : (
  <>
  <Save className="w-4 h-4" />
- <span>Enviar Avaliaçéo e Ganhar Pontos</span>
+ <span>Enviar Avaliação e Ganhar Pontos</span>
  </>
  )}
  </button>

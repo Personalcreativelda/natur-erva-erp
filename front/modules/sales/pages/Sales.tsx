@@ -203,7 +203,7 @@ export const Sales: React.FC<SalesProps> = ({
  // ------------------------------------------------------------------
  // FILTER HELPERS
  // ------------------------------------------------------------------
- // Funçéo auxiliar para obter intervalo de datas do peré­odo
+ // Função auxiliar para obter intervalo de datas do período
  const getDateRangeFromPeriod = (period: PeriodOption, customStart?: string, customEnd?: string): { start: Date; end: Date } => {
  const today = new Date();
  let start = new Date();
@@ -374,13 +374,13 @@ export const Sales: React.FC<SalesProps> = ({
  pdf.text('Itens', margin, yPos);
  yPos += 6;
 
- // Calcular largura disponé­vel e proporçéµes das colunas
+ // Calcular largura disponível e proporções das colunas
  const availableWidth = pdfWidth - (margin * 2);
  const colProportions = [3.0, 1.2, 0.8, 1.0, 1.5, 1.5]; // Product, Variação, Qtd, Unit, Unit Price, Total
  const totalProportion = colProportions.reduce((sum, prop) => sum + prop, 0);
  const colWidths = colProportions.map(prop => (prop / totalProportion) * availableWidth);
  
- // Calcular posiçéµes X das colunas
+ // Calcular posições X das colunas
  const colX: number[] = [margin];
  for (let i = 1; i < colWidths.length; i++) {
  colX.push(colX[i - 1] + colWidths[i - 1]);
@@ -391,7 +391,7 @@ export const Sales: React.FC<SalesProps> = ({
  pdf.setFont('helvetica', 'bold');
  pdf.setTextColor(255, 255, 255); // Branco
  
- // Desenhar reté¢ngulo de fundo para cabeçalho
+ // Desenhar retângulo de fundo para cabeçalho
  pdf.setFillColor(...colors.primaryRgb);
  pdf.rect(margin, yPos - 4, availableWidth, 6, 'F');
  
@@ -425,7 +425,7 @@ export const Sales: React.FC<SalesProps> = ({
  }
  }
 
- // Items com alterné¢ncia de cores (itens + linhas de subtotal)
+ // Items com alternância de cores (itens + linhas de subtotal)
  pdf.setFont('helvetica', 'normal');
  pdf.setFontSize(9);
  pdf.setTextColor(0, 0, 0); // Preto
@@ -606,7 +606,7 @@ export const Sales: React.FC<SalesProps> = ({
  showToast('Planilha carregada da URL! Processando...', 'success');
  } catch (urlError: any) {
  console.error('Erro ao carregar URL:', urlError);
- showToast(`Erro ao carregar URL: ${urlError.message || 'Erro desconhecido'}. Verifique se a URL esté¡ acessé­vel publicamente.`, 'error');
+ showToast(`Erro ao carregar URL: ${urlError.message || 'Erro desconhecido'}. Verifique se a URL está acessível publicamente.`, 'error');
  setIsImporting(false);
  return;
  }
@@ -626,7 +626,7 @@ export const Sales: React.FC<SalesProps> = ({
  return;
  }
  } else {
- showToast('Formato de arquivo néo suportado. Use CSV ou Excel (.csv, .xlsx, .xls)', 'error');
+ showToast('Formato de arquivo não suportado. Use CSV ou Excel (.csv, .xlsx, .xls)', 'error');
  setIsImporting(false);
  return;
  }
@@ -694,15 +694,15 @@ export const Sales: React.FC<SalesProps> = ({
  await worker.terminate();
  
  if (!text || text.trim().length === 0) {
- showToast('Néo foi possé­vel extrair texto da imagem. Tente uma imagem com melhor qualidade.', 'error');
+ showToast('Não foi possível extrair texto da imagem. Tente uma imagem com melhor qualidade.', 'error');
  setIsImporting(false);
  setOcrProgress(null);
  return;
  }
  
  // Debug: log extracted text (first 500 chars)
- console.log('Texto extraé­do pelo OCR (primeiros 500 caracteres):', text.substring(0, 500));
- console.log('Texto completo extraé­do:', text);
+ console.log('Texto extraído pelo OCR (primeiros 500 caracteres):', text.substring(0, 500));
+ console.log('Texto completo extraído:', text);
  
  setOcrProgress({ status: 'Processando texto extraído...', progress: 98 });
  
@@ -735,17 +735,17 @@ export const Sales: React.FC<SalesProps> = ({
  // Compare dates
  if (existingDate !== previewDate) return false;
  
- // Toleré¢ncia para valores moneté¡rios (0.01 MT)
+ // Tolerância para valores monetários (0.01 MT)
  const amountTolerance = 0.01;
  const salesDiff = Math.abs(existingSale.totalSales - previewSale.totalSales);
  const deliveriesDiff = Math.abs((existingSale.totalDeliveries || 0) - (previewSale.totalDeliveries || 0));
  
- // Se os valores são muito diferentes, néo é© duplicado
+ // Se os valores são muito diferentes, não é duplicado
  if (salesDiff > amountTolerance || deliveriesDiff > amountTolerance) return false;
  
- // Comparar néºmero de itens (se for muito diferente, pode néo ser o mesmo resumo)
+ // Comparar número de itens (se for muito diferente, pode não ser o mesmo resumo)
  const itemsCountDiff = Math.abs(existingSale.items.length - previewSale.items.length);
- if (itemsCountDiff > 2) return false; // Permite diferença de até© 2 itens
+ if (itemsCountDiff > 2) return false; // Permite diferença de até 2 itens
  
  return true;
  });
@@ -761,7 +761,7 @@ export const Sales: React.FC<SalesProps> = ({
  const duplicateCount = previewData.sales.length - totalSales;
  
  if (totalSales === 0) {
- showToast('Todos os resumos são duplicados. Nenhum resumo seré¡ salvo.', 'warning');
+ showToast('Todos os resumos são duplicados. Nenhum resumo será salvo.', 'warning');
  return;
  }
  
@@ -783,7 +783,7 @@ export const Sales: React.FC<SalesProps> = ({
  
  // Double check if duplicate (shouldn't happen if we filtered, but just in case)
  if (isDuplicateSale(previewSale)) {
- duplicates.push(`Data ${previewSale.date}: Resumo jé¡ existe`);
+ duplicates.push(`Data ${previewSale.date}: Resumo já existe`);
  const current = index + 1;
  const percentage = Math.round((current / totalSales) * 100);
  setSaveProgress({ current, total: totalSales, percentage });
@@ -865,7 +865,7 @@ export const Sales: React.FC<SalesProps> = ({
  }, 1000);
  }
  } else if (duplicateCount > 0) {
- showToast(`âš ï¸ Todos os resumos jé¡ existem (${duplicateCount} duplicado(s) ignorado(s))`, 'warning');
+ showToast(`âš ï¸ Todos os resumos já existem (${duplicateCount} duplicado(s) ignorado(s))`, 'warning');
  } else {
  showToast(`âŒ Nenhum resumo foi salvo. Verifique os erros.`, 'error');
  }
@@ -1589,11 +1589,11 @@ export const Sales: React.FC<SalesProps> = ({
  );
  }, [products, editProductSearchQuery]);
 
- // Funçéo para exportar vendas para Excel
+ // Função para exportar vendas para Excel
  const exportToExcel = async () => {
  try {
  if (filteredAndSortedSales.length === 0) {
- showToast('Néo hé¡ vendas para exportar', 'warning');
+ showToast('Não há vendas para exportar', 'warning');
  return;
  }
 
@@ -1601,7 +1601,7 @@ export const Sales: React.FC<SalesProps> = ({
  const startStr = toDateStringInTimezone(start);
  const endStr = toDateStringInTimezone(end);
 
- // Preparar Informações do peré­odo e filtros
+ // Preparar Informações do período e filtros
  const periodLabel = filterPeriod === 'custom'
  ? `${formatDateOnly(start)} a ${formatDateOnly(end)}`
  : filterPeriod === 'today' ? 'Hoje'
@@ -1620,7 +1620,7 @@ export const Sales: React.FC<SalesProps> = ({
  }
  filters.push({ label: 'Total de vendas', value: filteredAndSortedSales.length.toString() });
 
- // Preparar dados para exportaçéo
+ // Preparar dados para exportação
  const exportData = filteredAndSortedSales.map(sale => {
  const saleDate = new Date(sale.date);
  const totalAmount = sale.totalSales + (sale.totalDeliveries || 0);
@@ -1669,18 +1669,18 @@ export const Sales: React.FC<SalesProps> = ({
  : filterPeriod;
  const filename = `vendas_${periodLabelFile}_${getTodayDateString()}.xlsx`;
  await writeWorkbookToFile(wb, filename);
- showToast(`Exportaçéo para Excel conclué­da: ${filteredAndSortedSales.length} vendas`, 'success');
+ showToast(`Exportação para Excel concluída: ${filteredAndSortedSales.length} vendas`, 'success');
  } catch (error: any) {
  console.error('Erro ao exportar para Excel:', error);
  showToast('Erro ao exportar para Excel', 'error');
  }
  };
 
- // Funçéo para exportar vendas para PDF
+ // Função para exportar vendas para PDF
  const exportToPDF = async () => {
  try {
  if (filteredAndSortedSales.length === 0) {
- showToast('Néo hé¡ vendas para exportar', 'warning');
+ showToast('Não há vendas para exportar', 'warning');
  return;
  }
 
@@ -1695,7 +1695,7 @@ export const Sales: React.FC<SalesProps> = ({
  const pdfHeight = pdf.internal.pageSize.getHeight();
  const margin = 10;
 
- // Preparar Informações do peré­odo e filtros
+ // Preparar Informações do período e filtros
  const periodLabel = filterPeriod === 'custom'
  ? `${formatDateOnly(start)} a ${formatDateOnly(end)}`
  : filterPeriod === 'today' ? 'Hoje'
@@ -1745,17 +1745,17 @@ export const Sales: React.FC<SalesProps> = ({
  yPos += 10;
 
  // Tabela de vendas com cabeçalho destacado
- // Calcular largura disponé­vel
+ // Calcular largura disponível
  const availableWidth = pdfWidth - (margin * 2);
  
- // Proporçéµes relativas das colunas (baseadas na importé¢ncia/conteéºdo)
+ // Proporções relativas das colunas (baseadas na importância/conteúdo)
  const colProportions = [1.2, 0.8, 1.5, 1.5, 1.5, 1.5, 1.5, 2.5]; // 8 colunas
  const totalProportion = colProportions.reduce((sum, prop) => sum + prop, 0);
  
  // Calcular larguras proporcionais
  const colWidths = colProportions.map(prop => (prop / totalProportion) * availableWidth);
  
- // Calcular posiçéµes X das colunas
+ // Calcular posições X das colunas
  const colX: number[] = [margin];
  for (let i = 1; i < colWidths.length; i++) {
  colX.push(colX[i - 1] + colWidths[i - 1]);
@@ -1766,7 +1766,7 @@ export const Sales: React.FC<SalesProps> = ({
  pdf.setFont('helvetica', 'bold');
  pdf.setTextColor(255, 255, 255); // Branco
  
- // Desenhar reté¢ngulo de fundo para cabeçalho
+ // Desenhar retângulo de fundo para cabeçalho
  pdf.setFillColor(...colors.primaryRgb);
  pdf.rect(margin, yPos - 4, pdfWidth - (margin * 2), 6, 'F');
 
@@ -1786,19 +1786,19 @@ export const Sales: React.FC<SalesProps> = ({
  pdf.line(margin, yPos, pdfWidth - margin, yPos);
  yPos += 5;
 
- // Dados da tabela com alterné¢ncia de cores
+ // Dados da tabela com alternância de cores
  pdf.setFont('helvetica', 'normal');
  pdf.setFontSize(8);
  pdf.setTextColor(0, 0, 0); // Preto
 
  filteredAndSortedSales.forEach((sale, index) => {
- // Verificar se precisa de nova pé¡gina
+ // Verificar se precisa de nova página
  if (yPos > pdfHeight - 20) {
  pdf.addPage();
  yPos = margin;
  }
 
- // Alterné¢ncia de cores nas linhas
+ // Alternância de cores nas linhas
  const isEvenRow = index % 2 === 0;
  if (isEvenRow) {
  pdf.setFillColor(249, 250, 251); // Cinza muito claro
@@ -1826,7 +1826,7 @@ export const Sales: React.FC<SalesProps> = ({
  yPos += 5;
  });
 
- // Rodapé© com branding
+ // Rodapé com branding
  const totalPages = pdf.getNumberOfPages();
  for (let i = 1; i <= totalPages; i++) {
  pdf.setPage(i);
@@ -1841,7 +1841,7 @@ export const Sales: React.FC<SalesProps> = ({
 
  // Salvar arquivo
  pdf.save(filename);
- showToast(`Exportaçéo para PDF conclué­da: ${filteredAndSortedSales.length} vendas`, 'success');
+ showToast(`Exportação para PDF concluída: ${filteredAndSortedSales.length} vendas`, 'success');
  } catch (error: any) {
  console.error('Erro ao exportar para PDF:', error);
  showToast('Erro ao exportar para PDF', 'error');
@@ -2080,7 +2080,7 @@ export const Sales: React.FC<SalesProps> = ({
  {/* Resumos Tab */}
  {activeTab === 'summaries' && (
  <>
- {/* Barra Integrada: Controles, Filtros e Açéµes - Uma Linha - Fixa no Mobile */}
+ {/* Barra Integrada: Controles, Filtros e Ações - Uma Linha - Fixa no Mobile */}
  <FilterBar isStickyOnMobile={isMobile} stickyTopClassName="top-0">
  <ViewModeToggle
  value={viewMode === 'cards' ? 'cards' : 'table'}
@@ -2098,7 +2098,7 @@ export const Sales: React.FC<SalesProps> = ({
  className="flex-1 min-w-[120px] max-w-[300px] flex-shrink-0"
  />
 
- {/* Itens por pé¡gina - Oculto no Mobile */}
+ {/* Itens por página - Oculto no Mobile */}
  <div className="hidden sm:block">
  <ItemsPerPageSelect
  value={itemsPerPage}
@@ -2113,7 +2113,7 @@ export const Sales: React.FC<SalesProps> = ({
  />
  </div>
 
- {/* Botéo Limpar Filtros - Oculto no Mobile */}
+ {/* Botão Limpar Filtros - Oculto no Mobile */}
  {(searchQuery || filterPeriod !== 'all' || filterDateFrom || filterDateTo || filterSaleType !== 'ALL') && (
  <button
  onClick={() => {
@@ -2134,7 +2134,7 @@ export const Sales: React.FC<SalesProps> = ({
  {/* Separador - Oculto no Mobile */}
  <div className="hidden sm:block h-4 w-px bg-surface-base flex-shrink-0" />
 
- {/* Filtro Peré­odo - Oculto no Mobile */}
+ {/* Filtro Período - Oculto no Mobile */}
  <div className="hidden sm:block flex-shrink-0 relative" style={{ zIndex: 50 }}>
  <PeriodFilter
  selectedPeriod={filterPeriod}
@@ -2173,10 +2173,10 @@ export const Sales: React.FC<SalesProps> = ({
  <div className="space-y-3">
  {/* Filtros lado a lado */}
  <div className="grid grid-cols-2 gap-3">
- {/* Itens por pé¡gina */}
+ {/* Itens por página */}
  <div>
  <label className="block text-xs font-medium text-content-secondary mb-2">
- Itens por pé¡gina
+ Itens por página
  </label>
  <ItemsPerPageSelect
  value={itemsPerPage}
@@ -2204,9 +2204,9 @@ export const Sales: React.FC<SalesProps> = ({
  }}
  options={[
  { value: 'ALL', label: 'Todos' },
- { value: 'factory_direct', label: 'Fé¡brica' },
+ { value: 'factory_direct', label: 'Fábrica' },
  { value: 'store_retail', label: 'Loja' },
- { value: 'factory_to_store', label: 'Fé¡bricaâ†’Loja' }
+ { value: 'factory_to_store', label: 'Fábricaâ†’Loja' }
  ]}
  className="w-full"
  size="md"
@@ -2214,10 +2214,10 @@ export const Sales: React.FC<SalesProps> = ({
  </div>
  </div>
  
- {/* Filtro Peré­odo - Linha separada */}
+ {/* Filtro Período - Linha separada */}
  <div>
  <label className="block text-xs font-medium text-content-secondary mb-2">
- Peré­odo
+ Período
  </label>
  <PeriodFilter
  selectedPeriod={filterPeriod}
@@ -2239,7 +2239,7 @@ export const Sales: React.FC<SalesProps> = ({
  />
  </div>
 
- {/* Botéo Limpar Filtros */}
+ {/* Botão Limpar Filtros */}
  {(searchQuery || filterPeriod !== 'all' || filterDateFrom || filterDateTo || filterSaleType !== 'ALL') && (
  <button
  onClick={() => {
@@ -2715,7 +2715,7 @@ export const Sales: React.FC<SalesProps> = ({
  <ChevronLeft className="w-4 h-4" />
  </button>
  <span className="px-4 py-2 text-sm text-content-secondary">
- Pé¡gina {currentPage} de {totalPages}
+ Página {currentPage} de {totalPages}
  </span>
  <button
  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
@@ -3133,7 +3133,7 @@ export const Sales: React.FC<SalesProps> = ({
  />
  </div>
  
- {/* Localização sempre seré¡ LOJA - todas as vendas são registadas na loja */}
+ {/* Localização sempre será LOJA - todas as vendas são registadas na loja */}
 
  {selectedItems.length > 0 && (
  <div className="space-y-3">
@@ -3390,7 +3390,7 @@ export const Sales: React.FC<SalesProps> = ({
  <div className="space-y-6">
  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
  <p className="text-sm text-blue-800 dark:text-blue-200">
- <strong>Gerar resumo a partir de pedidos:</strong> Selecione uma data e o sistema iré¡ agrupar todos os pedidos daquela data em um resumo de vendas.
+ <strong>Gerar resumo a partir de pedidos:</strong> Selecione uma data e o sistema irá agrupar todos os pedidos daquela data em um resumo de vendas.
  </p>
  </div>
 
@@ -3456,7 +3456,7 @@ export const Sales: React.FC<SalesProps> = ({
  Pedidos encontrados: {ordersOfDate.length}
  </span>
  <span className="text-sm font-medium text-content-secondary">
- Itens éºnicos: {itemsMap.size}
+ Itens únicos: {itemsMap.size}
  </span>
  </div>
  
@@ -3575,7 +3575,7 @@ export const Sales: React.FC<SalesProps> = ({
  )}
  </div>
  <p className="text-xs text-content-muted mt-1">
- Dica: Use o link de publicaçéo do Google Sheets (formato TSV ou CSV)
+ Dica: Use o link de publicação do Google Sheets (formato TSV ou CSV)
  </p>
  </div>
 
@@ -3663,7 +3663,7 @@ export const Sales: React.FC<SalesProps> = ({
  <div className="mt-6 space-y-4">
  <div className="flex items-center justify-between">
  <h3 className="text-lg font-semibold text-content-primary">
- Pré©-visualizaçéo ({previewData.sales.length} resumo(s))
+ Pré-visualização ({previewData.sales.length} resumo(s))
  {previewData.sales.filter(s => s.isDuplicate).length > 0 && (
  <span className="ml-2 text-orange-600 dark:text-orange-400 text-sm font-normal">
  ({previewData.sales.filter(s => s.isDuplicate).length} duplicado(s))
@@ -3724,7 +3724,7 @@ export const Sales: React.FC<SalesProps> = ({
  {item.quantity} {item.unit} {item.productName} - {formatMoney(item.total)}
  {item.needsManualMatch && (
  <span className="ml-2 text-orange-600 dark:text-orange-400 text-xs">
- (Produto néo encontrado)
+ (Produto não encontrado)
  </span>
  )}
  </div>
@@ -3780,7 +3780,7 @@ export const Sales: React.FC<SalesProps> = ({
  {previewData.sales.filter(s => s.isDuplicate).length > 0 && (
  <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mb-2">
  <p className="text-sm text-orange-800 dark:text-orange-200">
- âš ï¸ <strong>{previewData.sales.filter(s => s.isDuplicate).length}</strong> resumo(s) duplicado(s) seréo ignorados automaticamente ao salvar.
+ âš ï¸ <strong>{previewData.sales.filter(s => s.isDuplicate).length}</strong> resumo(s) duplicado(s) serão ignorados automaticamente ao salvar.
  </p>
  </div>
  )}

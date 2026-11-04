@@ -34,7 +34,9 @@ const ProductCardComponent: React.FC<{
  isMobile?: boolean;
  showFeaturedBadge?: boolean;
  currentUserName?: string;
-}> = ({ product, onAddToCart, onNotify, index = 0, isMobile = false, showFeaturedBadge = false, currentUserName }) => {
+ /** Cartão deitado (foto à esquerda) — carrosséis no mobile, 1 produto por slide */
+ horizontal?: boolean;
+}> = ({ product, onAddToCart, onNotify, index = 0, isMobile = false, showFeaturedBadge = false, currentUserName, horizontal = false }) => {
  const availableVariants = useMemo(() =>
  product.variants?.filter(v => v.stock > 0) || [],
  [product.variants]
@@ -114,12 +116,12 @@ const ProductCardComponent: React.FC<{
  return (
  <div
  data-product-id={product.id}
- className="w-full bg-surface-raised rounded-2xl overflow-hidden border border-border-default shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group flex flex-col"
+ className={`w-full bg-surface-raised rounded-2xl overflow-hidden border border-border-default shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group flex ${horizontal ? 'flex-row' : 'flex-col'}`}
  style={{ animationDelay: `${index * 50}ms` }}
  >
  {/* Imagem — quadrada para todos os cartões terem a mesma altura */}
- <Link to={`/loja/produto/${product.slug}`} className="block relative overflow-hidden flex-shrink-0" tabIndex={-1} aria-hidden="true">
- <div className="relative w-full aspect-square bg-white dark:bg-surface-base">
+ <Link to={`/loja/produto/${product.slug}`} className={`block relative overflow-hidden flex-shrink-0 ${horizontal ? 'w-[40%] border-r border-border-default/60' : ''}`} tabIndex={-1} aria-hidden="true">
+ <div className={`relative w-full bg-white dark:bg-surface-base ${horizontal ? 'h-full min-h-[148px]' : 'aspect-square'}`}>
  {(() => {
  const imageUrl = getVariantImage(selectedVariant, product);
  return imageUrl && !imageUrl.includes('placeholder') ? (
@@ -165,9 +167,12 @@ const ProductCardComponent: React.FC<{
 
  {/* Conteúdo — mobile compacto (estilo app Android) / desktop completo */}
  {isMobile ? (
- <div className="px-2.5 pt-2 pb-2.5 flex flex-col flex-1 gap-1">
+ <div className={`flex flex-col flex-1 min-w-0 gap-1 ${horizontal ? 'p-3' : 'px-2.5 pt-2 pb-2.5'}`}>
+ {horizontal && product.category && (
+ <p className="text-[11px] font-medium text-content-muted truncate">{product.category}</p>
+ )}
  <Link to={`/loja/produto/${product.slug}`} className="block !min-h-0" style={{ color: 'inherit' }}>
- <h3 className="text-[13px] font-medium text-content-primary leading-snug line-clamp-2 min-h-[2.6em]">
+ <h3 className={`${horizontal ? 'text-[15px] font-semibold' : 'text-[13px] font-medium'} text-content-primary leading-snug line-clamp-2`}>
  {product.name}
  </h3>
  </Link>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
 /**
- * Hook para detectar se o dispositivo é© mobile
- * @param breakpoint - Breakpoint em pixels (padréo: 768px)
+ * Hook para detectar se o dispositivo é mobile
+ * @param breakpoint - Breakpoint em pixels (padrão: 768px)
  * @returns boolean - true se for mobile
  */
 export const useMobile = (breakpoint: number = 768): boolean => {

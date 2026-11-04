@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Phone, Mail, MapPin, Clock, MessageSquare, Send, Instagram, Facebook } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, MessageSquare, Send } from 'lucide-react';
+import { FaInstagram, FaFacebookF } from 'react-icons/fa6';
 import { PageHeroBanner } from '../components/PageHeroBanner';
 import { getSystemSettings } from '../../core/services/systemSettingsService';
 
@@ -104,11 +105,11 @@ const Contactos: React.FC = () => {
               <div className="flex gap-3">
                 <a href="https://instagram.com/naturervamz" target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white text-sm font-medium hover:opacity-90 transition-opacity">
-                  <Instagram className="w-4 h-4" /> Instagram
+                  <FaInstagram className="w-4 h-4" /> Instagram
                 </a>
                 <a href="https://facebook.com/naturervamz" target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:opacity-90 transition-opacity">
-                  <Facebook className="w-4 h-4" /> Facebook
+                  <FaFacebookF className="w-4 h-4" /> Facebook
                 </a>
               </div>
             </div>

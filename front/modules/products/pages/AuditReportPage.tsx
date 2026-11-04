@@ -12,10 +12,12 @@ import { useToast } from '../../core/contexts/ToastContext';
 import { useLanguage } from '../../core/contexts/LanguageContext';
 import { PageShell } from '../../core/components/layout/PageShell';
 import { addPDFHeader, addPDFFooter, addPDFTableHeader, addPDFTableRow, getBrandColors, calculateColumnWidths } from '../../core/services/reportService';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 const AUDIT_ADJUSTMENT_NOTES = 'Auditoria de stock, correção do stock de acordo com a contagem';
 
 export const AuditReportPage: React.FC = () => {
+ const confirm = useConfirm();
  const { id: auditId } = useParams<{ id: string }>();
  const navigate = useNavigate();
  const { showToast } = useToast();
@@ -112,8 +114,8 @@ export const AuditReportPage: React.FC = () => {
  const handleApplyAdjustments = async () => {
  if (!audit || itemsWithDiscrepancy.length === 0) return;
 
- const confirmMsg = t.stock.confirmApplyAdjustments.replace('{count}', itemsWithDiscrepancy.length.toString());
- if (!window.confirm(confirmMsg)) return;
+ const confirmMsg = ((t.stock as any).confirmApplyAdjustments || 'Vão ser criados {count} ajuste(s) de stock para corrigir as diferenças contadas.').replace('{count}', itemsWithDiscrepancy.length.toString());
+ if (!(await confirm(confirmMsg, { title: 'Aplicar ajustes de stock?', confirmLabel: 'Aplicar', variant: 'warning' }))) return;
 
  const total = itemsWithDiscrepancy.length;
  setApplying(true);
@@ -149,7 +151,7 @@ export const AuditReportPage: React.FC = () => {
 
  const handleRevertToCompleted = async () => {
  if (!audit || audit.status !== StockAuditStatus.APPLIED) return;
- if (!window.confirm('Reverter os ajustes aplicados e repor a auditoria como "Completa"? Poderá aplicar novamente. Os ajustes serão eliminados e o stock revertido.')) return;
+ if (!(await confirm('Os ajustes aplicados serão eliminados e o stock revertido. A auditoria volta a "Completa" e poderá aplicá-la novamente.', { title: 'Reverter ajustes?', confirmLabel: 'Reverter', variant: 'warning' }))) return;
  setReverting(true);
  try {
  const result = await stockAuditService.revertAuditToCompleted(audit.id);

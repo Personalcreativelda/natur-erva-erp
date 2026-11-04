@@ -89,7 +89,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  outcome: 'positive'
  });
 
- // Carregar dados se néo foram fornecidos
+ // Carregar dados se não foram fornecidos
  useEffect(() => {
  const loadData = async () => {
  if (orders.length === 0) {
@@ -113,7 +113,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  setCustomerFeedbacks(feedbacks.filter(f => f.customerId === customer.id));
  }
 
- // Carregar insight se néo foi fornecido
+ // Carregar insight se não foi fornecido
  if (!insight) {
  const insights = await dataService.getCustomerInsights(30);
  const foundInsight = insights.find(i => i.customerId === customer.id);
@@ -195,7 +195,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  if (formattedPhone.length >= 9) {
  window.open(`https://wa.me/${formattedPhone}`, '_blank');
  } else {
- showToast?.('Néºmero de telefone invé¡lido', 'error');
+ showToast?.('Número de telefone inválido', 'error');
  }
  };
 
@@ -204,7 +204,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  if (formattedPhone.length >= 9) {
  window.location.href = `tel:+${formattedPhone}`;
  } else {
- showToast?.('Néºmero de telefone invé¡lido', 'error');
+ showToast?.('Número de telefone inválido', 'error');
  }
  };
 
@@ -272,7 +272,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  .slice(0, 5);
  }, [customerOrders]);
 
- // Calcular tendéªncia de gastos (éºltimos 3 meses vs anteriores)
+ // Calcular tendência de gastos (últimos 3 meses vs anteriores)
  const spendingTrend = React.useMemo(() => {
  const now = new Date();
  const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
@@ -297,7 +297,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  };
  }, [customerOrders]);
 
- // Calcular padréo de compra (dias da semana mais frequentes)
+ // Calcular padrão de compra (dias da semana mais frequentes)
  const purchasePattern = React.useMemo(() => {
  const dayCounts: Record<string, number> = {};
  customerOrders.forEach(order => {
@@ -318,7 +318,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  } else {
  const days = customerInsight.daysSinceLastOrder;
  if (days < 7) {
- inactiveTime = `Hé¡ ${days} dia${days === 1 ? '' : 's'}`;
+ inactiveTime = `Há ${days} dia${days === 1 ? '' : 's'}`;
  } else if (days < 30) {
  const weeks = Math.floor(days / 7);
  inactiveTime = `Há ${weeks} semana${weeks === 1 ? '' : 's'}`;
@@ -413,7 +413,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  </div>
  </div>
 
- {/* Botéµes de Açéo */}
+ {/* Botões de Ação */}
  <div className={`flex gap-2.5 ${isMobile ? 'mb-2' : 'mb-3'}`}>
  <button
  onClick={handleWhatsApp}
@@ -523,7 +523,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  <div className="flex items-center text-content-secondary">
  <Mail className="w-4 h-4 mr-3 text-content-muted flex-shrink-0" />
  <span>{customer.email}</span>
- <span className="ml-2 text-xs text-content-muted">(néo edité¡vel)</span>
+ <span className="ml-2 text-xs text-content-muted">(não editável)</span>
  </div>
  )}
  <div className="flex items-start justify-between text-content-secondary">
@@ -553,7 +553,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  />
  ) : (
  <>
- <span className="flex-1">{customer.address || 'Néo especificado'}</span>
+ <span className="flex-1">{customer.address || 'Não especificado'}</span>
  <button
  onClick={() => {
  setEditingCustomerField('address');
@@ -570,7 +570,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  </div>
  </div>
 
- {/* Estaté­sticas */}
+ {/* Estatísticas */}
  <div className={`grid grid-cols-2 ${isMobile ? 'gap-2.5' : 'gap-3'}`}>
  <div className={`bg-gradient-to-br from-white/70 to-white/50 dark:from-gray-800/70 dark:to-gray-800/50 backdrop-blur-sm rounded-xl border border-border-default/50 shadow-sm ${isMobile ? 'p-2.5' : 'p-3'} transition-transform hover:scale-[1.02]`}>
  <p className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-content-muted mb-1`}>Total Gasto</p>
@@ -590,7 +590,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  </div>
  </div>
 
- {/* Ané¡lise e Recomendaçéµes */}
+ {/* Análise e Recomendações */}
  {customerInsight && customerInsight.riskLevel === 'high' && (
  <div className={`${riskStyle.bg} ${riskStyle.border} border-2 rounded-lg p-4`}>
  <div className="flex items-start gap-3">
@@ -688,7 +688,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  <div className="flex items-center justify-between mb-4">
  <h3 className="font-bold text-content-primary flex items-center">
  <History className="w-4 h-4 mr-2" />
- Histé³rico de Compras ({sortedOrders.length})
+ Histórico de Compras ({sortedOrders.length})
  </h3>
  </div>
 
@@ -696,7 +696,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
  <p className="text-sm text-yellow-800 dark:text-yellow-300">
  O cliente tem {customer.totalOrders} pedido(s) registado(s) com total de {formatMoney(customer.totalSpent)},
- mas os detalhes dos pedidos néo estéo disponé­veis.
+ mas os detalhes dos pedidos não estão disponíveis.
  </p>
  </div>
  ) : (
@@ -773,7 +773,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  <div className="flex-1">
  <p className="font-medium text-content-primary text-sm">{product.name}</p>
  <p className="text-xs text-content-muted mt-1">
- {product.quantity} unidade(s) â€¢ {formatMoney(product.revenue)}
+ {product.quantity} unidade(s) • {formatMoney(product.revenue)}
  </p>
  <p className="text-xs text-content-muted mt-1">
  éšltima compra: {formatDateOnly(product.lastOrder)}
@@ -791,11 +791,11 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  </div>
  )}
 
- {/* Tendéªncia de Gastos */}
+ {/* Tendência de Gastos */}
  <div>
  <h3 className="font-bold text-content-primary mb-3 flex items-center">
  <TrendingUp className="w-4 h-4 mr-2" />
- Tendéªncia de Gastos
+ Tendência de Gastos
  </h3>
  <div className="grid grid-cols-2 gap-3">
  <div className="bg-surface-base/50 rounded-lg p-3">
@@ -828,19 +828,19 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  ? 'text-red-700 dark:text-red-300'
  : 'text-content-secondary'
  }`}>
- {spendingTrend.change > 0 ? '+' : ''}{spendingTrend.change.toFixed(1)}% vs peré­odo anterior
+ {spendingTrend.change > 0 ? '+' : ''}{spendingTrend.change.toFixed(1)}% vs período anterior
  </span>
  </div>
  </div>
  )}
  </div>
 
- {/* Padréo de Compra */}
+ {/* Padrão de Compra */}
  {purchasePattern.length > 0 && (
  <div>
  <h3 className="font-bold text-content-primary mb-3 flex items-center">
  <Calendar className="w-4 h-4 mr-2" />
- Padréo de Compra
+ Padrão de Compra
  </h3>
  <div className="space-y-2">
  {purchasePattern.map(([day, count], index) => (
@@ -925,7 +925,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  )}
  {action.completedDate && (
  <p className="text-xs text-content-muted">
- Conclué­do: {formatDateOnly(action.completedDate)}
+ Concluído: {formatDateOnly(action.completedDate)}
  </p>
  )}
  </div>
@@ -964,7 +964,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  if (success) {
  setCustomerActions(prev => prev.filter(a => a.id !== action.id));
  if (showToast) {
- showToast('Açéo apagada com sucesso', 'success');
+ showToast('Ação apagada com sucesso', 'success');
  }
  } else {
  if (showToast) {
@@ -986,7 +986,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  )}
  {action.priority && (
  <p className="text-xs text-content-muted mt-1">
- Prioridade: {action.priority === 'high' ? 'Alta' : action.priority === 'medium' ? 'Mé©dia' : 'Baixa'}
+ Prioridade: {action.priority === 'high' ? 'Alta' : action.priority === 'medium' ? 'Média' : 'Baixa'}
  </p>
  )}
  </div>
@@ -1106,12 +1106,12 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  </div>
  </div>
 
- {/* Modal de Ediçéo de Açéo */}
+ {/* Modal de Edição de Ação */}
  {editingAction && (
  <div className="fixed inset-0 min-h-screen min-w-full modal-overlay z-[60] flex items-center justify-center p-4 transition-opacity duration-300" onClick={() => setEditingAction(null)}>
  <div className="bg-surface-raised/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-white/20" onClick={(e) => e.stopPropagation()}>
  <div className="sticky top-0 bg-gradient-to-r from-white/80 to-white/60 dark:from-gray-900/80 dark:to-gray-900/60 backdrop-blur-md border-b border-border-default/50 p-4 flex justify-between items-center z-10">
- <h3 className="text-lg font-bold text-content-primary">Editar Açéo Comercial</h3>
+ <h3 className="text-lg font-bold text-content-primary">Editar Ação Comercial</h3>
  <button
  onClick={() => setEditingAction(null)}
  className="text-content-muted hover:text-content-secondary "
@@ -1153,7 +1153,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  >
  <option value="">Sem prioridade</option>
  <option value="low">Baixa</option>
- <option value="medium">Mé©dia</option>
+ <option value="medium">Média</option>
  <option value="high">Alta</option>
  </select>
  </div>
@@ -1192,7 +1192,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  setCustomerActions(prev => prev.map(a => a.id === editingAction.id ? { ...a, ...updateData } : a));
  setEditingAction(null);
  if (showToast) {
- showToast('Açéo atualizada com sucesso', 'success');
+ showToast('Ação atualizada com sucesso', 'success');
  }
  } else {
  if (showToast) {
@@ -1216,7 +1216,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  </div>
  )}
 
- {/* Modal de Ediçéo de Feedback */}
+ {/* Modal de Edição de Feedback */}
  {editingFeedback && (
  <div className="fixed inset-0 min-h-screen min-w-full modal-overlay z-[60] flex items-center justify-center p-4 transition-opacity duration-300" onClick={() => setEditingFeedback(null)}>
  <div className="bg-surface-raised/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-white/20" onClick={(e) => e.stopPropagation()}>
@@ -1374,7 +1374,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  </div>
  ))
  ) : (
- <p className="text-content-muted text-sm">Nenhum item disponé­vel</p>
+ <p className="text-content-muted text-sm">Nenhum item disponível</p>
  )}
  </div>
  </div>

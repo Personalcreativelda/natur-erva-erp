@@ -2,11 +2,12 @@
 import { X, Eye, EyeOff, GripVertical, RotateCcw, Save, Search, Filter, ChevronUp, ChevronDown } from 'lucide-react';
 import { useDashboardPreferences, DashboardCard } from '../../../core/hooks/useDashboardPreferences';
 import { normalizeForSearch } from '../../../core/services/serviceUtils';
+import { useConfirm } from '../../../core/contexts/ConfirmContext';
 
 const categoryLabels: Record<DashboardCard['category'], string> = {
  vendas: 'Vendas e Pedidos',
  loja: 'Loja',
- producao: 'Produçéo / Fé¡brica',
+ producao: 'Produção / Fábrica',
  financeiro: 'Financeiro',
  estoque: 'Estoque',
  geral: 'Geral',
@@ -22,6 +23,7 @@ const categoryColors: Record<DashboardCard['category'], string> = {
 };
 
 export const DashboardSettings: React.FC = () => {
+ const confirm = useConfirm();
  const {
  cards,
  isConfigOpen,
@@ -87,8 +89,8 @@ export const DashboardSettings: React.FC = () => {
  setIsConfigOpen(false);
  };
 
- const handleReset = () => {
- if (window.confirm('Tem certeza que deseja restaurar as configurações padréo? Isso iré¡ ocultar todos os cards néo essenciais.')) {
+ const handleReset = async () => {
+ if (await confirm('Os cartões não essenciais vão ficar ocultos.', { title: 'Restaurar configuração padrão?', confirmLabel: 'Restaurar', variant: 'warning' })) {
  resetToDefault();
  setLocalCards(cards);
  }
@@ -256,7 +258,7 @@ export const DashboardSettings: React.FC = () => {
  className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2 text-sm font-medium text-content-secondary hover:bg-surface-base rounded-lg transition-all active:scale-95 min-h-[44px] sm:min-h-[auto]"
  >
  <RotateCcw className="w-4 h-4" />
- Restaurar Padréo
+ Restaurar Padrão
  </button>
  <div className="flex gap-2 sm:gap-3">
  <button

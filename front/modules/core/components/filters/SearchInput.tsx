@@ -72,7 +72,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
  aria-label={ariaLabel || placeholder}
  className={[
  'w-full border border-border-strong rounded bg-surface-raised text-content-primary',
- // compact (toolbar) deve alinhar com o PeriodFilter: mesma altura e sensaçéo visual
+ // compact (toolbar) deve alinhar com o PeriodFilter: mesma altura e sensação visual
  isCompact ? 'pl-10 pr-10 py-2 text-sm rounded-lg focus:ring-2' : 'pl-10 pr-10 py-2 text-sm focus:ring-2',
  'focus:ring-brand-500 focus:outline-none',
  inputClassName,

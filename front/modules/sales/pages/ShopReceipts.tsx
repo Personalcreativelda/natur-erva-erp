@@ -357,7 +357,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  try {
  const success = await dataService.deleteShopReceipt(id);
  if (success) {
- showToast('Recebimento exclué­do com sucesso', 'success');
+ showToast('Recebimento excluído com sucesso', 'success');
  loadData();
  } else {
  showToast('Erro ao excluir recebimento', 'error');
@@ -398,31 +398,31 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  }));
 
  setReceiptItems(items);
- showToast('Itens carregados da saé­da da fé¡brica', 'success');
+ showToast('Itens carregados da saída da fábrica', 'success');
  };
 
  const exportToExcel = async () => {
  try {
  if (filteredReceipts.length === 0) {
- showToast('Néo hé¡ dados para exportar', 'warning');
+ showToast('Não há dados para exportar', 'warning');
  return;
  }
 
  const exportData = filteredReceipts.flatMap(receipt =>
  receipt.items.map(item => ({
  'Data': receipt.date,
- 'Referéªncia': receipt.reference || '',
+ 'Referência': receipt.reference || '',
  'Origem': receipt.source,
  'Fornecedor': receipt.supplierName || '',
  'Recebido por': receipt.receivedBy,
  'Produto': item.productName,
- 'Variaçéo': item.variantName || '',
+ 'Variação': item.variantName || '',
  'Quantidade': item.quantity,
  'Unidade': item.unit,
  'Preço Custo': item.costPrice || 0,
  'Preço Venda': item.sellingPrice || 0,
  'Status': receipt.status,
- 'Observaçéµes': receipt.notes || ''
+ 'Observações': receipt.notes || ''
  }))
  );
 
@@ -436,7 +436,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  : filterPeriod;
  const filename = `recebimentos_${periodLabel}_${getTodayDateString()}.xlsx`;
  await writeWorkbookToFile(wb, filename);
- showToast(`Exportaçéo conclué­da: ${filteredReceipts.length} recebimentos`, 'success');
+ showToast(`Exportação concluída: ${filteredReceipts.length} recebimentos`, 'success');
  } catch (error: any) {
  console.error('Erro ao exportar:', error);
  showToast('Erro ao exportar para Excel', 'error');
@@ -446,7 +446,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  const exportToPDF = async () => {
  try {
  if (filteredReceipts.length === 0) {
- showToast('Néo hé¡ dados para exportar', 'warning');
+ showToast('Não há dados para exportar', 'warning');
  return;
  }
 
@@ -459,13 +459,13 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
 
  pdf.setFontSize(16);
  pdf.setFont('helvetica', 'bold');
- pdf.text('Relaté³rio de Recebimentos - Loja', pdfWidth / 2, yPos, { align: 'center' });
+ pdf.text('Relatório de Recebimentos - Loja', pdfWidth / 2, yPos, { align: 'center' });
  yPos += 8;
 
  pdf.setFontSize(10);
  pdf.setFont('helvetica', 'normal');
  const { start, end } = getDateRangeFromPeriod(filterPeriod, filterDateFrom, filterDateTo);
- pdf.text(`Peré­odo: ${formatDateOnly(start)} a ${formatDateOnly(end)}`, pdfWidth / 2, yPos, { align: 'center' });
+ pdf.text(`Período: ${formatDateOnly(start)} a ${formatDateOnly(end)}`, pdfWidth / 2, yPos, { align: 'center' });
  yPos += 8;
 
  const headers = ['Data', 'Ref', 'Origem', 'Produto', 'Qtd', 'Un', 'Custo', 'Status'];
@@ -521,7 +521,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  pdf.setPage(i);
  pdf.setFontSize(8);
  pdf.text(
- `Pé¡gina ${i} de ${totalPages} - ${formatDateTimeForReport(new Date())}`,
+ `Página ${i} de ${totalPages} - ${formatDateTimeForReport(new Date())}`,
  pdfWidth / 2,
  pdfHeight - 5,
  { align: 'center' }
@@ -595,14 +595,14 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  <div className="flex items-center gap-2 mb-2">
  <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
  <h3 className="font-semibold text-yellow-900 dark:text-yellow-200">
- {pendingOutputs.length} Saé­da(s) da Fé¡brica aguardando recebimento
+ {pendingOutputs.length} Saída(s) da Fábrica aguardando recebimento
  </h3>
  </div>
  <div className="space-y-2">
  {pendingOutputs.slice(0, 3).map(output => (
  <div key={output.id} className="flex items-center justify-between text-sm">
  <span className="text-yellow-800 dark:text-yellow-300">
- {output.date} - {output.reference || 'Sem referéªncia'} ({output.totalItems} itens)
+ {output.date} - {output.reference || 'Sem referência'} ({output.totalItems} itens)
  </span>
  <button
  onClick={() => {
@@ -644,7 +644,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  >
  <option value="ALL">Todos Status</option>
  <option value="pending">Pendente</option>
- <option value="completed">Conclué­do</option>
+ <option value="completed">Concluído</option>
  <option value="cancelled">Cancelado</option>
  </select>
  </div>
@@ -658,7 +658,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  className="px-3 py-1.5 text-xs border border-border-default rounded-lg bg-surface-raised text-content-primary"
  >
  <option value="ALL">Todas Origens</option>
- <option value="FABRICA">Fé¡brica</option>
+ <option value="FABRICA">Fábrica</option>
  <option value="FORNECEDOR">Fornecedor</option>
  <option value="OUTRO">Outro</option>
  </select>
@@ -739,7 +739,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  >
  <option value="ALL">Todos</option>
  <option value="pending">Pendente</option>
- <option value="completed">Conclué­do</option>
+ <option value="completed">Concluído</option>
  <option value="cancelled">Cancelado</option>
  </select>
  </div>
@@ -754,14 +754,14 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  className="w-full px-3 py-2 text-sm border border-border-default rounded-lg bg-surface-raised"
  >
  <option value="ALL">Todas</option>
- <option value="FABRICA">Fé¡brica</option>
+ <option value="FABRICA">Fábrica</option>
  <option value="FORNECEDOR">Fornecedor</option>
  <option value="OUTRO">Outro</option>
  </select>
  </div>
  </div>
  <div>
- <label className="block text-xs font-medium text-content-secondary mb-2">Peré­odo</label>
+ <label className="block text-xs font-medium text-content-secondary mb-2">Período</label>
  <PeriodFilter
  selectedPeriod={filterPeriod}
  onPeriodChange={(period) => {
@@ -782,7 +782,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  />
  </div>
  <div>
- <label className="block text-xs font-medium text-content-secondary mb-2">Itens por pé¡gina</label>
+ <label className="block text-xs font-medium text-content-secondary mb-2">Itens por página</label>
  <ItemsPerPageSelect
  value={itemsPerPage}
  onChange={(val) => {
@@ -840,7 +840,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  receipt.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
  'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
  }`}>
- {receipt.status === 'completed' ? 'Conclué­do' : receipt.status === 'pending' ? 'Pendente' : 'Cancelado'}
+ {receipt.status === 'completed' ? 'Concluído' : receipt.status === 'pending' ? 'Pendente' : 'Cancelado'}
  </span>
  </div>
  <div className="space-y-2 mb-3">
@@ -883,13 +883,13 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  <thead className="bg-surface-base sticky top-0 z-10">
  <tr>
  <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary">Data</th>
- <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary">Referéªncia</th>
+ <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary">Referência</th>
  <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary">Origem</th>
  <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary">Itens</th>
  <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary">Custo Total</th>
  <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary">Recebido por</th>
  <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary">Status</th>
- <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary">Açéµes</th>
+ <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary">Ações</th>
  </tr>
  </thead>
  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -908,7 +908,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  receipt.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
  'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
  }`}>
- {receipt.status === 'completed' ? 'Conclué­do' : receipt.status === 'pending' ? 'Pendente' : 'Cancelado'}
+ {receipt.status === 'completed' ? 'Concluído' : receipt.status === 'pending' ? 'Pendente' : 'Cancelado'}
  </span>
  </td>
  <td className="px-4 py-3">
@@ -946,7 +946,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  <ChevronLeft className="w-4 h-4" />
  </button>
  <span className="text-sm text-content-secondary">
- Pé¡gina {currentPage} de {totalPages}
+ Página {currentPage} de {totalPages}
  </span>
  <button
  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
@@ -985,13 +985,13 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  />
  </div>
  <div>
- <label className="block text-sm font-medium text-content-secondary mb-1">Referéªncia</label>
+ <label className="block text-sm font-medium text-content-secondary mb-1">Referência</label>
  <input
  type="text"
  value={newReceipt.reference}
  onChange={(e) => setNewReceipt({ ...newReceipt, reference: e.target.value })}
  className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-content-primary"
- placeholder="Néºmero do documento"
+ placeholder="Número do documento"
  />
  </div>
  <div>
@@ -1004,14 +1004,14 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  }}
  className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-content-primary"
  >
- <option value="FABRICA">Fé¡brica</option>
+ <option value="FABRICA">Fábrica</option>
  <option value="FORNECEDOR">Fornecedor</option>
  <option value="OUTRO">Outro</option>
  </select>
  </div>
  {newReceipt.source === 'FABRICA' && (
  <div>
- <label className="block text-sm font-medium text-content-secondary mb-1">Saé­da da Fé¡brica</label>
+ <label className="block text-sm font-medium text-content-secondary mb-1">Saída da Fábrica</label>
  <select
  value={newReceipt.factoryOutputId}
  onChange={(e) => {
@@ -1023,10 +1023,10 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  }}
  className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-content-primary"
  >
- <option value="">Selecione uma saé­da</option>
+ <option value="">Selecione uma saída</option>
  {factoryOutputs.filter(o => o.destination === 'LOJA').map(output => (
  <option key={output.id} value={output.id}>
- {output.date} - {output.reference || 'Sem referéªncia'} ({output.totalItems} itens)
+ {output.date} - {output.reference || 'Sem referência'} ({output.totalItems} itens)
  </option>
  ))}
  </select>
@@ -1045,13 +1045,13 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  />
  </div>
  <div>
- <label className="block text-sm font-medium text-content-secondary mb-1">Néºmero da Fatura</label>
+ <label className="block text-sm font-medium text-content-secondary mb-1">Número da Fatura</label>
  <input
  type="text"
  value={newReceipt.invoiceNumber}
  onChange={(e) => setNewReceipt({ ...newReceipt, invoiceNumber: e.target.value })}
  className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-content-primary"
- placeholder="Néºmero da fatura"
+ placeholder="Número da fatura"
  />
  </div>
  </>
@@ -1075,20 +1075,20 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-content-primary"
  >
  <option value="pending">Pendente</option>
- <option value="completed">Conclué­do</option>
+ <option value="completed">Concluído</option>
  <option value="cancelled">Cancelado</option>
  </select>
  </div>
  </div>
 
  <div>
- <label className="block text-sm font-medium text-content-secondary mb-1">Observaçéµes</label>
+ <label className="block text-sm font-medium text-content-secondary mb-1">Observações</label>
  <textarea
  value={newReceipt.notes}
  onChange={(e) => setNewReceipt({ ...newReceipt, notes: e.target.value })}
  className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-content-primary"
  rows={3}
- placeholder="Observaçéµes adicionais"
+ placeholder="Observações adicionais"
  />
  </div>
 
@@ -1106,13 +1106,13 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  />
  </div>
  <div>
- <label className="block text-xs font-medium text-content-secondary mb-1">Variaçéo</label>
+ <label className="block text-xs font-medium text-content-secondary mb-1">Variação</label>
  <input
  type="text"
  value={newItem.variantName}
  onChange={(e) => setNewItem({ ...newItem, variantName: e.target.value })}
  className="w-full px-3 py-2 text-sm border border-border-default rounded-lg bg-surface-raised"
- placeholder="Variaçéo (opcional)"
+ placeholder="Variação (opcional)"
  />
  </div>
  <div>
@@ -1179,7 +1179,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  </p>
  <p className="text-xs text-content-secondary">
  {item.quantity} {item.unit}
- {item.costPrice && ` â€¢ ${item.costPrice.toFixed(2)} MZN`}
+ {item.costPrice && ` • ${item.costPrice.toFixed(2)} MZN`}
  </p>
  </div>
  <button

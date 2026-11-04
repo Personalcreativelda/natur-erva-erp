@@ -72,7 +72,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
  }, []);
 
 
- // Estrutura de mé³dulos
+ // Estrutura de módulos
  const allModules: MenuModule[] = [
  {
  id: 'dashboard',
@@ -104,45 +104,45 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
  },
  {
  id: 'producao',
- label: 'Produçéo',
+ label: 'Produção',
  icon: Activity,
  items: [
  { id: 'production-activities', label: 'Atividades', icon: Activity, permission: 'production.view' },
  { id: 'production-expenses', label: 'Despesas', icon: DollarSign, permission: 'production.view' },
- { id: 'production-warehouse', label: 'Armazé©m', icon: Warehouse, permission: 'production.view' },
+ { id: 'production-warehouse', label: 'Armazém', icon: Warehouse, permission: 'production.view' },
  { id: 'production-animals', label: 'Animais', icon: Users, permission: 'production.view' },
- { id: 'production-consumption', label: 'Consumo Dié¡rio', icon: Package, permission: 'production.view' },
- { id: 'production-outputs', label: 'Saé­das', icon: ArrowRight, permission: 'production.view' },
+ { id: 'production-consumption', label: 'Consumo Diário', icon: Package, permission: 'production.view' },
+ { id: 'production-outputs', label: 'Saídas', icon: ArrowRight, permission: 'production.view' },
  { id: 'incubator', label: 'Incubadora', icon: Egg, permission: 'production.view' },
  ]
  },
  {
  id: 'administracao',
- label: 'Administraçéo',
+ label: 'Administração',
  icon: Settings,
  items: [
- { id: 'users', label: 'Usué¡rios', icon: Users, permission: 'users.view' },
- { id: 'roles', label: 'Roles e Permisséµes', icon: Shield, permission: 'users.manage_roles' },
+ { id: 'users', label: 'Usuários', icon: Users, permission: 'users.view' },
+ { id: 'roles', label: 'Roles e Permissões', icon: Shield, permission: 'users.manage_roles' },
 
- { id: 'media', label: 'Mé­dia', icon: Image, permission: 'media.view' },
+ { id: 'media', label: 'Mídia', icon: Image, permission: 'media.view' },
  { id: 'tracking', label: 'Rastreamento', icon: Activity, permission: 'users.view' },
  { id: 'profile', label: 'Meu Perfil', icon: UserIcon, permission: '' },
  ]
  },
  ];
 
- // Mé³dulos administrativos que sempre aparecem para admins (mesmo com "all" selecionado)
+ // Módulos administrativos que sempre aparecem para admins (mesmo com "all" selecionado)
  const adminModules = new Set(['users', 'roles', 'tracking', 'profile']);
 
- // Filtrar mé³dulos e itens baseado nas permisséµes
+ // Filtrar módulos e itens baseado nas permissões
  const filteredModules = useMemo(() => {
  return allModules
  .map(module => {
  const filteredItems = module.items.filter(item => {
- // Verificar mé³dulos habilitados (config global em system_modules_config)
+ // Verificar módulos habilitados (config global em system_modules_config)
  if (enabledModules.size > 0 && !enabledModules.has(item.id)) {
- // Exceçéo: mé³dulos administrativos podem aparecer mesmo se néo estiverem habilitados no local
- // mas sé³ para usué¡rios com permisséµes administrativas
+ // Exceção: módulos administrativos podem aparecer mesmo se não estiverem habilitados no local
+ // mas só para usuários com permissões administrativas
  if (adminModules.has(item.id)) {
  if (item.id === 'locations-management') {
  const isAdmin = currentUser?.role === UserRole.ADMIN || currentUser?.roles?.includes('ADMIN');
@@ -150,9 +150,9 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
  return isAdmin || hasLocationPermission;
  }
  if (item.id === 'profile') {
- return true; // Perfil sempre disponé­vel
+ return true; // Perfil sempre disponível
  }
- // Outros mé³dulos administrativos: verificar permisséµes
+ // Outros módulos administrativos: verificar permissões
  if (!item.permission || item.permission === '') {
  return currentUser.role === UserRole.ADMIN || currentUser.roles?.includes('ADMIN');
  }
@@ -167,7 +167,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
  return isAdmin || hasLocationPermission;
  }
 
- // Profile sempre disponé­vel para usué¡rios logados
+ // Profile sempre disponível para usuários logados
  if (item.id === 'profile') {
  return true;
  }
@@ -187,7 +187,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
  .filter(module => module.items.length > 0);
  }, [currentUser, hasPermission, enabledModules, t]);
 
- // Coletar todos os itens de todos os mé³dulos em uma lista plana
+ // Coletar todos os itens de todos os módulos em uma lista plana
  const allMenuItems = useMemo(() => {
  const items: Array<MenuItem & { moduleId: string; moduleLabel: string }> = [];
  filteredModules.forEach(module => {
@@ -232,7 +232,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
  if (!nav) return;
 
  const handleWheel = (e: WheelEvent) => {
- // Prevenir scroll vertical padréo e converter para horizontal
+ // Prevenir scroll vertical padrão e converter para horizontal
  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
  e.preventDefault();
  nav.scrollBy({ left: e.deltaY, behavior: 'auto' });
@@ -241,7 +241,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
 
  nav.addEventListener('wheel', handleWheel, { passive: false });
 
- // Verificar scrollability inicial e apé³s mudanças
+ // Verificar scrollability inicial e após mudanças
  checkScrollability();
  nav.addEventListener('scroll', checkScrollability);
 
@@ -268,7 +268,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
  }
  `}</style>
  <div className="hidden md:flex items-center relative w-full max-w-full" ref={menuRef}>
- {/* Botéo Scroll Esquerda */}
+ {/* Botão Scroll Esquerda */}
  {canScrollLeft && (
  <button
  onClick={scrollLeft}
@@ -323,7 +323,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
  )}
  </nav>
 
- {/* Botéo Scroll Direita */}
+ {/* Botão Scroll Direita */}
  {canScrollRight && (
  <button
  onClick={scrollRight}

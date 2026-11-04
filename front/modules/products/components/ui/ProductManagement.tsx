@@ -16,7 +16,7 @@ interface ProductManagementProps {
 export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast, onDataChanged, defaultTab = 'categories' }) => {
  const [activeTab, setActiveTab] = useState<ProductManagementTabType>(defaultTab);
 
- // Hook do mé³dulo produtos
+ // Hook do módulo produtos
  const {
  categories,
  units,
@@ -81,7 +81,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  // Categories
  const handleSaveCategory = async () => {
  if (!categoryForm.name.trim()) {
- showToast('Nome da categoria é© obrigaté³rio', 'error');
+ showToast('Nome da categoria é obrigatório', 'error');
  return;
  }
 
@@ -154,7 +154,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  // Units
  const handleSaveUnit = async () => {
  if (!unitForm.name.trim() || !unitForm.abbreviation.trim()) {
- showToast('Nome e abreviaçéo são obrigaté³rios', 'error');
+ showToast('Nome e abreviação são obrigatórios', 'error');
  return;
  }
 
@@ -219,7 +219,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  // Templates
  const handleSaveTemplate = async () => {
  if (!templateForm.name.trim()) {
- showToast('Nome do template é© obrigaté³rio', 'error');
+ showToast('Nome do template é obrigatório', 'error');
  return;
  }
 
@@ -326,7 +326,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  value={categoryForm.name}
  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
  className="w-full px-3 py-2 border border-border-default rounded-lg "
- placeholder="Ex: Carnes, Polpas, é“leos"
+ placeholder="Ex: Carnes, Polpas, Óleos"
  />
  </div>
  <div>
@@ -351,14 +351,14 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  </div>
  <div className="md:col-span-2">
  <label className="block text-sm font-medium text-content-secondary mb-1">
- Descriçéo
+ Descrição
  </label>
  <textarea
  value={categoryForm.description}
  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
  className="w-full px-3 py-2 border border-border-default rounded-lg "
  rows={2}
- placeholder="Descriçéo opcional da categoria"
+ placeholder="Descrição opcional da categoria"
  />
  </div>
  <div className="md:col-span-2">
@@ -428,7 +428,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  <tr>
  <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Nome</th>
  <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Cor</th>
- <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Descriçéo</th>
+ <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Descrição</th>
  <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Status</th>
  <th className="px-4 py-3 text-right text-xs font-semibold text-content-secondary">Ações</th>
  </tr>
@@ -512,7 +512,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  </div>
  <div>
  <label className="block text-sm font-medium text-content-secondary mb-1">
- Abreviaçéo *
+ Abreviação *
  </label>
  <input
  type="text"
@@ -524,14 +524,14 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  </div>
  <div className="md:col-span-2">
  <label className="block text-sm font-medium text-content-secondary mb-1">
- Descriçéo
+ Descrição
  </label>
  <textarea
  value={unitForm.description}
  onChange={(e) => setUnitForm({ ...unitForm, description: e.target.value })}
  className="w-full px-3 py-2 border border-border-default rounded-lg "
  rows={2}
- placeholder="Descriçéo opcional da unidade"
+ placeholder="Descrição opcional da unidade"
  />
  </div>
  </div>
@@ -563,8 +563,8 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  <thead className="bg-surface-base">
  <tr>
  <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Nome</th>
- <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Abreviaçéo</th>
- <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Descriçéo</th>
+ <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Abreviação</th>
+ <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Descrição</th>
  <th className="px-4 py-3 text-left text-xs font-semibold text-content-secondary">Status</th>
  <th className="px-4 py-3 text-right text-xs font-semibold text-content-secondary">Ações</th>
  </tr>
@@ -635,14 +635,14 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  </div>
  <div>
  <label className="block text-sm font-medium text-content-secondary mb-1">
- Descriçéo
+ Descrição
  </label>
  <textarea
  value={templateForm.description}
  onChange={(e) => setTemplateForm({ ...templateForm, description: e.target.value })}
  className="w-full px-3 py-2 border border-border-default rounded-lg "
  rows={2}
- placeholder="Descriçéo opcional do template"
+ placeholder="Descrição opcional do template"
  />
  </div>
  <div>
@@ -776,7 +776,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  onConfirm={confirmDialog.onConfirm}
  onCancel={() => setConfirmDialog({ isOpen: false, message: '', onConfirm: () => { } })}
  variant={confirmDialog.variant}
- title="Confirmar Açéo"
+ title="Confirmar Ação"
  confirmText="Confirmar"
  cancelText="Cancelar"
  />

@@ -44,12 +44,12 @@ export const Avatar: React.FC<AvatarProps> = ({
  };
 
  const sizeClass = sizeClasses[size];
- // Verificar se className conté©m uma classe de arredondamento personalizada
+ // Verificar se className contém uma classe de arredondamento personalizada
  const hasCustomRounded = className.includes('rounded-');
  const roundedClass = hasCustomRounded ? '' : 'rounded-full';
  const baseClasses = `${roundedClass} flex-shrink-0 flex items-center justify-center font-semibold text-white bg-gradient-to-br from-brand-500 to-brand-600 ${sizeClass} ${className}`;
 
- // Se néo hé¡ src ou houve erro, mostrar apenas as iniciais
+ // Se não há src ou houve erro, mostrar apenas as iniciais
  if (!src || hasError) {
  return (
  <div className={baseClasses}>
@@ -58,7 +58,7 @@ export const Avatar: React.FC<AvatarProps> = ({
  );
  }
 
- // Se hé¡ src, tentar mostrar a imagem
+ // Se há src, tentar mostrar a imagem
  // Extrair classe de arredondamento do className se existir
  const roundedMatch = className.match(/rounded-[a-z0-9-]+/);
  const imgRoundedClass = roundedMatch ? roundedMatch[0] : 'rounded-full';

@@ -17,6 +17,8 @@ import {
 } from '../../products/services/reviewService';
 import uploadService from '../../../services/uploadService';
 import { ProductCarousel } from '../components/ProductCarousel';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../core/lib/queryClient';
 
 export const ProductLandingPage: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -36,23 +38,36 @@ export const ProductLandingPage: React.FC = () => {
 
     const navigate = useNavigate();
     const cart = useCart();
+    const queryClient = useQueryClient();
     const [cartError, setCartError] = useState<string | null>(null);
 
     useEffect(() => {
+        const showProduct = (p: Product) => {
+            setProduct(p);
+            const defaultV = p.variants?.find(v => v.isDefault) || p.variants?.[0];
+            setSelectedVariant(defaultV);
+            setSelectedImage(getVariantImage(defaultV, p));
+        };
         const loadProduct = async () => {
             if (!slug) return;
-            setLoading(true);
+            // Abre logo com o que já está na cache da loja; o servidor confirma em segundo plano
+            const cachedList = queryClient.getQueryData<Product[]>(queryKeys.shop.products);
+            const cached = cachedList?.find(pr => pr.slug === slug);
+            if (cached) {
+                showProduct(cached);
+                setRelatedProducts(cachedList!.filter(pr => pr.id !== cached.id && pr.category === cached.category).slice(0, 4));
+                setLoading(false);
+            } else {
+                setLoading(true);
+            }
             try {
                 const p = await productService.getProductBySlug(slug);
                 if (p) {
-                    setProduct(p);
-                    const defaultV = p.variants?.find(v => v.isDefault) || p.variants?.[0];
-                    setSelectedVariant(defaultV);
-                    setSelectedImage(getVariantImage(defaultV, p));
+                    if (cached) setProduct(p); else showProduct(p);
                     const [stats, reviewList, allProducts] = await Promise.all([
                         getProductRating(p.id),
                         getProductReviews(p.id),
-                        productService.getProducts(),
+                        cachedList ? Promise.resolve(cachedList) : productService.getProducts(),
                     ]);
                     setRatingStats(stats);
                     setReviews(reviewList.slice(0, 5));

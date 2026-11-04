@@ -10,8 +10,8 @@ export interface PageShellProps {
  actions?: React.ReactNode;
  children: React.ReactNode;
  /**
- * Se true, aplica padding interno. Por padréo fica false porque o `Layout`
- * jé¡ aplica padding responsivo no `<main>`.
+ * Se true, aplica padding interno. Por padrão fica false porque o `Layout`
+ * já aplica padding responsivo no `<main>`.
  */
  withInnerPadding?: boolean;
  className?: string;
@@ -31,26 +31,20 @@ export const PageShell: React.FC<PageShellProps> = ({
 }) => {
  const description = descriptionProp ?? subtitle;
 
- const titleClass = compactHeaderMobile
- ? 'text-xl md:text-3xl font-bold tracking-tight text-content-primary'
- : 'text-2xl md:text-3xl font-bold tracking-tight text-content-primary';
-
- const descriptionClass = compactHeaderMobile
- ? 'text-xs md:text-sm text-content-muted mt-1'
- : 'text-sm text-content-muted mt-1';
-
- const headerClass = compactHeaderMobile
- ? 'flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4'
- : 'flex flex-col md:flex-row md:items-center md:justify-between gap-4';
+ // Cabeçalho único para todas as páginas admin (o compactHeaderMobile mantém-se por compatibilidade)
+ void compactHeaderMobile;
+ const titleClass = 'text-xl sm:text-2xl lg:text-[26px] leading-tight font-bold tracking-tight text-content-primary truncate';
+ const descriptionClass = 'text-sm text-content-muted mt-1 line-clamp-2';
+ const headerClass = 'flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6';
 
  return (
- <div className={[withInnerPadding ? 'p-4 md:p-6' : '', 'space-y-6', className].join(' ')}>
+ <div className={[withInnerPadding ? 'p-4 md:p-6' : '', 'space-y-4 sm:space-y-6', className].join(' ')}>
  {(title || actions) && (
  <div className={headerClass}>
  {title && (
- <div className="min-w-0 flex items-start gap-3">
+ <div className="min-w-0 flex items-center gap-3">
  {icon && (
- <span className="shrink-0 mt-0.5 w-10 h-10 rounded-2xl flex items-center justify-center bg-brand-600/10 text-brand-600 dark:text-brand-400">
+ <span className="shrink-0 w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center bg-brand-600/10 text-brand-600 dark:text-brand-400 [&>svg]:w-5 [&>svg]:h-5">
  {icon}
  </span>
  )}
@@ -61,7 +55,9 @@ export const PageShell: React.FC<PageShellProps> = ({
  </div>
  )}
  {/* No mobile as acções ocupam a largura toda (alvos maiores, zona do polegar) */}
- {actions && <div className="flex gap-2 flex-wrap [&>*]:flex-1 md:[&>*]:flex-none">{actions}</div>}
+ {/* Regras de mobile em .page-actions (index.html): os botões dividem a largura
+     em partes iguais e, sem texto visível, ficam só com o ícone centrado */}
+ {actions && <div className="page-actions flex gap-2 flex-wrap md:flex-nowrap md:shrink-0">{actions}</div>}
  </div>
  )}
  {children}

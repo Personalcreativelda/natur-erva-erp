@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { ModalPortal } from '../ui/ModalPortal';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, X } from 'lucide-react';
 import { User } from '../../../core/types/types';
 import { authService } from '../../../auth/services/authService';
 import { Logo } from '../ui/Logo';
@@ -14,6 +14,8 @@ interface LoginModalProps {
  onUserLogin?: (user: User) => void;
  message?: string | null;
 }
+
+const inputClass = 'w-full h-12 px-3.5 text-base sm:text-sm border border-border-default rounded-xl bg-surface-base text-content-primary placeholder-content-muted focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition';
 
 export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUserLogin, message }) => {
  const [identifier, setIdentifier] = useState('');
@@ -82,151 +84,137 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
  return (
  <>
  <ModalPortal open onClose={onClose} zIndex={10000} className="p-4">
- <div className="bg-surface-raised rounded-2xl px-6 sm:px-8 py-5 sm:py-6 max-w-sm w-full mx-auto shadow-2xl border border-border-default animate-scaleIn max-h-[92dvh] overflow-y-auto">
- <div className="text-center mb-3">
- <div className="mb-2 flex justify-center" style={{ maxWidth: '50%', margin: '0 auto' }}>
- <Logo className="h-4" isDarkMode={document.documentElement.classList.contains('dark')} />
+ <div className="relative bg-surface-raised rounded-3xl px-5 sm:px-7 pt-6 pb-5 max-w-sm w-full mx-auto shadow-2xl border border-border-default animate-scaleIn max-h-[92dvh] overflow-y-auto">
+ <button
+ type="button"
+ onClick={onClose}
+ className="absolute top-3 right-3 w-10 h-10 !min-h-0 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-base transition-colors"
+ aria-label="Fechar"
+ >
+ <X className="w-5 h-5" />
+ </button>
+
+ <div className="text-center mb-5">
+ <div className="flex justify-center mb-4">
+ <Logo width={120} height={40} className="w-auto" isDarkMode={document.documentElement.classList.contains('dark')} />
  </div>
- <h2 className="text-lg font-bold mb-1 text-content-primary">Entrar</h2>
- <p className="text-content-muted text-xs">Acesse sua conta para continuar</p>
+ <h2 className="text-xl font-bold text-content-primary">Entrar</h2>
+ <p className="text-content-muted text-sm mt-1">Aceda à sua conta para continuar</p>
  </div>
 
  {/* Mensagem explicativa quando login é forçado */}
  {message && (
- <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
- <p className="text-sm text-green-800 dark:text-green-300 text-center">
- {message}
- </p>
+ <div className="mb-4 px-3.5 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+ <p className="text-sm text-green-800 dark:text-green-300 text-center leading-snug">{message}</p>
  </div>
  )}
 
- <form onSubmit={handleSubmit} className="space-y-3">
+ <form onSubmit={handleSubmit} className="space-y-4">
  <div>
- <label className="block text-xs font-semibold text-content-primary mb-1.5">
- Email ou Telefone
+ <label htmlFor="login-identifier" className="block text-sm font-medium text-content-primary mb-1.5">
+ Email ou telefone
  </label>
  <input
+ id="login-identifier"
  type="text"
+ inputMode="email"
+ autoComplete="username"
  value={identifier}
  onChange={(e) => setIdentifier(e.target.value)}
- className="w-full px-3.5 py-2.5 text-sm border-2 border-white/20 rounded-lg bg-surface-raised/60 backdrop-blur-md text-content-primary placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500/50 dark:focus:ring-green-400/50 focus:border-green-500/50 dark:focus:border-green-400/50 transition-all shadow-sm"
+ className={inputClass}
  placeholder="seu@email.com ou +258..."
  required
  />
  </div>
  <div>
- <label className="block text-xs font-semibold text-content-primary mb-1.5">
- Senha
+ <label htmlFor="login-password" className="block text-sm font-medium text-content-primary mb-1.5">
+ Palavra-passe
  </label>
  <div className="relative">
  <input
+ id="login-password"
  type={showPassword ? 'text' : 'password'}
+ autoComplete="current-password"
  value={password}
  onChange={(e) => setPassword(e.target.value)}
- className="w-full px-3.5 py-2.5 pr-10 text-sm border-2 border-white/20 rounded-lg bg-surface-raised/60 backdrop-blur-md text-content-primary placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500/50 dark:focus:ring-green-400/50 focus:border-green-500/50 dark:focus:border-green-400/50 transition-all shadow-sm"
+ className={`${inputClass} pr-12`}
  placeholder="••••••••"
  required
  />
  <button
  type="button"
  onClick={() => setShowPassword(!showPassword)}
- className="absolute right-2.5 top-1/2 -translate-y-1/2 text-content-muted hover:text-content-secondary transition-colors"
+ className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 !min-h-0 flex items-center justify-center rounded-lg text-content-muted hover:text-content-secondary transition-colors"
+ aria-label={showPassword ? 'Esconder palavra-passe' : 'Mostrar palavra-passe'}
  >
- {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+ {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
  </button>
  </div>
  </div>
 
- <div className="flex items-center justify-between text-xs">
- <div className="flex items-center">
+ <div className="flex items-center justify-between">
+ <label htmlFor="remember-me-login" className="flex items-center gap-2 text-sm text-content-secondary cursor-pointer">
  <input
  id="remember-me-login"
  name="remember-me-login"
  type="checkbox"
  checked={rememberMe}
  onChange={(e) => setRememberMe(e.target.checked)}
- className="h-3.5 w-3.5 text-green-600 focus:ring-green-500 border-border-default rounded cursor-pointer"
+ className="h-4 w-4 text-green-600 focus:ring-green-500 border-border-default rounded cursor-pointer"
  />
- <label htmlFor="remember-me-login" className="ml-1.5 block text-xs text-content-secondary cursor-pointer">
  Lembrar-me
  </label>
- </div>
  <button
  type="button"
  onClick={() => setShowForgotPasswordModal(true)}
- className="text-xs text-green-600 dark:text-green-400 hover:underline"
+ className="text-sm font-medium text-green-600 dark:text-green-400 hover:underline"
  >
- Esqueceu a senha?
+ Esqueceu-se?
  </button>
  </div>
 
  {error && (
- <div className="text-red-500 text-xs bg-red-50 dark:bg-red-900/20 p-2.5 rounded-lg text-center">
+ <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 px-3 py-2.5 rounded-xl text-center" role="alert">
  {error}
  </div>
  )}
 
- <div className="flex space-x-2 pt-1">
  <button
  type="submit"
  disabled={googleLoading || loading}
- className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-2.5 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl shadow-green-500/30 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+ className="w-full h-12 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-xl font-semibold text-[15px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+ style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 8px 20px -10px rgb(22 163 74)' }}
  >
- {loading ? (
+ {loading ? (<><Loader2 className="w-4 h-4 animate-spin" /> A entrar...</>) : 'Entrar'}
+ </button>
+
+ {/* Google — só aparece se estiver configurado (antes mostrava um botão desactivado) */}
+ {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
  <>
- <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
- Entrando...
- </>
- ) : (
- 'Entrar'
- )}
- </button>
- <button
- type="button"
- onClick={onClose}
- className="flex-1 backdrop-blur-md bg-surface-raised/60 border border-white/20 text-content-secondary py-2.5 rounded-lg font-medium text-sm hover:bg-surface-raised/80 transition-all shadow-sm"
- >
- Cancelar
- </button>
+ <div className="flex items-center gap-3 text-xs text-content-muted">
+ <span className="h-px flex-1 bg-border-default" />
+ ou
+ <span className="h-px flex-1 bg-border-default" />
  </div>
-
- {/* Divisor */}
- <div className="relative my-3">
- <div className="absolute inset-0 flex items-center">
- <div className="w-full border-t border-white/20"></div>
- </div>
- <div className="relative flex justify-center text-xs">
- <span className="px-2 bg-surface-raised/90 text-content-muted">ou</span>
- </div>
- </div>
-
- {/* Botão Google */}
- {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
- <div className="flex justify-center">
+ <div className="flex justify-center min-h-[44px]">
  {googleLoading
- ? <div className="flex items-center gap-2 text-content-muted text-sm py-1"><Loader2 className="w-4 h-4 animate-spin" /> A autenticar...</div>
- : <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Erro ao autenticar com Google.')} useOneTap={false} text="continue_with" shape="rectangular" />
+ ? <div className="flex items-center gap-2 text-content-muted text-sm"><Loader2 className="w-4 h-4 animate-spin" /> A autenticar...</div>
+ : <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Erro ao autenticar com Google.')} useOneTap={false} text="continue_with" shape="pill" width="300" />
  }
  </div>
- ) : (
- <button type="button" disabled className="w-full bg-surface-base text-content-muted font-medium py-2.5 px-4 rounded-lg border border-border-default flex justify-center items-center gap-2 text-sm opacity-50 cursor-not-allowed">
- <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="#9ca3af" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#9ca3af" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#9ca3af" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#9ca3af" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
- Continuar com Google
- </button>
+ </>
  )}
 
- <div className="text-center pt-2 border-t border-white/20">
- <p className="text-xs text-content-secondary">
- Não tem uma conta?{' '}
+ <p className="text-center text-sm text-content-secondary pt-1">
+ Não tem conta?{' '}
  <button
  type="button"
  onClick={() => setShowSignUpModal(true)}
- className="text-green-600 dark:text-green-400 hover:underline font-medium"
+ className="text-green-600 dark:text-green-400 hover:underline font-semibold"
  >
  Criar conta
  </button>
  </p>
- </div>
  </form>
  </div>
  </ModalPortal>

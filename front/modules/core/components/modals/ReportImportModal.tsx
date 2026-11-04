@@ -32,7 +32,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
 
  const parseReport = () => {
  if (!reportText.trim()) {
- showToast('Por favor, cole o relaté³rio no campo de texto', 'warning');
+ showToast('Por favor, cole o relatório no campo de texto', 'warning');
  return;
  }
 
@@ -43,7 +43,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  for (let i = 0; i < lines.length; i++) {
  const line = lines[i].trim();
  
- // Padréµes para identificar clientes:
+ // Padrões para identificar clientes:
  // - "Sr/Sra [Nome] ([telefone])"
  // - "Cliente [nome]"
  // - "[Nome] ([telefone])"
@@ -51,16 +51,16 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  const patterns = [
  /^(?:Sr|Sra|Sr\.|Sra\.)\s+([^(]+?)\s*\((\d+)\)/i,
  /^Cliente\s+(?:ativa|ativo|corrente)?!?\s*([^(]+?)(?:\s*\((\d+)\))?/i,
- /^([A-Zéé‰éé“éšé‡][a-zé¡é©é­é³éºç]+(?:\s+[A-Zéé‰éé“éšé‡][a-zé¡é©é­é³éºç]+)*(?:\s+-\s*[A-Zéé‰éé“éšé‡][a-zé¡é©é­é³éºç]+)?)\s*\((\d+)\)/,
- /^([A-Zéé‰éé“éšé‡][a-zé¡é©é­é³éºç]+(?:\s+[A-Zéé‰éé“éšé‡][a-zé¡é©é­é³éºç]+)*)\s*-\s*\(?(\d+)\)?/,
- /^([A-Zéé‰éé“éšé‡][a-zé¡é©é­é³éºç]+(?:\s+[A-Zéé‰éé“éšé‡][a-zé¡é©é­é³éºç]+)*)\s*\((\d+)\)/,
+ /^([A-ZéÉéÓéšé‡][a-záéíóúç]+(?:\s+[A-ZéÉéÓéšé‡][a-záéíóúç]+)*(?:\s+-\s*[A-ZéÉéÓéšé‡][a-záéíóúç]+)?)\s*\((\d+)\)/,
+ /^([A-ZéÉéÓéšé‡][a-záéíóúç]+(?:\s+[A-ZéÉéÓéšé‡][a-záéíóúç]+)*)\s*-\s*\(?(\d+)\)?/,
+ /^([A-ZéÉéÓéšé‡][a-záéíóúç]+(?:\s+[A-ZéÉéÓéšé‡][a-záéíóúç]+)*)\s*\((\d+)\)/,
  ];
 
  let matched = false;
  for (const pattern of patterns) {
  const match = line.match(pattern);
  if (match) {
- // Se havia um cliente anterior, salvé¡-lo
+ // Se havia um cliente anterior, salvá-lo
  if (currentCustomer && currentCustomer.notes.trim()) {
  parsed.push(currentCustomer);
  }
@@ -68,7 +68,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  const name = match[1].trim();
  const phone = match[2]?.trim();
  
- // Normalizar nomes para comparaçéo (remover acentos e espaços extras)
+ // Normalizar nomes para comparação (remover acentos e espaços extras)
  const normalizeName = (n: string) => n.toLowerCase()
  .normalize('NFD')
  .replace(/[\u0300-\u036f]/g, '')
@@ -80,7 +80,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  const normalizedCustomerName = normalizeName(c.name);
  const normalizedInputName = normalizeName(name);
  
- // Verificar correspondéªncia por nome (parcial ou completo)
+ // Verificar correspondência por nome (parcial ou completo)
  const nameMatch = normalizedCustomerName.includes(normalizedInputName) || 
  normalizedInputName.includes(normalizedCustomerName) ||
  // Verificar se partes do nome correspondem
@@ -88,7 +88,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  part.length > 2 && normalizedCustomerName.includes(part)
  );
  
- // Verificar correspondéªncia por telefone
+ // Verificar correspondência por telefone
  const phoneMatch = phone && (
  c.phone.replace(/\s/g, '').includes(phone.replace(/\s/g, '')) || 
  phone.replace(/\s/g, '').includes(c.phone.replace(/\s/g, ''))
@@ -108,7 +108,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  }
  }
 
- // Se néo é© uma linha de identificaçéo de cliente, adicionar como nota
+ // Se não é uma linha de identificação de cliente, adicionar como nota
  if (!matched && currentCustomer) {
  if (currentCustomer.notes) {
  currentCustomer.notes += ' ' + line;
@@ -118,7 +118,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  }
  }
 
- // Adicionar éºltimo cliente
+ // Adicionar último cliente
  if (currentCustomer && currentCustomer.notes.trim()) {
  parsed.push(currentCustomer);
  }
@@ -126,15 +126,15 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  setParsedCustomers(parsed);
  
  if (parsed.length === 0) {
- showToast('Nenhum cliente encontrado no relaté³rio. Verifique o formato.', 'warning');
+ showToast('Nenhum cliente encontrado no relatório. Verifique o formato.', 'warning');
  } else {
- showToast(`${parsed.length} cliente(s) identificado(s) no relaté³rio`, 'info');
+ showToast(`${parsed.length} cliente(s) identificado(s) no relatório`, 'info');
  }
  };
 
  const handleProcess = async () => {
  if (parsedCustomers.length === 0) {
- showToast('Por favor, analise o relaté³rio primeiro', 'warning');
+ showToast('Por favor, analise o relatório primeiro', 'warning');
  return;
  }
 
@@ -177,7 +177,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  showToast('Nenhum cliente foi atualizado. Verifique os erros.', 'error');
  }
  } catch (error: any) {
- showToast('Erro ao processar relaté³rio: ' + (error.message || 'Erro desconhecido'), 'error');
+ showToast('Erro ao processar relatório: ' + (error.message || 'Erro desconhecido'), 'error');
  } finally {
  setIsProcessing(false);
  }
@@ -188,8 +188,8 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  <div className="bg-surface-raised rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
  <div className="sticky top-0 bg-surface-raised border-b border-border-default p-6 flex justify-between items-center z-10">
  <div>
- <h3 className="text-xl font-bold text-content-primary">Importar Relaté³rio de Clientes</h3>
- <p className="text-sm text-content-muted mt-1">Cole o relaté³rio e o sistema identificaré¡ automaticamente os clientes</p>
+ <h3 className="text-xl font-bold text-content-primary">Importar Relatório de Clientes</h3>
+ <p className="text-sm text-content-muted mt-1">Cole o relatório e o sistema identificará automaticamente os clientes</p>
  </div>
  <button onClick={onClose} className="text-content-muted hover:text-content-secondary ">
  <X className="w-6 h-6" />
@@ -199,14 +199,14 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  <div className="flex-1 overflow-y-auto p-6 space-y-4">
  <div>
  <label className="block text-sm font-medium text-content-secondary mb-2">
- Cole o relaté³rio aqui:
+ Cole o relatório aqui:
  </label>
  <textarea
  value={reportText}
  onChange={(e) => setReportText(e.target.value)}
  rows={12}
  className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-content-primary font-mono text-sm"
- placeholder="Cole aqui o relaté³rio de clientes..."
+ placeholder="Cole aqui o relatório de clientes..."
  />
  <div className="mt-2 flex gap-2">
  <button
@@ -215,7 +215,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
  >
  <Search className="w-4 h-4" />
- Analisar Relaté³rio
+ Analisar Relatório
  </button>
  <button
  onClick={() => {
@@ -276,7 +276,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  </span>
  ) : (
  <span className="px-2 py-0.5 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 text-xs rounded">
- âœ— Néo encontrado
+ âœ— Não encontrado
  </span>
  )}
  </div>

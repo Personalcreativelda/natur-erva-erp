@@ -302,10 +302,10 @@ export const ShopMidBanner: React.FC<ShopMidBannerProps> = ({ isAdmin = false, p
   }
 
   return (
-    <section className="w-full mt-8">
+    <section className="mt-2 sm:mt-6">
       <div
-        className="relative w-full overflow-hidden cursor-pointer group flex items-center"
-        style={{ backgroundColor: banner!.bgColor, height: 'clamp(280px, calc(100vw / 3.2), 600px)' }}
+        className="banner-hero relative overflow-hidden cursor-pointer group flex items-center"
+        style={{ backgroundColor: banner!.bgColor }}
         onClick={handleClick}
       >
         {/* Imagem cobre o banner todo */}
@@ -321,10 +321,10 @@ export const ShopMidBanner: React.FC<ShopMidBannerProps> = ({ isAdmin = false, p
         )}
 
         {/* Conteúdo de texto — centrado verticalmente, alinhado à esquerda */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-6 md:px-12">
           <div className="max-w-xl drop-shadow-lg">
             {banner!.productSlug && (
-              <span className="inline-block bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full mb-3 border border-white/30">
+              <span className="hidden sm:inline-block bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full mb-3 border border-white/30">
                 Produto em destaque
               </span>
             )}
@@ -332,11 +332,11 @@ export const ShopMidBanner: React.FC<ShopMidBannerProps> = ({ isAdmin = false, p
               {banner!.title}
             </h2>
             {banner!.subtitle && (
-              <p className="text-white/80 mb-6 leading-relaxed" style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1.1rem)' }}>
+              <p className="text-white/80 mb-4 sm:mb-6 leading-relaxed line-clamp-2" style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1.1rem)' }}>
                 {banner!.subtitle}
               </p>
             )}
-            <button className="inline-flex items-center gap-2 bg-white text-gray-900 font-bold px-6 py-3 rounded-xl hover:bg-surface-base active:scale-95 transition-all shadow-lg hover:shadow-xl text-sm md:text-base">
+            <button className="inline-flex items-center gap-2 bg-white text-gray-900 font-bold px-5 sm:px-6 h-10 sm:h-12 !min-h-0 rounded-xl hover:bg-surface-base active:scale-95 transition-all shadow-lg hover:shadow-xl text-sm md:text-base">
               {banner!.buttonText}
               <ArrowRight className="w-4 h-4" />
             </button>
@@ -350,7 +350,7 @@ export const ShopMidBanner: React.FC<ShopMidBannerProps> = ({ isAdmin = false, p
             className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors md:opacity-0 md:group-hover:opacity-100 z-20"
           >
             <Settings className="w-3.5 h-3.5" />
-            Editar Banner
+            <span className="hidden sm:inline">Editar Banner</span>
           </button>
         )}
       </div>

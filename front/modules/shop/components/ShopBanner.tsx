@@ -8,6 +8,7 @@ import {
 import api from '../../core/services/apiClient';
 import uploadService from '../../../services/uploadService';
 import { Product } from '../../core/types/types';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 interface BannerConfig {
   id: number | null;
@@ -50,9 +51,11 @@ const BG_PRESETS = [
 ];
 
 export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, products = [], uploadImage }) => {
+ const confirm = useConfirm();
   const navigate = useNavigate();
   const [slides, setSlides] = useState<BannerConfig[]>([]);
   const [current, setCurrent] = useState(0);
+  const touchStartX = useRef(0);
   const [loading, setLoading] = useState(true);
 
   // Admin state
@@ -177,7 +180,7 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
   };
 
   const handleDelete = async (id: number | null) => {
-    if (!id || !confirm('Eliminar este slide?')) return;
+    if (!id || !(await confirm('O slide deixa de aparecer na loja.', { title: 'Eliminar slide?', confirmLabel: 'Eliminar', variant: 'danger' }))) return;
     try {
       await api.delete(`/banners/${id}`);
       setSlides(prev => prev.filter(s => s.id !== id));
@@ -201,7 +204,7 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
   // ─── Skeleton ─────────────────────────────────────────────────────
   if (loading) {
     return (
-      <section className="w-full" style={{ height: 'clamp(280px, calc(100vw / 3.2), 600px)' }}>
+      <section className="banner-hero">
         <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-100 dark:from-gray-800 dark:to-gray-700 animate-pulse" />
       </section>
     );
@@ -215,7 +218,17 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
   return (
     <>
       {/* ── Slider ───────────────────────────────────────────────── */}
-      <section className="relative w-full overflow-hidden" style={{ height: 'clamp(280px, calc(100vw / 3.2), 600px)' }}>
+      <section
+        className="banner-hero relative overflow-hidden"
+        // Deslizar com o dedo (antes só havia setas, que no mobile tapavam o texto)
+        onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
+        onTouchEnd={e => {
+          const dx = e.changedTouches[0].clientX - touchStartX.current;
+          if (Math.abs(dx) < 40 || slides.length < 2) return;
+          stopAuto();
+          goTo(dx < 0 ? (current + 1) % slides.length : (current - 1 + slides.length) % slides.length);
+        }}
+      >
 
         {/* Slides track */}
         <div
@@ -249,10 +262,10 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
                 )}
 
                 {/* Conteúdo */}
-                <div className="relative w-full max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-start gap-6">
+                <div className="relative w-full max-w-7xl mx-auto px-5 sm:px-6 md:px-12 flex items-center justify-start gap-6">
                   <div className="text-white max-w-xl z-10 drop-shadow-lg">
                     {slide.productSlug && (
-                      <span className="inline-block bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full mb-3 border border-white/30">
+                      <span className="hidden sm:inline-block bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full mb-3 border border-white/30">
                         Produto em destaque
                       </span>
                     )}
@@ -260,13 +273,13 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
                       style={{ fontSize: 'clamp(1.5rem, 4vw, 3rem)' }}>
                       {slide.title}
                     </h2>
-                    <p className="text-white/80 mb-6 leading-relaxed"
+                    <p className="text-white/80 mb-4 sm:mb-6 leading-relaxed line-clamp-2"
                       style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1.1rem)' }}>
                       {slide.subtitle}
                     </p>
                     <button
                       onClick={() => handleSlideClick(slide)}
-                      className="inline-flex items-center gap-2 bg-white text-gray-900 font-bold px-6 py-3 rounded-xl hover:bg-surface-base active:scale-95 transition-all shadow-lg hover:shadow-xl text-sm md:text-base"
+                      className="inline-flex items-center gap-2 bg-white text-gray-900 font-bold px-5 sm:px-6 h-10 sm:h-12 !min-h-0 rounded-xl hover:bg-surface-base active:scale-95 transition-all shadow-lg hover:shadow-xl text-sm md:text-base"
                     >
                       {slide.buttonText}
                       <ArrowRight className="w-4 h-4" />
@@ -283,13 +296,13 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
           <>
             <button
               onClick={() => { stopAuto(); goTo(current - 1 < 0 ? slides.length - 1 : current - 1); }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 md:w-10 md:h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-colors z-10"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full hidden md:flex items-center justify-center text-white transition-colors z-10"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={() => { stopAuto(); goTo((current + 1) % slides.length); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 md:w-10 md:h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-colors z-10"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full hidden md:flex items-center justify-center text-white transition-colors z-10"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -298,15 +311,15 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
 
         {/* Dots */}
         {slides.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-10">
             {slides.map((_, i) => (
               <button
                 key={i}
                 onClick={() => { stopAuto(); goTo(i); }}
                 className={`rounded-full transition-all duration-300 ${
                   i === current
-                    ? 'w-6 h-2.5 bg-white shadow-md'
-                    : 'w-2.5 h-2.5 bg-white/50 hover:bg-white/75'
+                    ? 'w-5 sm:w-6 h-2 sm:h-2.5 bg-white shadow-md'
+                    : 'w-2 sm:w-2.5 h-2 sm:h-2.5 bg-white/50 hover:bg-white/75'
                 }`}
               />
             ))}
@@ -320,7 +333,7 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
             className="absolute top-3 right-3 z-10 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors"
           >
             <Settings className="w-3.5 h-3.5" />
-            Gerir Slides
+            <span className="hidden sm:inline">Gerir Slides</span>
           </button>
         )}
       </section>

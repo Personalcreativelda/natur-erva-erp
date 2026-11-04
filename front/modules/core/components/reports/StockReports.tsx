@@ -40,7 +40,7 @@ export const StockReports: React.FC<StockReportsProps> = ({ products, showToast 
  const [reportData, setReportData] = useState<StockReport | null>(null);
  const reportRef = useRef<HTMLDivElement>(null);
 
- // Hook do mé³dulo stock
+ // Hook do módulo stock
  const { movements: stockMovements, getStockMovements, loading } = useStockMovements();
 
  React.useEffect(() => {
@@ -168,16 +168,16 @@ export const StockReports: React.FC<StockReportsProps> = ({ products, showToast 
  try {
  const data = calculateStockReport();
  setReportData(data);
- showToast('Relaté³rio gerado com sucesso', 'success');
+ showToast('Relatório gerado com sucesso', 'success');
  } catch (error) {
- console.error('Erro ao gerar relaté³rio:', error);
- showToast('Erro ao gerar relaté³rio', 'error');
+ console.error('Erro ao gerar relatório:', error);
+ showToast('Erro ao gerar relatório', 'error');
  }
  };
 
  const exportReport = async () => {
  if (!reportData || !reportRef.current) {
- showToast('Gere o relaté³rio primeiro', 'warning');
+ showToast('Gere o relatório primeiro', 'warning');
  return;
  }
 
@@ -219,7 +219,7 @@ export const StockReports: React.FC<StockReportsProps> = ({ products, showToast 
 
  // Adicionar cabeçalho com branding
  const periodLabel = `${start.toLocaleDateString('pt-PT')} a ${end.toLocaleDateString('pt-PT')}`;
- const startY = await addPDFHeader(pdf, 'Relaté³rio de Stock', {
+ const startY = await addPDFHeader(pdf, 'Relatório de Stock', {
  period: periodLabel,
  orientation: 'portrait',
  });
@@ -236,7 +236,7 @@ export const StockReports: React.FC<StockReportsProps> = ({ products, showToast 
  heightLeft -= (pdfHeight - margin * 2);
  }
 
- // Adicionar rodapé© em todas as pé¡ginas
+ // Adicionar rodapé em todas as páginas
  const totalPages = pdf.getNumberOfPages();
  for (let i = 1; i <= totalPages; i++) {
  pdf.setPage(i);
@@ -244,10 +244,10 @@ export const StockReports: React.FC<StockReportsProps> = ({ products, showToast 
  }
 
  pdf.save(filename);
- showToast('Relaté³rio exportado em PDF com sucesso', 'success');
+ showToast('Relatório exportado em PDF com sucesso', 'success');
  } catch (error) {
  console.error('Erro ao exportar PDF:', error);
- showToast('Erro ao exportar relaté³rio em PDF', 'error');
+ showToast('Erro ao exportar relatório em PDF', 'error');
  }
  };
 
@@ -276,7 +276,7 @@ export const StockReports: React.FC<StockReportsProps> = ({ products, showToast 
  <div className="flex items-center justify-between">
  <h2 className="text-xl font-bold text-content-primary flex items-center gap-2">
  <BarChart3 className="w-6 h-6 text-brand-500" />
- Relaté³rios de Stock
+ Relatórios de Stock
  </h2>
  </div>
 
@@ -304,7 +304,7 @@ export const StockReports: React.FC<StockReportsProps> = ({ products, showToast 
  className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
  >
  <FileText className="w-4 h-4" />
- Gerar Relaté³rio
+ Gerar Relatório
  </button>
  <button
  onClick={exportReport}
@@ -321,7 +321,7 @@ export const StockReports: React.FC<StockReportsProps> = ({ products, showToast 
  <div ref={reportRef} className="bg-surface-raised rounded-lg shadow p-6 space-y-6">
  <h2 className="text-2xl font-bold text-content-primary mb-6 flex items-center gap-2">
  <Package className="w-7 h-7 text-brand-500" />
- Relaté³rio de Stock
+ Relatório de Stock
  </h2>
 
  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -404,7 +404,7 @@ export const StockReports: React.FC<StockReportsProps> = ({ products, showToast 
  }}
  />
  <Bar dataKey="stock" fill="#10b981" name="Stock Atual" radius={[0, 8, 8, 0]} />
- <Bar dataKey="minStock" fill="#f59e0b" name="Stock Mé­nimo" radius={[0, 8, 8, 0]} />
+ <Bar dataKey="minStock" fill="#f59e0b" name="Stock Mínimo" radius={[0, 8, 8, 0]} />
  </BarChart>
  </ResponsiveContainer>
  </div>
@@ -425,8 +425,8 @@ export const StockReports: React.FC<StockReportsProps> = ({ products, showToast 
  <tr>
  <th className="text-left py-4 px-6 text-sm font-semibold text-content-primary">Produto</th>
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Stock Atual</th>
- <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Stock Mé­nimo</th>
- <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Dé©fice</th>
+ <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Stock Mínimo</th>
+ <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Défice</th>
  <th className="text-left py-4 px-6 text-sm font-semibold text-content-primary">Unidade</th>
  <th className="w-40 py-4 px-6 text-sm font-semibold text-content-primary">Status</th>
  </tr>

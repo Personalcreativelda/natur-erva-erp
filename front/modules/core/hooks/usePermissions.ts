@@ -11,14 +11,14 @@ interface UsePermissionsReturn {
   refreshPermissions: () => Promise<void>;
 }
 
-// Cache de permisséµes por usué¡rio
+// Cache de permissões por usuário
 const permissionsCache: Record<string, { permissions: string[]; timestamp: number }> = {};
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
-// Funçéo para limpar cache de um usué¡rio especé­fico (exportada para uso externo)
+// Função para limpar cache de um usuário específico (exportada para uso externo)
 export const clearUserPermissionsCache = (userId: string) => {
   delete permissionsCache[userId];
-  console.log(`Cache de permisséµes limpo para usué¡rio: ${userId}`);
+  console.log(`Cache de permissões limpo para usuário: ${userId}`);
 };
 
 // Função para limpar todo o cache
@@ -260,14 +260,14 @@ export const usePermissions = (user: User | null): UsePermissionsReturn => {
   useEffect(() => {
     loadPermissions();
 
-    // Ouvir eventos de atualizaçéo de roles para limpar cache
+    // Ouvir eventos de atualização de roles para limpar cache
     const handleRolesUpdated = (event: CustomEvent) => {
       const updatedUserId = event.detail?.userId;
       if (updatedUserId && updatedUserId === user?.id) {
         clearUserPermissionsCache(updatedUserId);
         loadPermissions();
       } else if (!updatedUserId) {
-        // Se néo especificou userId, limpar cache de todos
+        // Se não especificou userId, limpar cache de todos
         clearAllPermissionsCache();
         if (user) {
           loadPermissions();

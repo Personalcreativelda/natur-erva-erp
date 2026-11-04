@@ -243,9 +243,38 @@
 
       /* Espaço do <main> admin no mobile: header fixo (56px) + barra inferior (~72px) + safe-areas */
       @media (max-width: 767px) {
-        .admin-main-mobile {
+        /* Classe repetida = mais especificidade que o "p-4" do Tailwind (CDN injecta o CSS depois deste) */
+        .admin-main-mobile.admin-main-mobile {
           padding-top: calc(56px + 16px + env(safe-area-inset-top));
           padding-bottom: calc(88px + env(safe-area-inset-bottom));
+        }
+      }
+
+      /* Acções do cabeçalho das páginas admin (PageShell) no mobile:
+         uma linha de botões do mesmo tamanho, sem transbordar do ecrã */
+      @media (max-width: 767px) {
+        .page-actions { width: 100%; }
+        .page-actions > div { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+        .page-actions > button, .page-actions > a,
+        .page-actions > div > button, .page-actions > div > a, .page-actions > div > div {
+          flex: 1 1 0; min-width: 44px; min-height: 44px;
+          justify-content: center; padding-left: 10px; padding-right: 10px;
+          box-shadow: none;
+        }
+      }
+      @media (max-width: 639px) {
+        /* Botão só com ícone (texto "hidden sm:inline" escondido): ícone centrado */
+        .page-actions button:has(> span.hidden) > svg,
+        .page-actions a:has(> span.hidden) > svg { margin-right: 0; }
+      }
+
+      /* POS no mobile: ocupa exactamente o espaço entre o cabeçalho (56px) e a barra
+         de navegação inferior (64px + safe-area), sem deslizar a página inteira */
+      @media (max-width: 767px) {
+        .pos-mobile-viewport {
+          position: fixed; left: 0; right: 0; z-index: 20;
+          top: calc(56px + env(safe-area-inset-top));
+          bottom: calc(64px + max(8px, env(safe-area-inset-bottom)));
         }
       }
 
@@ -270,6 +299,27 @@
         -webkit-text-size-adjust: 100%;
       }
       
+      /* Filas de chips que deslizam: desvanecer na borda direita indica que há mais */
+      @media (max-width: 639px) {
+        .chips-fade { -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
+      }
+
+      /* Banners (hero e intermédio): no mobile são cartões arredondados com margem,
+         no desktop ocupam a largura toda */
+      .banner-hero { height: 200px; margin: 12px 16px 0; border-radius: 16px; overflow: hidden; }
+      @media (min-width: 640px) {
+        .banner-hero { height: clamp(280px, calc(100vw / 3.2), 600px); margin: 0; border-radius: 0; }
+      }
+
+      /* Notificações (Toast) */
+      .toast-stack { top: calc(64px + env(safe-area-inset-top)); }
+      @media (min-width: 768px) { .toast-stack { top: auto; } }
+      @keyframes toast-in { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
+      .toast-enter { animation: toast-in 0.24s cubic-bezier(0.16, 1, 0.3, 1); }
+      @keyframes toast-progress { from { width: 100%; } to { width: 0%; } }
+      .toast-progress { animation-name: toast-progress; animation-timing-function: linear; animation-fill-mode: forwards; }
+      @media (prefers-reduced-motion: reduce) { .toast-enter { animation: none; } }
+
       /* Overlay de modais */
       @keyframes overlay-enter {
         from { opacity: 0; }

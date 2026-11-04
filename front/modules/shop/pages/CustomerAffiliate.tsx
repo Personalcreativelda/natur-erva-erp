@@ -5,6 +5,7 @@ import {
   Download, Smartphone, CreditCard, ExternalLink, Plus, X, AlertCircle
 } from 'lucide-react';
 import api from '../../core/services/apiClient';
+import { useToast } from '../../core/contexts/ToastContext';
 
 interface AffiliateProfile {
   id: string;
@@ -50,6 +51,7 @@ const STAT_STATUS: Record<string, { label: string; cls: string }> = {
 const fmt = (d: string) => new Date(d).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' });
 
 export const CustomerAffiliate: React.FC = () => {
+ const { showToast: notify } = useToast();
   const navigate = useNavigate();
   const [affiliate, setAffiliate] = useState<AffiliateProfile | null>(null);
   const [commissions, setCommissions] = useState<Commission[]>([]);
@@ -88,7 +90,7 @@ export const CustomerAffiliate: React.FC = () => {
       await api.post('/affiliates/join', {});
       await loadAll();
     } catch (err: any) {
-      alert(err.message || 'Erro ao aderir ao programa');
+      notify(err.message || 'Erro ao aderir ao programa', 'error');
     } finally {
       setJoining(false);
     }

@@ -2,6 +2,7 @@
 import { FileText, FileImage, Download, Trash2, Eye } from 'lucide-react';
 import { formatFileSize, getFileIcon } from '../services/mediaService';
 import type { MediaFile } from '../../core/types/types';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 interface MediaCardProps {
  file: MediaFile;
@@ -22,12 +23,13 @@ export const MediaCard: React.FC<MediaCardProps> = ({
  onSelect,
  showActions = true
 }) => {
+ const confirm = useConfirm();
  const handleDownload = (e: React.MouseEvent) => {
  e.stopPropagation();
  if (onDownload) {
  onDownload(file);
  } else {
- // Download padréo
+ // Download padrão
  const link = document.createElement('a');
  link.href = file.url;
  link.download = file.name;
@@ -38,9 +40,9 @@ export const MediaCard: React.FC<MediaCardProps> = ({
  }
  };
 
- const handleDelete = (e: React.MouseEvent) => {
+ const handleDelete = async (e: React.MouseEvent) => {
  e.stopPropagation();
- if (onDelete && window.confirm(`Tem certeza que deseja deletar "${file.name}"?`)) {
+ if (onDelete && await confirm(`"${file.name}" será eliminado permanentemente.`, { title: 'Eliminar ficheiro?', confirmLabel: 'Eliminar', variant: 'danger' })) {
  onDelete(file);
  }
  };
@@ -75,7 +77,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
  `}
  onClick={handleCardClick}
  >
- {/* Checkbox de seleçéo */}
+ {/* Checkbox de seleção */}
  {onSelect && (
  <div className="absolute top-2 left-2 z-10">
  <input
@@ -97,7 +99,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
  className="w-full h-full object-cover"
  loading="lazy"
  onError={(e) => {
- // Fallback para é­cone se imagem néo carregar
+ // Fallback para ícone se imagem não carregar
  const target = e.target as HTMLImageElement;
  target.style.display = 'none';
  const parent = target.parentElement;
@@ -118,7 +120,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
  </div>
  )}
 
- {/* Overlay com açéµes */}
+ {/* Overlay com ações */}
  {showActions && (
  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
  {onView && (

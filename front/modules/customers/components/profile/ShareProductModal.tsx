@@ -1,9 +1,10 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { X, Share2, Copy, Check, MessageCircle } from 'lucide-react';
+import { X, Share2, Copy, Check } from 'lucide-react';
+import { FaWhatsapp, FaFacebookF, FaInstagram } from 'react-icons/fa6';
 import { dataService } from '../../../core/services/dataService';
 import { customerProfileService } from '../../services/customerProfileService';
 import { Product } from '../../../core/types/types';
-import { Toast } from '../ui/Toast';
+import type { Toast } from '../../../core/components/ui/Toast';
 
 interface ShareProductModalProps {
  customerId: string;
@@ -129,7 +130,7 @@ export const ShareProductModal: React.FC<ShareProductModalProps> = ({
  <div>
  <p className="font-semibold text-content-primary">{product.name}</p>
  <p className="text-sm text-content-secondary">
- {product.price.toFixed(2)} MT â€¢ Stock: {product.stock}
+ {product.price.toFixed(2)} MT • Stock: {product.stock}
  </p>
  </div>
  </div>
@@ -146,9 +147,9 @@ export const ShareProductModal: React.FC<ShareProductModalProps> = ({
  </label>
  <div className="grid grid-cols-2 gap-3">
  {[
- { value: 'whatsapp' as const, label: 'WhatsApp', icon: MessageCircle },
- { value: 'facebook' as const, label: 'Facebook', icon: Share2 },
- { value: 'instagram' as const, label: 'Instagram', icon: Share2 },
+ { value: 'whatsapp' as const, label: 'WhatsApp', icon: FaWhatsapp },
+ { value: 'facebook' as const, label: 'Facebook', icon: FaFacebookF },
+ { value: 'instagram' as const, label: 'Instagram', icon: FaInstagram },
  { value: 'other' as const, label: 'Outro', icon: Share2 }
  ].map(platform => {
  const Icon = platform.icon;
@@ -196,15 +197,16 @@ export const ShareProductModal: React.FC<ShareProductModalProps> = ({
  onClick={() => shareOnWhatsApp(selectedProduct)}
  className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
  >
- <MessageCircle className="w-5 h-5" />
+ <FaWhatsapp className="w-5 h-5" />
  </button>
  )}
  {selectedPlatform === 'facebook' && (
  <button
  onClick={() => shareOnFacebook(selectedProduct)}
- className="p-2 bg-brand-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+ className="p-2 bg-[#1877F2] text-white rounded-lg hover:opacity-90 transition-opacity"
+ aria-label="Partilhar no Facebook"
  >
- <Share2 className="w-5 h-5" />
+ <FaFacebookF className="w-5 h-5" />
  </button>
  )}
  </div>
@@ -214,7 +216,7 @@ export const ShareProductModal: React.FC<ShareProductModalProps> = ({
  {/* Reward info */}
  <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
  <p className="text-sm text-green-800 dark:text-green-300">
- ðŸŽ <strong>Recompensa:</strong> Ao partilhar um produto, vocéª ganharé¡ <strong>10 pontos</strong>!
+ ðŸŽ <strong>Recompensa:</strong> Ao partilhar um produto, você ganhará <strong>10 pontos</strong>!
  </p>
  </div>
 

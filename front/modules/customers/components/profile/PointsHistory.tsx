@@ -28,14 +28,14 @@ const getActionLabel = (actionType: string) => {
  partilhar_produto: 'Partilhar Produto',
  avaliar_produto: 'Avaliar Produto',
  seguir_rede_social: 'Seguir Rede Social',
- participar_promocao: 'Participar Promoçéo',
+ participar_promocao: 'Participar Promoção',
  criar_review: 'Criar Review',
- criar_conteudo: 'Criar Conteéºdo',
+ criar_conteudo: 'Criar Conteúdo',
  participar_evento: 'Participar Evento',
  meta_completa: 'Meta Completa',
  purchase: 'Compra',
- referral: 'Indicaçéo',
- bonus: 'Bé³nus'
+ referral: 'Indicação',
+ bonus: 'Bónus'
  };
  return labels[actionType] || actionType;
 };
@@ -45,7 +45,7 @@ export const PointsHistory: React.FC<PointsHistoryProps> = ({ actions }) => {
  return (
  <div className="text-center py-8 text-content-muted">
  <Gift className="w-12 h-12 text-content-muted mx-auto mb-2" />
- <p>Nenhuma açéo registrada ainda</p>
+ <p>Nenhuma ação registrada ainda</p>
  </div>
  );
  }

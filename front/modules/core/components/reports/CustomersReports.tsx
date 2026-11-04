@@ -41,7 +41,7 @@ export const CustomersReports: React.FC<CustomersReportsProps> = ({ customers, s
  const [reportData, setReportData] = useState<CustomersReport | null>(null);
  const reportRef = useRef<HTMLDivElement>(null);
 
- // Hook do mé³dulo vendas
+ // Hook do módulo vendas
  const { orders, getOrders, loading } = useOrders();
 
  React.useEffect(() => {
@@ -187,16 +187,16 @@ export const CustomersReports: React.FC<CustomersReportsProps> = ({ customers, s
  try {
  const data = calculateCustomersReport();
  setReportData(data);
- showToast('Relaté³rio gerado com sucesso', 'success');
+ showToast('Relatório gerado com sucesso', 'success');
  } catch (error) {
- console.error('Erro ao gerar relaté³rio:', error);
- showToast('Erro ao gerar relaté³rio', 'error');
+ console.error('Erro ao gerar relatório:', error);
+ showToast('Erro ao gerar relatório', 'error');
  }
  };
 
  const exportReport = async () => {
  if (!reportData || !reportRef.current) {
- showToast('Gere o relaté³rio primeiro', 'warning');
+ showToast('Gere o relatório primeiro', 'warning');
  return;
  }
 
@@ -238,7 +238,7 @@ export const CustomersReports: React.FC<CustomersReportsProps> = ({ customers, s
 
  // Adicionar cabeçalho com branding
  const periodLabel = `${start.toLocaleDateString('pt-PT')} a ${end.toLocaleDateString('pt-PT')}`;
- const startY = await addPDFHeader(pdf, 'Relaté³rio de Clientes', {
+ const startY = await addPDFHeader(pdf, 'Relatório de Clientes', {
  period: periodLabel,
  orientation: 'portrait',
  });
@@ -255,7 +255,7 @@ export const CustomersReports: React.FC<CustomersReportsProps> = ({ customers, s
  heightLeft -= (pdfHeight - margin * 2);
  }
 
- // Adicionar rodapé© em todas as pé¡ginas
+ // Adicionar rodapé em todas as páginas
  const totalPages = pdf.getNumberOfPages();
  for (let i = 1; i <= totalPages; i++) {
  pdf.setPage(i);
@@ -263,10 +263,10 @@ export const CustomersReports: React.FC<CustomersReportsProps> = ({ customers, s
  }
 
  pdf.save(filename);
- showToast('Relaté³rio exportado em PDF com sucesso', 'success');
+ showToast('Relatório exportado em PDF com sucesso', 'success');
  } catch (error) {
  console.error('Erro ao exportar PDF:', error);
- showToast('Erro ao exportar relaté³rio em PDF', 'error');
+ showToast('Erro ao exportar relatório em PDF', 'error');
  }
  };
 
@@ -296,7 +296,7 @@ export const CustomersReports: React.FC<CustomersReportsProps> = ({ customers, s
  <div className="flex items-center justify-between">
  <h2 className="text-xl font-bold text-content-primary flex items-center gap-2">
  <BarChart3 className="w-6 h-6 text-brand-500" />
- Relaté³rios de Clientes
+ Relatórios de Clientes
  </h2>
  </div>
 
@@ -324,7 +324,7 @@ export const CustomersReports: React.FC<CustomersReportsProps> = ({ customers, s
  className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
  >
  <FileText className="w-4 h-4" />
- Gerar Relaté³rio
+ Gerar Relatório
  </button>
  <button
  onClick={exportReport}
@@ -341,7 +341,7 @@ export const CustomersReports: React.FC<CustomersReportsProps> = ({ customers, s
  <div ref={reportRef} className="bg-surface-raised rounded-lg shadow p-6 space-y-6">
  <h2 className="text-2xl font-bold text-content-primary mb-6 flex items-center gap-2">
  <Users className="w-7 h-7 text-brand-500" />
- Relaté³rio de Clientes
+ Relatório de Clientes
  </h2>
 
  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -368,7 +368,7 @@ export const CustomersReports: React.FC<CustomersReportsProps> = ({ customers, s
  </div>
  <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/20 rounded-xl shadow-sm border border-orange-200 dark:border-orange-800">
  <div className="flex items-center justify-between mb-2">
- <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Pontos de Fidelizaçéo</p>
+ <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Pontos de Fidelização</p>
  <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-400" />
  </div>
  <p className="text-3xl font-bold text-orange-700 dark:text-orange-300">{reportData.loyaltyStats.totalPoints.toLocaleString('pt-PT')}</p>

@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MapPin, Search, Navigation, X, Loader2 } from 'lucide-react';
 import { useGoogleMaps } from '../../../core/hooks/useGoogleMaps';
+import { useToast } from '../../contexts/ToastContext';
 
 interface GoogleMapPickerProps {
  onLocationSelect: (location: {
@@ -18,7 +19,7 @@ interface GoogleMapPickerProps {
  zoom?: number;
 }
 
-// Coordenadas padréo de Maputo, Moçambique
+// Coordenadas padrão de Maputo, Moçambique
 const DEFAULT_CENTER = {
  lat: -25.969248,
  lng: 32.573230
@@ -42,6 +43,7 @@ export const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
  showGeolocation = true,
  zoom = DEFAULT_ZOOM
 }) => {
+ const { showToast: notify } = useToast();
  const { isLoaded, loadError, geocode, reverseGeocode } = useGoogleMaps();
  const [map, setMap] = useState<google.maps.Map | null>(null);
  const [selectedLocation, setSelectedLocation] = useState<{
@@ -70,7 +72,7 @@ export const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
  setSelectedLocation(location);
  setMarkerPosition({ lat: initialLat, lng: initialLng });
  
- // Buscar endereço se néo foi fornecido
+ // Buscar endereço se não foi fornecido
  if (!initialAddress && isLoaded) {
  reverseGeocode(initialLat, initialLng).then(address => {
  if (address) {
@@ -110,7 +112,7 @@ export const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
  }
  });
 
- // Criar marcador se tiver posiçéo inicial
+ // Criar marcador se tiver posição inicial
  if (initialLat && initialLng) {
  const marker = new google.maps.Marker({
  position: { lat: initialLat, lng: initialLng },
@@ -267,11 +269,11 @@ export const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
  
  onLocationSelect(location);
  } else {
- alert('Localização néo encontrada. Tente novamente com um endereço mais especé­fico.');
+ notify('Localização não encontrada. Tente um endereço mais específico.', 'warning');
  }
  } catch (error) {
  console.error('Erro na busca:', error);
- alert('Erro ao buscar Localização. Tente novamente.');
+ notify('Erro ao procurar a localização. Tente novamente.', 'error');
  } finally {
  setIsSearching(false);
  }
@@ -279,7 +281,7 @@ export const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
 
  const handleGetCurrentLocation = () => {
  if (!navigator.geolocation) {
- alert('GeoLocalização néo é© suportada pelo seu navegador.');
+ notify('A geolocalização não é suportada por este navegador.', 'warning');
  return;
  }
  
@@ -317,7 +319,7 @@ export const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
  },
  (error) => {
  console.error('Erro na geoLocalização:', error);
- alert('Néo foi possé­vel obter sua Localização. Verifique as permisséµes do navegador.');
+ notify('Não foi possível obter a sua localização. Verifique as permissões de localização.', 'error');
  setIsGettingLocation(false);
  },
  {
@@ -334,7 +336,7 @@ export const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
  return (
  <div className={`bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 ${className}`}>
  <p className="text-yellow-800 dark:text-yellow-200 text-sm">
- âš ï¸ Chave da API do Google Maps néo configurada. Configure a varié¡vel VITE_GOOGLE_MAPS_API_KEY no arquivo .env
+ âš ï¸ Chave da API do Google Maps não configurada. Configure a variável VITE_GOOGLE_MAPS_API_KEY no arquivo .env
  </p>
  </div>
  );
@@ -438,7 +440,7 @@ export const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
  style={mapStyle}
  />
 
- {/* Informaçéo da Localização selecionada */}
+ {/* Informação da Localização selecionada */}
  {selectedLocation && (
  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
  <div className="flex items-start gap-2">

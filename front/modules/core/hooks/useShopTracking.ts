@@ -8,7 +8,7 @@ interface UseShopTrackingOptions {
 }
 
 /**
- * Hook para rastrear visitas na loja online com duraçéo e açéµes
+ * Hook para rastrear visitas na loja online com duração e ações
  */
 export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
   const { enabled = true, trackPageChanges = true } = options;
@@ -19,7 +19,7 @@ export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
   const productsViewedRef = useRef<Set<string>>(new Set());
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Carregar usué¡rio uma vez (apenas na montagem)
+  // Carregar usuário uma vez (apenas na montagem)
   const hasLoadedUser = useRef(false);
   useEffect(() => {
     if (!enabled || hasLoadedUser.current) return;
@@ -39,7 +39,7 @@ export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
     startTimeRef.current = Date.now();
     lastPageRef.current = window.location.pathname;
 
-    // Rastrear duraçéo e criar visita final ao sair
+    // Rastrear duração e criar visita final ao sair
     return () => {
       const trackFinalVisit = async () => {
         const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
@@ -48,7 +48,7 @@ export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
             const user = currentUser || await authService.getCurrentUser();
             const customerId = user?.customerId;
 
-            // Criar visita final com duraçéo e todas as açéµes acumuladas
+            // Criar visita final com duração e todas as ações acumuladas
             await trackingService.trackShopVisit({
               pagePath: lastPageRef.current,
               pageTitle: document.title,
@@ -72,7 +72,7 @@ export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
         }
       };
 
-      // Usar sendBeacon se disponé­vel para garantir envio mesmo ao fechar a pé¡gina
+      // Usar sendBeacon se disponível para garantir envio mesmo ao fechar a página
       if (navigator.sendBeacon) {
         const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
         const data = JSON.stringify({
@@ -91,14 +91,14 @@ export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
-  // Rastrear mudanças de pé¡gina
+  // Rastrear mudanças de página
   useEffect(() => {
     if (!enabled || !trackPageChanges) return;
 
     const handleLocationChange = () => {
       const currentPath = window.location.pathname;
       if (currentPath !== lastPageRef.current) {
-        // Registrar açéo de mudança de pé¡gina
+        // Registrar ação de mudança de página
         trackAction('page_view', {
           from: lastPageRef.current,
           to: currentPath
@@ -107,11 +107,11 @@ export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
       }
     };
 
-    // Usar MutationObserver para detectar mudanças no histé³rico
+    // Usar MutationObserver para detectar mudanças no histórico
     const observer = new MutationObserver(handleLocationChange);
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // També©m escutar eventos popstate (voltar/avançar)
+    // Também escutar eventos popstate (voltar/avançar)
     window.addEventListener('popstate', handleLocationChange);
 
     return () => {
@@ -121,7 +121,7 @@ export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
   }, [enabled, trackPageChanges]);
 
   /**
-   * Rastrear uma açéo do usué¡rio
+   * Rastrear uma ação do usuário
    */
   const trackAction = (actionType: string, data?: any) => {
     if (!enabled) return;
@@ -134,14 +134,14 @@ export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
 
     actionsRef.current.push(action);
 
-    // Enviar açéo imediatamente para o servidor
+    // Enviar ação imediatamente para o servidor
     trackingService.trackShopAction(actionType, data).catch(error => {
-      console.error('Erro ao rastrear açéo:', error);
+      console.error('Erro ao rastrear ação:', error);
     });
   };
 
   /**
-   * Rastrear visualizaçéo de produto
+   * Rastrear visualização de produto
    */
   const trackProductView = (productId: string, productName?: string) => {
     if (!enabled) return;
@@ -154,7 +154,7 @@ export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
   };
 
   /**
-   * Rastrear adiçéo ao carrinho
+   * Rastrear adição ao carrinho
    */
   const trackAddToCart = (productId: string, productName: string, quantity: number, price: number) => {
     if (!enabled) return;
@@ -169,7 +169,7 @@ export const useShopTracking = (options: UseShopTrackingOptions = {}) => {
   };
 
   /**
-   * Rastrear iné­cio de checkout
+   * Rastrear início de checkout
    */
   const trackCheckoutStart = (cartItems: any[], total: number) => {
     if (!enabled) return;

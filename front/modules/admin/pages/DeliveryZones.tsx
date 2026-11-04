@@ -2,6 +2,7 @@
 import { Plus, Edit, Trash2, MapPin, Check, X, Loader2, ToggleLeft, ToggleRight, GripVertical } from 'lucide-react';
 import api from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
+import { useConfirm } from '../../core/contexts/ConfirmContext';
 
 interface DeliveryZone {
  id: string;
@@ -23,6 +24,7 @@ const empty = (): Partial<DeliveryZone> => ({
 export const DeliveryZones: React.FC<{
  showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
 }> = ({ showToast }) => {
+ const confirm = useConfirm();
  const [zones, setZones] = useState<DeliveryZone[]>([]);
  const [loading, setLoading] = useState(true);
  const [showModal, setShowModal] = useState(false);
@@ -86,7 +88,7 @@ export const DeliveryZones: React.FC<{
  };
 
  const handleDelete = async (id: string) => {
- if (!window.confirm('Apagar esta zona de entrega?')) return;
+ if (!(await confirm('Os clientes deixam de poder escolher esta zona.', { title: 'Apagar zona de entrega?', confirmLabel: 'Apagar', variant: 'danger' }))) return;
  setDeletingId(id);
  try {
  await api.delete(`/delivery-zones/${id}`);

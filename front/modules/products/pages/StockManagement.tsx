@@ -156,7 +156,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  const [showFiltersProducts, setShowFiltersProducts] = useState(false);
  const [showFiltersMovements, setShowFiltersMovements] = useState(false);
 
- // Reset paginaçéo quando filtros mudarem
+ // Reset paginação quando filtros mudarem
  useEffect(() => {
  setCurrentPage(1);
  }, [searchQuery, selectedPeriod, customStartDate, customEndDate]);
@@ -734,8 +734,8 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  // Calcular largura disponível e proporções das colunas
  const availableWidth = pdfWidth - (margin * 2);
  const colProportions = groupByVariant
- ? [1.0, 2.5, 1.5, 1.2, 1.2, 1.0, 1.0, 1.0] // Com variaçéo
- : [1.0, 2.5, 2.0, 1.2, 1.0, 1.0, 1.0]; // Sem variaçéo
+ ? [1.0, 2.5, 1.5, 1.2, 1.2, 1.0, 1.0, 1.0] // Com variação
+ : [1.0, 2.5, 2.0, 1.2, 1.0, 1.0, 1.0]; // Sem variação
 
  const colWidths = calculateColumnWidths(availableWidth, colProportions);
 
@@ -748,7 +748,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  // Cabeçalho da tabela com branding
  yPos = addPDFTableHeader(pdf, colHeaders, colX, yPos, margin, pdfWidth);
 
- // Dados da tabela com alterné¢ncia de cores
+ // Dados da tabela com alternância de cores
  dataToExport.forEach((item, index) => {
  // Verificar se precisa de nova página
  if (yPos > pdfHeight - 20) {
@@ -799,7 +799,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  });
  });
 
- // Seçéo de totais com branding
+ // Seção de totais com branding
  const totalEntry = dataToExport.reduce((sum, item) => sum + item.entry, 0);
  const totalExit = dataToExport.reduce((sum, item) => sum + item.exit, 0);
  const totalEntryValue = dataToExport.reduce((sum, item) => sum + item.entryValue, 0);
@@ -1465,7 +1465,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  if (itemVariantName && searchVariantName) {
  const itemNormalized = itemVariantName.toLowerCase().trim().replace(/\s+/g, '');
  const searchNormalized = searchVariantName.toLowerCase().trim().replace(/\s+/g, '');
- // Comparaçéo exata ou parcial
+ // Comparação exata ou parcial
  return itemNormalized === searchNormalized ||
  itemNormalized.includes(searchNormalized) ||
  searchNormalized.includes(itemNormalized);
@@ -2586,7 +2586,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  />
 
 
- {/* Controles de Visualizaçéo */}
+ {/* Controles de Visualização */}
  <label title="Agrupar por variante (uma linha por variante) ou por produto (uma linha por produto). Os totais são os mesmos." className="hidden sm:flex items-center gap-1.5 px-2 py-1 text-xs border border-border-default rounded bg-surface-raised cursor-pointer whitespace-nowrap flex-shrink-0">
  <input
  type="checkbox"
@@ -2672,7 +2672,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  </div>
 
 
- {/* Botéo Limpar Filtros - Oculto no Mobile */}
+ {/* Botão Limpar Filtros - Oculto no Mobile */}
  {(searchQuery || selectedPeriod !== 'thisMonth' || customStartDate || customEndDate) && (
  <button
  onClick={() => {
@@ -2689,7 +2689,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  </button>
  )}
 
- {/* Botéo Filtros - Apenas no Mobile */}
+ {/* Botão Filtros - Apenas no Mobile */}
  {isMobile && (
  <button
  onClick={() => setShowFiltersProducts(!showFiltersProducts)}
@@ -2727,7 +2727,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
 
  <div>
  <label className="block text-xs font-medium text-content-secondary mb-2">
- Itens por pé¡gina
+ Itens por página
  </label>
  <ItemsPerPageSelect
  value={itemsPerPage}
@@ -2743,10 +2743,10 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  </div>
  </div>
 
- {/* Controles de Visualizaçéo */}
+ {/* Controles de Visualização */}
  <div className="space-y-2">
  <label className="block text-xs font-medium text-content-secondary mb-2">
- Visualizaçéo
+ Visualização
  </label>
  <div className="flex flex-wrap items-center gap-3">
  <label title="Agrupar por variante (uma linha por variante) ou por produto (uma linha por produto). Os totais são os mesmos." className="flex items-center gap-2 px-3 py-2 text-sm border border-border-default rounded-lg bg-surface-raised cursor-pointer">
@@ -2820,7 +2820,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  </p>
  </div>
 
- {/* Botéo Limpar Filtros */}
+ {/* Botão Limpar Filtros */}
  {(searchQuery || selectedPeriod !== 'thisMonth' || customStartDate || customEndDate) && (
  <button
  onClick={() => {
@@ -3244,7 +3244,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  className="flex-1 min-w-0 sm:min-w-[120px] sm:max-w-[300px] flex-shrink-0"
  />
 
- {/* Controles de Visualizaçéo */}
+ {/* Controles de Visualização */}
  <label title="Agrupar por variante (uma linha por variante) ou por produto (uma linha por produto). Os totais são os mesmos." className="hidden sm:flex items-center gap-1.5 px-2 py-1 text-xs border border-border-default rounded bg-surface-raised cursor-pointer whitespace-nowrap flex-shrink-0">
  <input
  type="checkbox"
@@ -3338,7 +3338,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  </span>
  </div>
 
- {/* Botéo Limpar Filtros - Oculto no Mobile */}
+ {/* Botão Limpar Filtros - Oculto no Mobile */}
  {(searchQuery || filterType !== 'all' || selectedPeriod !== 'thisMonth' || customStartDate || customEndDate) && (
  <button
  onClick={() => {
@@ -3356,7 +3356,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  </button>
  )}
 
- {/* Botéo Filtros - Apenas no Mobile */}
+ {/* Botão Filtros - Apenas no Mobile */}
  {isMobile && (
  <button
  onClick={() => setShowFiltersMovements(!showFiltersMovements)}
@@ -3429,10 +3429,10 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  </div>
  </div>
 
- {/* Controles de Visualizaçéo */}
+ {/* Controles de Visualização */}
  <div className="space-y-2">
  <label className="block text-xs font-medium text-content-secondary mb-2">
- Visualizaçéo
+ Visualização
  </label>
  <div className="flex items-center gap-3">
  <label title="Agrupar por variante (uma linha por variante) ou por produto (uma linha por produto). Os totais são os mesmos." className="flex items-center gap-2 px-3 py-2 text-sm border border-border-default rounded-lg bg-surface-raised cursor-pointer">
@@ -3497,7 +3497,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  </p>
  </div>
 
- {/* Botéo Limpar Filtros */}
+ {/* Botão Limpar Filtros */}
  {(searchQuery || filterType !== 'all' || selectedPeriod !== 'thisMonth' || customStartDate || customEndDate) && (
  <button
  onClick={() => {
@@ -3627,7 +3627,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  exit = Math.abs(item.quantity);
  }
  } else if (isPurchase) {
- // é‰ uma entrada - quantidade deve ser positiva
+ // É uma entrada - quantidade deve ser positiva
  if (item.quantity > 0) {
  entry = Math.abs(item.quantity);
  } else if (item.quantity < 0) {
@@ -3950,7 +3950,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  });
  }
 
- // Ordenar dados para exibiçéo baseado no campo selecionado
+ // Ordenar dados para exibição baseado no campo selecionado
  const sortedData = [...filteredExtractData].sort((a, b) => {
  let compare = 0;
 
@@ -4090,7 +4090,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  onClick={() => setSelectedMovements(new Set())}
  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
  >
- Limpar Seleçéo
+ Limpar Seleção
  </button>
  </div>
  )}

@@ -385,7 +385,7 @@ export const SalesReports: React.FC<SalesReportsProps> = ({ sales, orders, showT
  </div>
 
  <div className="bg-surface-raised rounded-xl shadow-sm border border-border-default p-6">
- <h3 className="text-lg font-semibold text-content-primary mb-4">Distribuiçéo de Vendas</h3>
+ <h3 className="text-lg font-semibold text-content-primary mb-4">Distribuição de Vendas</h3>
  <ResponsiveContainer width="100%" height={300}>
  <PieChart>
  <Pie
@@ -432,7 +432,7 @@ export const SalesReports: React.FC<SalesReportsProps> = ({ sales, orders, showT
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Quantidade</th>
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">Valor Total</th>
  <th className="text-right py-4 px-6 text-sm font-semibold text-content-primary">%</th>
- <th className="w-32 py-4 px-6 text-sm font-semibold text-content-primary">Distribuiçéo</th>
+ <th className="w-32 py-4 px-6 text-sm font-semibold text-content-primary">Distribuição</th>
  </tr>
  </thead>
  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">

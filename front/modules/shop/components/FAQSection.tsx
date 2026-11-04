@@ -79,7 +79,7 @@ export const FAQSection: React.FC = () => {
 
   return (
     <section id="faq" className="max-w-3xl mx-auto px-4 py-10 sm:py-14 scroll-mt-20">
-      <h2 className="text-xl sm:text-2xl font-bold text-content-primary mb-6">
+      <h2 className="text-lg sm:text-2xl font-bold text-content-primary mb-6">
         Perguntas frequentes
       </h2>
 

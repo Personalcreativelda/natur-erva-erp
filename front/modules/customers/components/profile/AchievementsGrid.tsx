@@ -30,7 +30,7 @@ const getAchievementLabel = (type: string) => {
  big_spender: 'Grande Comprador',
  social_butterfly: 'Borboleta Social',
  reviewer_expert: 'Especialista em Reviews',
- sharing_champion: 'Campeéo de Partilhas',
+ sharing_champion: 'Campeão de Partilhas',
  perfect_attendance: 'Assiduidade Perfeita',
  early_adopter: 'Primeiro a Adotar'
  };

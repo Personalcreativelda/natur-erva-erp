@@ -6,7 +6,7 @@ import { MediaCategory, MediaType } from '../../core/types/types';
 const BUCKET_NAME = 'product-images';
 
 /**
- * Cache em memé³ria para listMediaFiles
+ * Cache em memória para listMediaFiles
  */
 interface CacheEntry {
   data: MediaFile[];
@@ -18,7 +18,7 @@ const cache: Map<string, CacheEntry> = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 /**
- * Constroi URL péºblica manualmente (sem fazer requisiçéo HTTP)
+ * Constroi URL pública manualmente (sem fazer requisição HTTP)
  * Formato: https://{project-ref}.supabase.co/storage/v1/object/public/{bucket}/{path}
  */
 const buildPublicUrl = (filePath: string): string => {
@@ -27,8 +27,8 @@ const buildPublicUrl = (filePath: string): string => {
   
   // Remover trailing slash se existir
   const baseUrl = url.replace(/\/$/, '');
-  // O caminho do arquivo pode conter barras, entéo precisamos encodar apenas caracteres especiais
-  // mas manter as barras como estéo
+  // O caminho do arquivo pode conter barras, então precisamos encodar apenas caracteres especiais
+  // mas manter as barras como estão
   const encodedPath = filePath
     .split('/')
     .map(segment => encodeURIComponent(segment))
@@ -50,7 +50,7 @@ const cleanExpiredCache = () => {
 };
 
 /**
- * Obté©m chave de cache baseada nos paré¢metros
+ * Obtém chave de cache baseada nos parâmetros
  */
 const getCacheKey = (category?: string, limit?: number, offset?: number): string => {
   return `listMediaFiles_${category || 'all'}_${limit || 'none'}_${offset || 0}`;
@@ -61,7 +61,7 @@ const getCacheKey = (category?: string, limit?: number, offset?: number): string
  */
 export const invalidateMediaCache = (category?: string) => {
   if (category) {
-    // Invalidar apenas cache da categoria especé­fica
+    // Invalidar apenas cache da categoria específica
     for (const [key] of cache.entries()) {
       if (key.includes(category)) {
         cache.delete(key);
@@ -111,17 +111,17 @@ const DOCUMENT_MIME_TYPES = [
 ];
 
 /**
- * Extenséµes de arquivo suportadas para imagens
+ * Extensões de arquivo suportadas para imagens
  */
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'ico'];
 
 /**
- * Extenséµes de arquivo suportadas para documentos
+ * Extensões de arquivo suportadas para documentos
  */
 const DOCUMENT_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf'];
 
 /**
- * Determina o tipo de mé­dia baseado no arquivo
+ * Determina o tipo de mídia baseado no arquivo
  */
 export const getMediaType = (file: File): MediaType => {
   const mimeType = file.type.toLowerCase();
@@ -152,7 +152,7 @@ export const getMediaCategory = (filePath: string): MediaCategory => {
 };
 
 /**
- * Valida um arquivo de mé­dia
+ * Valida um arquivo de mídia
  */
 export const validateMediaFile = (file: File): { valid: boolean; error?: string } => {
   const mediaType = getMediaType(file);
@@ -163,7 +163,7 @@ export const validateMediaFile = (file: File): { valid: boolean; error?: string 
   if (mediaType === 'other') {
     return {
       valid: false,
-      error: 'Tipo de arquivo néo suportado. Use imagens (JPEG, PNG, WEBP, GIF, SVG, ICO) ou documentos (PDF, Word, Excel, PowerPoint, TXT, RTF).'
+      error: 'Tipo de arquivo não suportado. Use imagens (JPEG, PNG, WEBP, GIF, SVG, ICO) ou documentos (PDF, Word, Excel, PowerPoint, TXT, RTF).'
     };
   }
 
@@ -179,14 +179,14 @@ export const validateMediaFile = (file: File): { valid: boolean; error?: string 
       maxSize = 5 * 1024 * 1024; // 5MB para textos
     }
   } else {
-    maxSize = 10 * 1024 * 1024; // 10MB padréo
+    maxSize = 10 * 1024 * 1024; // 10MB padrão
   }
 
   if (file.size > maxSize) {
     const maxSizeMB = Math.round(maxSize / (1024 * 1024));
     return {
       valid: false,
-      error: `Arquivo muito grande. Tamanho mé¡ximo: ${maxSizeMB}MB.`
+      error: `Arquivo muito grande. Tamanho máximo: ${maxSizeMB}MB.`
     };
   }
 
@@ -194,7 +194,7 @@ export const validateMediaFile = (file: File): { valid: boolean; error?: string 
 };
 
 /**
- * Faz upload de um arquivo gené©rico para o Supabase Storage
+ * Faz upload de um arquivo genérico para o Supabase Storage
  */
 export const uploadMediaFile = async (
   file: File,
@@ -202,7 +202,7 @@ export const uploadMediaFile = async (
   subfolder?: string
 ): Promise<MediaFile | null> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[uploadMediaFile] Supabase néo configurado');
+    console.error('[uploadMediaFile] Supabase não configurado');
     return null;
   }
 
@@ -210,10 +210,10 @@ export const uploadMediaFile = async (
     // Validar arquivo
     const validation = validateMediaFile(file);
     if (!validation.valid) {
-      throw new Error(validation.error || 'Arquivo invé¡lido');
+      throw new Error(validation.error || 'Arquivo inválido');
     }
 
-    // Gerar nome éºnico para o arquivo
+    // Gerar nome único para o arquivo
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
     const fileExtension = file.name.split('.').pop() || 'bin';
@@ -233,27 +233,27 @@ export const uploadMediaFile = async (
       console.error('[uploadMediaFile] Erro no upload:', error);
       
       if (error.message && error.message.includes('Bucket not found')) {
-        throw new Error(`Bucket '${BUCKET_NAME}' néo encontrado. Por favor, verifique se o bucket foi criado no Supabase Dashboard > Storage.`);
+        throw new Error(`Bucket '${BUCKET_NAME}' não encontrado. Por favor, verifique se o bucket foi criado no Supabase Dashboard > Storage.`);
       } else if (error.message && error.message.includes('new row violates row-level security')) {
-        throw new Error('Erro de permissão. Verifique se as polé­ticas RLS estéo configuradas corretamente para o bucket.');
+        throw new Error('Erro de permissão. Verifique se as políticas RLS estão configuradas corretamente para o bucket.');
       } else if (error.message && error.message.includes('mime type') && error.message.includes('is not supported')) {
         const mimeType = file.type || 'desconhecido';
         throw new Error(
-          `Tipo MIME "${mimeType}" néo é© suportado pelo bucket. ` +
+          `Tipo MIME "${mimeType}" não é suportado pelo bucket. ` +
           `Por favor, atualize o bucket '${BUCKET_NAME}' no Supabase Dashboard > Storage > Settings ` +
           `e adicione "${mimeType}" na lista de "Allowed MIME types". ` +
-          `Consulte o guia em docs/guides/ATUALIZAR_BUCKET_SVG.md para instruçéµes detalhadas.`
+          `Consulte o guia em docs/guides/ATUALIZAR_BUCKET_SVG.md para instruções detalhadas.`
         );
       } else {
         throw error;
       }
     }
 
-    // Construir URL péºblica manualmente (sem requisiçéo HTTP)
+    // Construir URL pública manualmente (sem requisição HTTP)
     const publicUrl = buildPublicUrl(fileName);
 
     if (!publicUrl) {
-      throw new Error('Erro ao construir URL péºblica do arquivo');
+      throw new Error('Erro ao construir URL pública do arquivo');
     }
 
     // Criar objeto MediaFile
@@ -270,7 +270,7 @@ export const uploadMediaFile = async (
       updatedAt: new Date().toISOString()
     };
 
-    // Invalidar cache apé³s upload
+    // Invalidar cache após upload
     invalidateMediaCache(category);
 
     return mediaFile;
@@ -281,7 +281,7 @@ export const uploadMediaFile = async (
 };
 
 /**
- * Faz upload méºltiplo de arquivos
+ * Faz upload múltiplo de arquivos
  */
 export const uploadMultipleMediaFiles = async (
   files: File[],
@@ -310,7 +310,7 @@ export const uploadMultipleMediaFiles = async (
 };
 
 /**
- * Cache para requisiçéµes de listagem de pastas
+ * Cache para requisições de listagem de pastas
  */
 const folderListCache: Map<string, { data: any[]; timestamp: number }> = new Map();
 const FOLDER_CACHE_TTL = 2 * 60 * 1000; // 2 minutos para cache de pastas
@@ -342,7 +342,7 @@ const listFilesRecursively = async (
     if (cached && (Date.now() - cached.timestamp) < FOLDER_CACHE_TTL) {
       data = cached.data;
     } else {
-      // Fazer requisiçéo apenas se néo estiver em cache
+      // Fazer requisição apenas se não estiver em cache
       const { data: listData, error } = await supabase.storage
         .from(BUCKET_NAME)
         .list(folderPath, {
@@ -375,7 +375,7 @@ const listFilesRecursively = async (
     for (const item of data) {
       const itemPath = folderPath ? `${folderPath}/${item.name}` : item.name;
       
-      // Verificar se é© uma pasta ou arquivo
+      // Verificar se é uma pasta ou arquivo
       const hasId = !!item.id;
       const hasMetadata = item.metadata && Object.keys(item.metadata).length > 0;
       const isFile = hasId || hasMetadata;
@@ -387,7 +387,7 @@ const listFilesRecursively = async (
       }
     }
 
-    // Processar arquivos primeiro (mais ré¡pido)
+    // Processar arquivos primeiro (mais rápido)
     for (const item of files) {
       const publicUrl = buildPublicUrl(item.itemPath);
 
@@ -407,7 +407,7 @@ const listFilesRecursively = async (
       allFiles.push(mediaFile);
     }
 
-    // Processar pastas em paralelo (limitado a 5 requisiçéµes simulté¢neas)
+    // Processar pastas em paralelo (limitado a 5 requisições simultâneas)
     const BATCH_SIZE = 5;
     for (let i = 0; i < folders.length; i += BATCH_SIZE) {
       const batch = folders.slice(i, i + BATCH_SIZE);
@@ -432,7 +432,7 @@ export const listMediaFiles = async (
   offset?: number
 ): Promise<MediaFile[]> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[listMediaFiles] Supabase néo configurado');
+    console.error('[listMediaFiles] Supabase não configurado');
     return [];
   }
 
@@ -452,7 +452,7 @@ export const listMediaFiles = async (
     let allFiles: MediaFile[] = [];
 
     if (category) {
-      // Listar apenas de uma categoria especé­fica
+      // Listar apenas de uma categoria específica
       const folderPath = `${category}/`;
       allFiles = await listFilesRecursively(folderPath, []);
     } else {
@@ -460,7 +460,7 @@ export const listMediaFiles = async (
       // Primeiro tentar listar da raiz
       allFiles = await listFilesRecursively('', []);
       
-      // Se néo encontrou arquivos na raiz, tentar listar de cada categoria conhecida
+      // Se não encontrou arquivos na raiz, tentar listar de cada categoria conhecida
       if (allFiles.length === 0) {
         const categories = [
           MediaCategory.PRODUCTS,
@@ -478,7 +478,7 @@ export const listMediaFiles = async (
       }
     }
 
-    // Ordenar por data de criaçéo (mais recente primeiro)
+    // Ordenar por data de criação (mais recente primeiro)
     allFiles.sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
@@ -500,7 +500,7 @@ export const listMediaFiles = async (
       category: category
     });
 
-    // També©m salvar versão completa sem limit/offset para reutilizaçéo
+    // Também salvar versão completa sem limit/offset para reutilização
     if (limit || offset) {
       const fullCacheKey = getCacheKey(category);
       if (!cache.has(fullCacheKey)) {
@@ -527,7 +527,7 @@ export const searchMediaFiles = async (
   category?: MediaCategory | string
 ): Promise<MediaFile[]> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[searchMediaFiles] Supabase néo configurado');
+    console.error('[searchMediaFiles] Supabase não configurado');
     return [];
   }
 
@@ -550,7 +550,7 @@ export const searchMediaFiles = async (
  */
 export const deleteMediaFile = async (filePath: string): Promise<boolean> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[deleteMediaFile] Supabase néo configurado');
+    console.error('[deleteMediaFile] Supabase não configurado');
     return false;
   }
 
@@ -564,7 +564,7 @@ export const deleteMediaFile = async (filePath: string): Promise<boolean> => {
       return false;
     }
 
-    // Invalidar cache apé³s deletar
+    // Invalidar cache após deletar
     invalidateMediaCache();
 
     return true;
@@ -575,7 +575,7 @@ export const deleteMediaFile = async (filePath: string): Promise<boolean> => {
 };
 
 /**
- * Deleta méºltiplos arquivos
+ * Deleta múltiplos arquivos
  */
 export const deleteMultipleMediaFiles = async (filePaths: string[]): Promise<{
   success: string[];
@@ -603,7 +603,7 @@ export const deleteMultipleMediaFiles = async (filePaths: string[]): Promise<{
  */
 export const deleteMediaFileByUrl = async (url: string): Promise<boolean> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[deleteMediaFileByUrl] Supabase néo configurado');
+    console.error('[deleteMediaFileByUrl] Supabase não configurado');
     return false;
   }
 
@@ -613,7 +613,7 @@ export const deleteMediaFileByUrl = async (url: string): Promise<boolean> => {
     const fileNameIndex = urlParts.findIndex(part => part === BUCKET_NAME);
     
     if (fileNameIndex === -1 || fileNameIndex === urlParts.length - 1) {
-      console.error('[deleteMediaFileByUrl] URL invé¡lida:', url);
+      console.error('[deleteMediaFileByUrl] URL inválida:', url);
       return false;
     }
 
@@ -626,11 +626,11 @@ export const deleteMediaFileByUrl = async (url: string): Promise<boolean> => {
 };
 
 /**
- * Obté©m metadados de um arquivo
+ * Obtém metadados de um arquivo
  */
 export const getMediaFileMetadata = async (filePath: string): Promise<MediaFile | null> => {
   if (!isSupabaseConfigured() || !supabase) {
-    console.error('[getMediaFileMetadata] Supabase néo configurado');
+    console.error('[getMediaFileMetadata] Supabase não configurado');
     return null;
   }
 
@@ -650,7 +650,7 @@ export const getMediaFileMetadata = async (filePath: string): Promise<MediaFile 
       return null;
     }
 
-    // Construir URL péºblica manualmente (sem requisiçéo HTTP)
+    // Construir URL pública manualmente (sem requisição HTTP)
     const publicUrl = buildPublicUrl(filePath);
 
     return {
@@ -672,7 +672,7 @@ export const getMediaFileMetadata = async (filePath: string): Promise<MediaFile 
 };
 
 /**
- * Helper para determinar tipo de mé­dia pelo caminho
+ * Helper para determinar tipo de mídia pelo caminho
  */
 const getMediaTypeFromPath = (path: string): MediaType => {
   const extension = path.split('.').pop()?.toLowerCase() || '';
@@ -689,7 +689,7 @@ const getMediaTypeFromPath = (path: string): MediaType => {
 };
 
 /**
- * Formata tamanho de arquivo para exibiçéo
+ * Formata tamanho de arquivo para exibição
  */
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
@@ -702,7 +702,7 @@ export const formatFileSize = (bytes: number): string => {
 };
 
 /**
- * Obté©m é­cone baseado no tipo de arquivo
+ * Obtém ícone baseado no tipo de arquivo
  */
 export const getFileIcon = (mimeType: string, extension?: string): string => {
   const ext = extension?.toLowerCase() || '';
