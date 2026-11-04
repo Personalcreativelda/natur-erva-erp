@@ -5,6 +5,7 @@ import { useProducts } from '../../../core/hooks/useProducts';
 import { Plus, Edit2, Trash2, Save, X, Tag, Ruler, Layers, CheckCircle, Upload, Search } from 'lucide-react';
 import { Toast } from '../../../core/components/ui/Toast';
 import { ConfirmDialog } from '../../../core/components/ui/ConfirmDialog';
+import { ShopTileImages } from './ShopTileImages';
 
 type ProductManagementTabType = 'categories' | 'units' | 'templates';
 
@@ -429,6 +430,9 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  <span className="sm:hidden">Nova</span>
  </button>
  </div>
+
+ {/* Imagens dos atalhos "Promoções" e "Novidades" da loja */}
+ <ShopTileImages showToast={showToast} />
 
  {loading && allCategories.length === 0 ? (
  <div className="space-y-2">

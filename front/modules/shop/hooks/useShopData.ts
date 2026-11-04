@@ -52,6 +52,24 @@ export const useShopSettings = () =>
     meta: persist,
   });
 
+/** Chaves dos atalhos especiais da loja (imagem definida no admin, em Categorias) */
+export const SHOP_TILE_KEYS = { promo: 'tile-promo', new: 'tile-new' } as const;
+
+/** Imagens dos atalhos "Promoções" e "Novidades" (guardadas como banners de página) */
+export const useShopTileImages = () =>
+  useQuery({
+    queryKey: queryKeys.shop.tiles,
+    queryFn: async () => {
+      const [promo, fresh] = await Promise.all([
+        api.get<{ imageUrl?: string } | null>(`/banners/page/${SHOP_TILE_KEYS.promo}`).catch(() => null),
+        api.get<{ imageUrl?: string } | null>(`/banners/page/${SHOP_TILE_KEYS.new}`).catch(() => null),
+      ]);
+      return { promo: promo?.imageUrl || undefined, new: fresh?.imageUrl || undefined };
+    },
+    staleTime: 10 * 60_000,
+    meta: persist,
+  });
+
 /**
  * Imagem de cada categoria: a definida no admin ou, se não houver, a foto do produto
  * mais vendido dessa categoria (foto real, em vez de um ícone genérico).

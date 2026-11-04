@@ -35,5 +35,6 @@ export const queryKeys = {
     categories: ['shop', 'categories'] as const,
     blog: ['shop', 'blog'] as const,
     settings: ['shop', 'settings'] as const,
+    tiles: ['shop', 'tiles'] as const,
   },
 };

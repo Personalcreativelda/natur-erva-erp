@@ -20,7 +20,7 @@ import { normalizeForSearch } from '../../core/services/serviceUtils';
 import { ShopBanner } from '../components/ShopBanner';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../core/lib/queryClient';
-import { useShopProducts, useShopCategories, useShopBlog, useShopSettings, useCategoryImages } from '../hooks/useShopData';
+import { useShopProducts, useShopCategories, useShopBlog, useShopSettings, useCategoryImages, useShopTileImages } from '../hooks/useShopData';
 import { uploadProductImage } from '../../../services/uploadService';
 import { FAQSection } from '../components/FAQSection';
 import { ProductCarousel } from '../components/ProductCarousel';
@@ -143,6 +143,8 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
   const blogPosts = useShopBlog().data ?? EMPTY_LIST;
   const settings: SystemSettings = useShopSettings().data ?? EMPTY_SETTINGS;
   const categoryImage = useCategoryImages(products);
+  // Imagens dos atalhos Promoções/Novidades definidas no admin (Categorias)
+  const tileImages = useShopTileImages().data;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -373,22 +375,26 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
   const categoryTiles = useMemo(() => {
     const tiles: Array<{ key: string; value: string; label: string; count: number; image?: string; cover?: boolean; color?: string; badge?: string }> = [];
     const firstImage = (list: Product[]) => list.find(p => p.image && !p.image.includes('placeholder'))?.image;
+    const special: typeof tiles = [];
+    // Penúltimo e último: Promoções e Novidades (as categorias vêm primeiro)
     if (promoProducts.length) {
-      tiles.push({ key: 'promo', value: PROMO_FILTER, label: 'Promoções', count: products.filter(p => getPromoPrice(p) != null).length, image: firstImage(promoProducts), color: '#dc2626', badge: '%' });
+      special.push({ key: 'promo', value: PROMO_FILTER, label: 'Promoções', count: products.filter(p => getPromoPrice(p) != null).length, image: tileImages?.promo || firstImage(promoProducts), cover: !!tileImages?.promo, color: '#dc2626', badge: '%' });
+    }
+    if (newestProducts.length) {
+      const cutoff = newestCutoff(products);
+      special.push({ key: 'new', value: NEW_FILTER, label: 'Novidades', count: products.filter(p => new Date(p.createdAt || p.updatedAt || 0).getTime() >= cutoff).length, image: tileImages?.new || firstImage(newestProducts), cover: !!tileImages?.new, color: '#2563eb', badge: 'Novo' });
     }
     categories
       .filter(c => (categoryCounts.get(c.name.toLowerCase()) || 0) > 0)
+      .slice(0, 5 - special.length)
       .forEach(c => tiles.push({
         key: c.id, value: c.name, label: c.name,
         count: categoryCounts.get(c.name.toLowerCase()) || 0,
         image: categoryImage(c.name, c.imageUrl), cover: !!c.imageUrl, color: c.color,
       }));
-    if (newestProducts.length) {
-      const cutoff = newestCutoff(products);
-      tiles.push({ key: 'new', value: NEW_FILTER, label: 'Novidades', count: products.filter(p => new Date(p.createdAt || p.updatedAt || 0).getTime() >= cutoff).length, image: firstImage(newestProducts), color: '#2563eb', badge: 'Novo' });
-    }
+    tiles.push(...special);
     return tiles.slice(0, 5);
-  }, [promoProducts, newestProducts, categories, categoryCounts, categoryImage, products]);
+  }, [promoProducts, newestProducts, categories, categoryCounts, categoryImage, products, tileImages]);
 
   // Novo filtro/pesquisa/ordenação → voltar ao primeiro lote
   // eslint-disable-next-line react-hooks/exhaustive-deps
