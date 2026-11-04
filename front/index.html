@@ -320,6 +320,16 @@
       .toast-progress { animation-name: toast-progress; animation-timing-function: linear; animation-fill-mode: forwards; }
       @media (prefers-reduced-motion: reduce) { .toast-enter { animation: none; } }
 
+      /* Modais/overlays de ecrã inteiro: nunca herdam margens (ex.: "space-y-*" do contentor
+         dava margin-top ao modal e deixava uma faixa por cobrir no topo do ecrã) */
+      .fixed.inset-0 { margin: 0 !important; }
+
+      /* Painéis laterais: sobem do fundo no mobile, deslizam da direita no desktop */
+      @keyframes sheet-up    { from { transform: translateY(100%); } to { transform: none; } }
+      @keyframes sheet-right { from { transform: translateX(100%); } to { transform: none; } }
+      .animate-sheet-panel { animation: sheet-up 0.32s cubic-bezier(0.16, 1, 0.3, 1) both; }
+      @media (min-width: 768px) { .animate-sheet-panel { animation-name: sheet-right; } }
+
       /* Overlay de modais */
       @keyframes overlay-enter {
         from { opacity: 0; }
@@ -350,6 +360,11 @@
         .animate-modal-enter {
           animation: modal-sheet-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+      }
+      /* Usada por vários modais mas nunca tinha sido definida (não animavam) */
+      .animate-scaleIn { animation: modal-enter 0.26s cubic-bezier(0.16, 1, 0.3, 1) both; }
+      @media (prefers-reduced-motion: reduce) {
+        .animate-sheet-panel, .animate-scaleIn, .modal-overlay, .modal-overlay-bg { animation: none !important; }
       }
 
       /* Esconder setas dos inputs numéricos */

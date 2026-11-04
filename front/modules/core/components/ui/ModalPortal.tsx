@@ -32,7 +32,13 @@ export const ModalPortal: React.FC<ModalPortalProps> = ({
  if (e.key === 'Escape') onClose();
  };
  window.addEventListener('keydown', handleEscape);
- return () => window.removeEventListener('keydown', handleEscape);
+ // A página por trás não desliza enquanto o modal está aberto
+ const prev = document.body.style.overflow;
+ document.body.style.overflow = 'hidden';
+ return () => {
+ window.removeEventListener('keydown', handleEscape);
+ document.body.style.overflow = prev;
+ };
  }, [open, onClose]);
 
  if (!open) return null;
@@ -49,7 +55,7 @@ export const ModalPortal: React.FC<ModalPortalProps> = ({
  aria-hidden
  />
  {/* Conteúdo — my-auto garante centralização mesmo com overflow */}
- <div className="relative w-full flex justify-center my-auto" onClick={(e) => e.stopPropagation()}>
+ <div className="relative w-full flex justify-center my-auto animate-scaleIn" onClick={(e) => e.stopPropagation()}>
  {children}
  </div>
  </div>,

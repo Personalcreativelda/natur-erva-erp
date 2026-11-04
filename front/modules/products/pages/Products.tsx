@@ -1,6 +1,6 @@
 ﻿import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Product, ProductType, ProductVariant } from '../../core/types/types';
-import { Plus, Edit2, Trash2, Filter, Sprout, ArrowUpDown, ArrowUp, ArrowDown, Settings, X, Layers, Package, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileSpreadsheet, Upload, Tag } from 'lucide-react';
+import { Plus, Edit2, Trash2, Filter, Sprout, ArrowUpDown, ArrowUp, ArrowDown, Settings, X, Layers, Package, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileSpreadsheet, Upload, Tag, ArrowLeft } from 'lucide-react';
 import { productService } from '../services/productService';
 import { Toast } from '../../core/components/ui/Toast';
 import { ConfirmDialog } from '../../core/components/ui/ConfirmDialog';
@@ -536,21 +536,20 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
 
  if (showManagement) {
  return (
- <div className="space-y-6">
- <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
- <div>
- <h2 className="text-2xl font-bold text-content-primary">Gestão de Produtos</h2>
- <p className="text-sm text-content-muted">Categorias, Unidades e Templates de Variações</p>
- </div>
+ <PageShell
+ title="Gestão de produtos"
+ description="Categorias, unidades e modelos de variações"
+ actions={
  <button
  onClick={() => setShowManagement(false)}
- className="bg-surface-raised border border-border-default text-content-secondary hover:bg-surface-base rounded-lg transition-colors flex items-center shadow-lg px-4 py-2"
+ className="h-11 px-4 inline-flex items-center gap-2 rounded-xl border border-border-default bg-surface-raised text-sm font-medium text-content-secondary hover:bg-surface-base transition-colors"
  >
- <Package className="w-4 h-4" /> Voltar para Produtos
+ <ArrowLeft className="w-4 h-4" /> <span>Voltar aos produtos</span>
  </button>
- </div>
- <ProductManagement showToast={showToast} defaultTab={showManagementTab || 'categories'} />
- </div>
+ }
+ >
+ <ProductManagement showToast={showToast} defaultTab={showManagementTab || 'categories'} products={products} />
+ </PageShell>
  );
  }
 

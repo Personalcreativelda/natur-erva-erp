@@ -12,6 +12,16 @@ import { usePermissions } from '../../../core/hooks/usePermissions';
 import { useMobile } from '../../../core/hooks/useMobile';
 import { Footer } from '../layout/Footer';
 
+/**
+ * Rotas que abrem a MESMA página que outro item do menu (lá dentro há separadores).
+ * O menu mostra um só item e destaca-o em qualquer uma delas.
+ */
+const MENU_PATH_ALIASES: Record<string, string> = {
+ '/admin/produtos/unidades': '/admin/produtos/categorias',
+};
+const toMenuPath = (p: string) => MENU_PATH_ALIASES[p.replace(/\/$/, '')] || p;
+
+
 const BASE_PATH = '/';
 
 interface LayoutProps {
@@ -82,7 +92,7 @@ export const Layout: React.FC<LayoutProps> = ({
  // Encontrar qual menu pai contém a rota atual
  for (const item of menuItemsWithChildren) {
  if (item.children?.some(child =>
- currentPath === child.path || currentPath.startsWith(child.path + '/')
+ toMenuPath(currentPath) === child.path || toMenuPath(currentPath).startsWith(child.path + '/')
  )) {
  activeMenuId = item.id;
  break;
@@ -194,8 +204,7 @@ export const Layout: React.FC<LayoutProps> = ({
  group: 'comercial',
  children: [
  { id: 'products-list', label: 'Produtos', icon: Package, path: '/admin/produtos' },
- { id: 'products-categories', label: 'Categorias', icon: Tag, path: '/admin/produtos/categorias' },
- { id: 'products-units', label: 'Unidades', icon: Ruler, path: '/admin/produtos/unidades' },
+ { id: 'products-categories', label: 'Categorias e unidades', icon: Tag, path: '/admin/produtos/categorias' },
  { id: 'products-labels', label: 'Etiquetas', icon: ClipboardCheck, path: '/admin/produtos/etiquetas' },
  ]
  },
@@ -206,9 +215,8 @@ export const Layout: React.FC<LayoutProps> = ({
  permission: 'products.view',
  group: 'comercial',
  children: [
- { id: 'stock-products', label: 'Produtos', icon: Package, path: '/admin/stock' },
+ { id: 'stock-products', label: 'Stock e movimentos', icon: Package, path: '/admin/stock' },
  { id: 'stock-alerts', label: 'Alertas', icon: AlertTriangle, path: '/admin/stock/alertas' },
- { id: 'stock-movements', label: 'Movimentos', icon: ArrowLeftRight, path: '/admin/stock/movimentos' },
  { id: 'stock-lots', label: 'Lotes', icon: Boxes, path: '/admin/stock/lotes' },
  { id: 'stock-audit', label: 'Auditoria', icon: ClipboardCheck, path: '/admin/stock/auditoria' },
  { id: 'stock-adjustments', label: 'Ajustes', icon: Scale, path: '/admin/stock/ajustes' },
@@ -555,7 +563,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
  // Verificar se algum submenu está ativo
  const isSubmenuActive = hasChildren && item.children?.some(
- child => location.pathname === child.path || location.pathname.startsWith(child.path + '/')
+ child => toMenuPath(location.pathname) === child.path || toMenuPath(location.pathname).startsWith(child.path + '/')
  );
  const isActive = activePage === item.id || activePage.startsWith(item.id + '-') || isSubmenuActive;
 
@@ -595,7 +603,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
  // Encontrar o melhor match entre os irmãos (o path mais longo que coincide)
  const matchingSiblings = item.children?.filter(c =>
- location.pathname === c.path || location.pathname.startsWith(c.path + '/')
+ toMenuPath(location.pathname) === c.path || toMenuPath(location.pathname).startsWith(c.path + '/')
  ) || [];
  const bestSiblingMatch = matchingSiblings.reduce((prev, curr) =>
  (curr.path.length > prev.path.length) ? curr : prev

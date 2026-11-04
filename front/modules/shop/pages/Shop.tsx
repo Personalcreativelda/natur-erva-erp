@@ -59,6 +59,16 @@ interface ShopProps {
   onLogout?: () => void;
 }
 
+/** Filtros especiais do catálogo (atalhos "Promoções" e "Novidades") */
+const PROMO_FILTER = '__promo';
+const NEW_FILTER = '__new';
+const SPECIAL_FILTER_LABELS: Record<string, string> = { [PROMO_FILTER]: 'Promoções', [NEW_FILTER]: 'Novidades' };
+/** "Novidades" = os 12 produtos mais recentes (data do 12.º serve de corte) */
+const newestCutoff = (list: Product[]) => {
+  const dates = list.map(p => new Date(p.createdAt || p.updatedAt || 0).getTime()).sort((a, b) => b - a);
+  return dates[Math.min(11, dates.length - 1)] ?? 0;
+};
+
 const EMPTY_PRODUCTS: Product[] = [];
 const EMPTY_LIST: any[] = [];
 const EMPTY_SETTINGS: SystemSettings = {};
@@ -303,7 +313,12 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    if (selectedCategory !== 'all') {
+    if (selectedCategory === PROMO_FILTER) {
+      filtered = filtered.filter(p => getPromoPrice(p) != null);
+    } else if (selectedCategory === NEW_FILTER) {
+      const cutoff = newestCutoff(products);
+      filtered = filtered.filter(p => new Date(p.createdAt || p.updatedAt || 0).getTime() >= cutoff);
+    } else if (selectedCategory !== 'all') {
       const cat = selectedCategory.toLowerCase();
       filtered = filtered.filter(p => (p.category || '').toLowerCase() === cat);
     }
@@ -353,6 +368,27 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
     [products]);
 
   const isBrowsingAll = selectedCategory === 'all' && !debouncedSearchTerm;
+
+  /** Atalhos do topo (círculos no mobile, cartões no desktop): até 5, sempre com produtos */
+  const categoryTiles = useMemo(() => {
+    const tiles: Array<{ key: string; value: string; label: string; count: number; image?: string; cover?: boolean; color?: string; badge?: string }> = [];
+    const firstImage = (list: Product[]) => list.find(p => p.image && !p.image.includes('placeholder'))?.image;
+    if (promoProducts.length) {
+      tiles.push({ key: 'promo', value: PROMO_FILTER, label: 'Promoções', count: products.filter(p => getPromoPrice(p) != null).length, image: firstImage(promoProducts), color: '#dc2626', badge: '%' });
+    }
+    categories
+      .filter(c => (categoryCounts.get(c.name.toLowerCase()) || 0) > 0)
+      .forEach(c => tiles.push({
+        key: c.id, value: c.name, label: c.name,
+        count: categoryCounts.get(c.name.toLowerCase()) || 0,
+        image: categoryImage(c.name, c.imageUrl), cover: !!c.imageUrl, color: c.color,
+      }));
+    if (newestProducts.length) {
+      const cutoff = newestCutoff(products);
+      tiles.push({ key: 'new', value: NEW_FILTER, label: 'Novidades', count: products.filter(p => new Date(p.createdAt || p.updatedAt || 0).getTime() >= cutoff).length, image: firstImage(newestProducts), color: '#2563eb', badge: 'Novo' });
+    }
+    return tiles.slice(0, 5);
+  }, [promoProducts, newestProducts, categories, categoryCounts, categoryImage, products]);
 
   // Novo filtro/pesquisa/ordenação → voltar ao primeiro lote
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -580,83 +616,77 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
       {/* ── HERO / BANNER (mobile: cartão arredondado com margem; desktop: largura total) ── */}
       <ShopBanner isAdmin={isAdmin} products={products} uploadImage={uploadProductImage} />
 
-      {/* ── CATEGORIAS (mobile: círculos deslizáveis, como nas apps de lojas) ── */}
-      {isMobile && categories.some(c => (categoryCounts.get(c.name.toLowerCase()) || 0) > 0) && (
-        <section className="pt-5" aria-label="Categorias">
-          <div className="chips-fade overflow-x-auto scrollbar-hide">
-            <div className="flex gap-4 px-4 w-max">
-              {categories.filter(c => (categoryCounts.get(c.name.toLowerCase()) || 0) > 0).map((cat, idx) => {
-                const Icon = CATEGORY_ICONS[idx % CATEGORY_ICONS.length];
-                const active = selectedCategory === cat.name;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => selectCategory(cat.name)}
-                    aria-pressed={active}
-                    className="w-[72px] flex flex-col items-center gap-1.5 !min-h-0"
-                  >
-                    {(() => {
-                      const img = categoryImage(cat.name, cat.imageUrl);
-                      return (
-                        <span
-                          className={`w-16 h-16 rounded-full overflow-hidden flex items-center justify-center border transition-shadow ${img ? 'bg-white border-border-default' : 'border-transparent'} ${active ? 'ring-2 ring-offset-2 ring-green-600 ring-offset-surface-base' : ''}`}
-                          style={img ? undefined : { backgroundColor: cat.color || '#22c55e' }}
-                        >
-                          {img
-                            ? <img src={img} alt="" className={`w-full h-full ${cat.imageUrl ? 'object-cover' : 'object-contain p-1.5'}`} loading="lazy" />
-                            : <Icon className="w-7 h-7 text-white" />}
-                        </span>
-                      );
-                    })()}
-                    <span className={`text-[11px] leading-tight text-center line-clamp-2 ${active ? 'font-semibold text-green-700 dark:text-green-400' : 'text-content-secondary'}`}>
-                      {cat.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── CATEGORIAS (desktop: cartões) ── */}
-      {categories.length > 0 && !isMobile && (
-        <section className="max-w-7xl mx-auto px-4 relative z-10 -mt-16">
-          {/* Centradas: só aparecem categorias com produtos, por isso o nº varia */}
-          <div className="flex flex-wrap justify-center gap-3 lg:gap-4">
-            {categories.filter(c => loading || (categoryCounts.get(c.name.toLowerCase()) || 0) > 0).map((cat, idx) => {
+      {/* ── ATALHOS (mobile: até 5 círculos numa linha; desktop: cartões) ── */}
+      {categoryTiles.length > 0 && (isMobile ? (
+        <section className="pt-5 px-3" aria-label="Categorias">
+          <div className={`grid gap-1`} style={{ gridTemplateColumns: `repeat(${Math.max(categoryTiles.length, 4)}, minmax(0, 1fr))` }}>
+            {categoryTiles.map((tile, idx) => {
               const Icon = CATEGORY_ICONS[idx % CATEGORY_ICONS.length];
-              const count = categoryCounts.get(cat.name.toLowerCase()) || 0;
+              const active = selectedCategory === tile.value;
               return (
                 <button
-                  key={cat.id}
-                  onClick={() => selectCategory(cat.name)}
-                  aria-pressed={selectedCategory === cat.name}
-                  className={`group bg-surface-raised rounded-2xl p-5 lg:p-6 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 w-[calc(33.333%-0.5rem)] lg:w-44 ${selectedCategory === cat.name ? 'ring-2 ring-green-500' : ''}`}
+                  key={tile.key}
+                  onClick={() => selectCategory(tile.value)}
+                  aria-pressed={active}
+                  className="flex flex-col items-center gap-1.5 !min-h-0 min-w-0"
                 >
-                  {(() => {
-                    const img = categoryImage(cat.name, cat.imageUrl);
-                    return (
-                      <div
-                        className={`w-20 h-20 rounded-full overflow-hidden flex items-center justify-center mx-auto mb-3 border ${img ? 'bg-white border-border-default' : 'border-transparent'}`}
-                        style={img ? undefined : { backgroundColor: cat.color || '#22c55e' }}
-                      >
-                        {img
-                          ? <img src={img} alt="" className={`w-full h-full ${cat.imageUrl ? 'object-cover' : 'object-contain p-2'} group-hover:scale-105 transition-transform duration-300`} loading="lazy" />
-                          : <Icon className="w-8 h-8 text-white" />}
-                      </div>
-                    );
-                  })()}
-                  <h3 className="text-base font-semibold mb-1 text-content-primary">{cat.name}</h3>
-                  <p className="text-sm text-content-muted">
-                    {loading ? ' ' : `${count} ${count === 1 ? 'produto' : 'produtos'}`}
-                  </p>
+                  <span className="relative">
+                    <span
+                      className={`w-14 h-14 rounded-full overflow-hidden flex items-center justify-center border transition-shadow ${tile.image ? 'bg-white border-border-default' : 'border-transparent'} ${active ? 'ring-2 ring-offset-2 ring-green-600 ring-offset-surface-base' : ''}`}
+                      style={tile.image ? undefined : { backgroundColor: tile.color || '#22c55e' }}
+                    >
+                      {tile.image
+                        ? <img src={tile.image} alt="" className={`w-full h-full ${tile.cover ? 'object-cover' : 'object-contain p-1.5'}`} loading="lazy" />
+                        : <Icon className="w-6 h-6 text-white" />}
+                    </span>
+                    {tile.badge && (
+                      <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center ring-2 ring-surface-base" style={{ backgroundColor: tile.color }}>
+                        {tile.badge}
+                      </span>
+                    )}
+                  </span>
+                  <span className={`w-full text-[11px] leading-tight text-center line-clamp-2 ${active ? 'font-semibold text-green-700 dark:text-green-400' : 'text-content-secondary'}`}>
+                    {tile.label}
+                  </span>
                 </button>
               );
             })}
           </div>
         </section>
-      )}
+      ) : (
+        <section className="max-w-7xl mx-auto px-4 relative z-10 -mt-8">
+          <div className="flex flex-wrap justify-center gap-3 lg:gap-4">
+            {categoryTiles.map((tile, idx) => {
+              const Icon = CATEGORY_ICONS[idx % CATEGORY_ICONS.length];
+              const active = selectedCategory === tile.value;
+              return (
+                <button
+                  key={tile.key}
+                  onClick={() => selectCategory(tile.value)}
+                  aria-pressed={active}
+                  className={`group relative bg-surface-raised rounded-2xl p-5 lg:p-6 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 w-[calc(20%-0.8rem)] min-w-[140px] lg:w-44 ${active ? 'ring-2 ring-green-500' : ''}`}
+                >
+                  {tile.badge && (
+                    <span className="absolute top-3 right-3 px-2 h-5 rounded-full text-[11px] font-bold text-white flex items-center" style={{ backgroundColor: tile.color }}>
+                      {tile.badge}
+                    </span>
+                  )}
+                  <div
+                    className={`w-20 h-20 rounded-full overflow-hidden flex items-center justify-center mx-auto mb-3 border ${tile.image ? 'bg-white border-border-default' : 'border-transparent'}`}
+                    style={tile.image ? undefined : { backgroundColor: tile.color || '#22c55e' }}
+                  >
+                    {tile.image
+                      ? <img src={tile.image} alt="" className={`w-full h-full ${tile.cover ? 'object-cover' : 'object-contain p-2'} group-hover:scale-105 transition-transform duration-300`} loading="lazy" />
+                      : <Icon className="w-8 h-8 text-white" />}
+                  </div>
+                  <h3 className="text-base font-semibold mb-1 text-content-primary leading-snug">{tile.label}</h3>
+                  <p className="text-sm text-content-muted">{tile.count} {tile.count === 1 ? 'produto' : 'produtos'}</p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
 
       {/* ── BANNER PROMOCIONAL ── */}
       <section className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isMobile ? 'mt-5' : 'mt-12'}`}>
@@ -720,7 +750,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
         <div className="flex items-end justify-between gap-4 mb-5">
           <div>
             <h2 className="text-lg sm:text-2xl font-bold text-content-primary">
-              {selectedCategory !== 'all' ? selectedCategory : 'Todos os produtos'}
+              {selectedCategory === 'all' ? 'Todos os produtos' : (SPECIAL_FILTER_LABELS[selectedCategory] || selectedCategory)}
             </h2>
             {!loading && (
               <p className="text-sm text-content-muted mt-1">

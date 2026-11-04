@@ -86,6 +86,26 @@ interface StockPeriodData {
  profit: number; // Reservado para enriquecimento futuro
 }
 
+/** Seletor Produtos / Movimentos / Configurações (substitui os itens repetidos no menu lateral) */
+const StockTabSwitcher: React.FC<{ activeTab: string; onChange: (tab: any) => void }> = ({ activeTab, onChange }) => (
+ <div className="inline-flex shrink-0 p-1 rounded-xl bg-surface-base border border-border-default" role="tablist" aria-label="Áreas do stock">
+ {([['products', 'Produtos', Package], ['movements', 'Movimentos', BarChart3], ['settings', 'Configurações', Settings]] as const).map(([id, label, Icon]) => (
+ <button
+ key={id}
+ type="button"
+ role="tab"
+ aria-selected={activeTab === id}
+ onClick={() => onChange(id)}
+ className={`h-8 !min-h-0 px-2.5 sm:px-3 inline-flex items-center gap-1.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${activeTab === id ? 'bg-surface-raised text-content-primary shadow-sm' : 'text-content-muted hover:text-content-primary'}`}
+ title={label}
+ >
+ <Icon className="w-4 h-4" />
+ <span className={id === 'settings' ? 'hidden sm:inline' : ''}>{label}</span>
+ </button>
+ ))}
+ </div>
+);
+
 export const StockManagement: React.FC<StockManagementProps> = ({
  products,
  orders,
@@ -2542,41 +2562,9 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  {/* FilterBar - Filtros principais visíveis no desktop */}
  <FilterBar isStickyOnMobile={isMobile} stickyTopClassName="top-0">
  {/* Alternador de éreas (Produtos / Movimentos) */}
- <div className="hidden">
- <button
- onClick={() => setActiveTab('products')}
- className={`p-1.5 rounded transition-colors ${activeTab === 'products'
- ? 'bg-brand-600 text-white'
- : 'bg-transparent text-content-muted hover:text-content-secondary dark:text-content-muted dark:hover:text-content-muted'
- }`}
- title="Visualizar Produtos"
- >
- <Package className="w-4 h-4" />
- </button>
- <button
- onClick={() => setActiveTab('movements')}
- className={`p-1.5 rounded transition-colors ${activeTab === 'movements'
- ? 'bg-brand-600 text-white'
- : 'bg-transparent text-content-muted hover:text-content-secondary dark:text-content-muted dark:hover:text-content-muted'
- }`}
- title="Visualizar Movimentos"
- >
- <BarChart3 className="w-4 h-4" />
- </button>
- <button
- onClick={() => setActiveTab('settings')}
- className={`p-1.5 rounded transition-colors ${activeTab === 'settings'
- ? 'bg-brand-600 text-white'
- : 'bg-transparent text-content-muted hover:text-content-secondary dark:text-content-muted dark:hover:text-content-muted'
- }`}
- title="Configurações de Stock"
- >
- <Settings className="w-4 h-4" />
- </button>
- </div>
+ <StockTabSwitcher activeTab={activeTab} onChange={setActiveTab} />
 
- {/* Separador removido - navegação via sidebar */}
-
+ 
  <SearchInput
  value={searchQuery}
  onChange={(val) => setSearchQuery(val)}
@@ -3201,38 +3189,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  {/* FilterBar - Filtros principais visíveis no desktop */}
  <FilterBar isStickyOnMobile={isMobile} stickyTopClassName="top-0">
  {/* Alternador de éreas (Produtos / Movimentos) */}
- <div className="hidden">
- <button
- onClick={() => setActiveTab('products')}
- className={`p-1.5 rounded transition-colors ${activeTab === 'products'
- ? 'bg-brand-600 text-white'
- : 'bg-transparent text-content-muted hover:text-content-secondary dark:text-content-muted dark:hover:text-content-muted'
- }`}
- title="Visualizar Produtos"
- >
- <Package className="w-4 h-4" />
- </button>
- <button
- onClick={() => setActiveTab('movements')}
- className={`p-1.5 rounded transition-colors ${activeTab === 'movements'
- ? 'bg-brand-600 text-white'
- : 'bg-transparent text-content-muted hover:text-content-secondary dark:text-content-muted dark:hover:text-content-muted'
- }`}
- title="Visualizar Movimentos"
- >
- <BarChart3 className="w-4 h-4" />
- </button>
- <button
- onClick={() => setActiveTab('settings')}
- className={`p-1.5 rounded transition-colors ${activeTab === 'settings'
- ? 'bg-brand-600 text-white'
- : 'bg-transparent text-content-muted hover:text-content-secondary dark:text-content-muted dark:hover:text-content-muted'
- }`}
- title="Configurações de Stock"
- >
- <Settings className="w-4 h-4" />
- </button>
- </div>
+ <StockTabSwitcher activeTab={activeTab} onChange={setActiveTab} />
 
  <div className="hidden" />
 
@@ -4371,11 +4328,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  </p>
  </div>
  </div>
- <div className="hidden">
- <button onClick={() => setActiveTab('products')} className="p-1.5 rounded transition-colors bg-transparent text-content-muted hover:text-content-secondary dark:text-content-muted dark:hover:text-content-muted" title="Produtos"><Package className="w-4 h-4" /></button>
- <button onClick={() => setActiveTab('movements')} className="p-1.5 rounded transition-colors bg-transparent text-content-muted hover:text-content-secondary dark:text-content-muted dark:hover:text-content-muted" title="Movimentos"><BarChart3 className="w-4 h-4" /></button>
- <button onClick={() => setActiveTab('settings')} className="p-1.5 rounded transition-colors bg-brand-600 text-white" title="Configurações"><Settings className="w-4 h-4" /></button>
- </div>
+ <StockTabSwitcher activeTab={activeTab} onChange={setActiveTab} />
  </div>
  )}
 
