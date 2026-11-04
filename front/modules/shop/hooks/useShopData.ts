@@ -30,7 +30,7 @@ export const useShopCategories = () =>
   useQuery({
     queryKey: queryKeys.shop.categories,
     queryFn: async () => ((await api.get<ShopCategory[]>('/categories')) || []).filter(c => c.isActive !== false),
-    staleTime: 5 * 60_000,
+    staleTime: 60_000, // conteúdo editado no admin: aparece na loja em ~1 min
     meta: persist,
   });
 
@@ -48,7 +48,7 @@ export const useShopSettings = () =>
   useQuery({
     queryKey: queryKeys.shop.settings,
     queryFn: (): Promise<SystemSettings> => getSystemSettings(),
-    staleTime: 10 * 60_000,
+    staleTime: 60_000,
     meta: persist,
   });
 
@@ -66,7 +66,7 @@ export const useShopTileImages = () =>
       ]);
       return { promo: promo?.imageUrl || undefined, new: fresh?.imageUrl || undefined };
     },
-    staleTime: 10 * 60_000,
+    staleTime: 30_000, // imagens trocadas no admin aparecem logo
     meta: persist,
   });
 
