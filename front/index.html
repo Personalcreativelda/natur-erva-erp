@@ -122,8 +122,7 @@
       /* Chat LeadsFlow (widget externo, z-index 9999): não tapar o carrinho/diálogos,
          subir acima da barra fixa de compra, e não aparecer na área de administração */
       body:has([aria-modal="true"]) #lfw-btn,
-      html[data-area="admin"] #lfw-btn,
-      html[data-area="admin"] #lfw-window,
+      html[data-area="admin"] [id^="lfw"],
       html.keyboard-open #lfw-btn { display: none !important; }
       /* Acima das barras fixas inferiores (só existem abaixo de md / lg) */
       @media (max-width: 767px) {
@@ -444,20 +443,7 @@
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>
-<!-- LeadsFlow Chat Widget -->
-<script>
-  (function(w,d,s,o,f,js,fjs){
-    w['LeadsFlowWidget']=o;w[o]=w[o]||function(){(w[o].q=w[o].q||[]).push(arguments)};
-    js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
-    js.id=o;js.src=f;js.async=1;fjs.parentNode.insertBefore(js,fjs);
-  }(window,document,'script','lfw','https://api.leadsflowapi.com/w'));
-  lfw('init', {
-    channelId: '662d73c3-914d-4ae3-ab74-1ffebd518755',
-    primaryColor: '#2edc50',
-    welcomeMessage: 'Olá! Como posso ajudar?',
-    position: 'bottom-right'
-  });
-</script>
+<!-- Chat LeadsFlow: carregado só na loja (front/modules/shop/chatWidget.ts), nunca no admin -->
 <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-PBCGGZNV"></script>
 <script>
   window.dataLayer = window.dataLayer || [];

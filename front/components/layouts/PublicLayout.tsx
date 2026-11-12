@@ -9,6 +9,7 @@ import { CartDrawer } from '../../modules/shop/components/CartDrawer';
 import { useCart } from '../../modules/shop/context/CartContext';
 import { ShopTabBar } from '../../modules/shop/components/ShopTabBar';
 import { RouteTransition } from '../../modules/core/mobile/RouteTransition';
+import { loadShopChatWidget } from '../../modules/shop/chatWidget';
 
 interface PublicLayoutProps {
   currentUser: User | null;
@@ -30,6 +31,9 @@ const PublicLayoutContent: React.FC<PublicLayoutProps> = ({
   const shopContext = useShopContextSafe();
   // Carrinho único (CartContext) — o mesmo em todas as páginas públicas
   const cart = useCart();
+
+  // Chat de atendimento: só existe na loja (o admin nunca o carrega)
+  useEffect(() => { loadShopChatWidget(); }, []);
 
   // Memoizar valores derivados do contexto para evitar recálculos
   // IMPORTANTE: Não memoizar os callbacks para garantir que mudanças sejam detectadas
