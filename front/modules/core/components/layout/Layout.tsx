@@ -36,7 +36,7 @@ interface LayoutProps {
 }
 
 // Itens que não aparecem no menu do telemóvel (as páginas continuam acessíveis)
-const MOBILE_MENU_HIDDEN = new Set(['tracking', 'subscriptions']);
+const MOBILE_MENU_HIDDEN = new Set(['tracking', 'subscriptions', 'helpdesk']);
 
 /** Texto comparável: sem acentos e em minúsculas ("Logística" ≈ "logistica"). */
 const normalizeMenuText = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();

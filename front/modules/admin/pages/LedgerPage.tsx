@@ -7,6 +7,7 @@ import {
 import api from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
 import type { Toast } from '../../core/components/ui/Toast';
+import { formatMoney } from '../../core/utils/money';
 
 interface LedgerPageProps {
   showToast?: (msg: string, type: Toast['type']) => void;
@@ -19,7 +20,7 @@ interface PnL { period: { from: string; to: string }; revenue: number; cogs: num
 interface BalanceSheet { asOf: string; assets: { cash: number; ar: number; stock: number; total: number }; liabilities: { ap: number; total: number }; equity: { retained: number; total: number }; }
 interface AccountBalance { id: string; code: string; name: string; type: string; totalDebit: number; totalCredit: number; balance: number; }
 
-const fmt     = (n: number) => `${Number(n || 0).toFixed(2)} MT`;
+const fmt = formatMoney; // formato único da área financeira (core/utils/money)
 const fmtDate = (d?: string) => d ? new Date(d).toLocaleDateString('pt-MZ') : '—';
 const fmtPct  = (n: number | null) => n === null ? '—' : `${n > 0 ? '+' : ''}${n}%`;
 
@@ -196,8 +197,8 @@ function ManualEntryModal({ accounts, onClose, onCreated, showToast }: { account
                 <tfoot>
                   <tr className="bg-surface-base border-t border-border-default">
                     <td colSpan={2} className="px-3 py-2 text-xs font-semibold text-content-muted">Totais</td>
-                    <td className={`px-3 py-2 text-xs font-bold text-right font-mono ${balanced ? 'text-green-600 dark:text-green-400' : 'text-red-600'}`}>{fmt(totalDebit)}</td>
-                    <td className={`px-3 py-2 text-xs font-bold text-right font-mono ${balanced ? 'text-green-600 dark:text-green-400' : 'text-red-600'}`}>{fmt(totalCredit)}</td>
+                    <td className={`px-3 py-2 text-xs font-bold text-right tabular-nums ${balanced ? 'text-green-600 dark:text-green-400' : 'text-red-600'}`}>{fmt(totalDebit)}</td>
+                    <td className={`px-3 py-2 text-xs font-bold text-right tabular-nums ${balanced ? 'text-green-600 dark:text-green-400' : 'text-red-600'}`}>{fmt(totalCredit)}</td>
                     <td />
                   </tr>
                 </tfoot>
@@ -292,10 +293,10 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
 
       {/* Tabs */}
       <div className="border-b border-border-default -mx-3 sm:-mx-4 md:-mx-8 px-3 sm:px-4 md:px-8 mb-5">
-        <div className="flex gap-1">
+        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t.id ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400' : 'border-transparent text-content-muted hover:text-content-primary'}`}>
+              className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 sm:px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t.id ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400' : 'border-transparent text-content-muted hover:text-content-primary'}`}>
               {t.icon}{t.label}
             </button>
           ))}
@@ -304,14 +305,25 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
 
       {/* Period selector */}
       {tab !== TAB.BALANCE && (
-        <div className="flex flex-wrap items-center gap-3 mb-5 bg-surface-raised border border-border-default rounded-xl p-3">
-          <span className="text-xs font-medium text-content-muted">Período:</span>
-          <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="px-3 py-1.5 rounded-lg border border-border-default bg-surface-base text-sm text-content-primary focus:ring-2 focus:ring-brand-500 focus:outline-none" />
-          <span className="text-content-muted text-xs">até</span>
-          <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="px-3 py-1.5 rounded-lg border border-border-default bg-surface-base text-sm text-content-primary focus:ring-2 focus:ring-brand-500 focus:outline-none" />
-          {[{ label: 'Este ano', from: `${thisYear}-01-01`, to: today }, { label: 'Este mês', from: `${today.slice(0,7)}-01`, to: today }, { label: 'Q1', from: `${thisYear}-01-01`, to: `${thisYear}-03-31` }, { label: 'Q2', from: `${thisYear}-04-01`, to: `${thisYear}-06-30` }].map(p => (
-            <button key={p.label} onClick={() => { setFromDate(p.from); setToDate(p.to); }} className="px-2.5 py-1 text-xs font-medium border border-border-default rounded-lg text-content-muted hover:bg-surface-base transition-colors">{p.label}</button>
-          ))}
+        <div className="mb-5 bg-surface-raised border border-border-default rounded-xl p-3 space-y-3 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+          <span className="block text-xs font-medium text-content-muted">Período:</span>
+          {/* Telemóvel: as duas datas lado a lado; desktop: em linha como antes */}
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex sm:gap-3">
+            <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="w-full min-w-0 sm:w-auto px-3 py-1.5 rounded-lg border border-border-default bg-surface-base text-sm text-content-primary focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+            <span className="text-content-muted text-xs text-center">até</span>
+            <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="w-full min-w-0 sm:w-auto px-3 py-1.5 rounded-lg border border-border-default bg-surface-base text-sm text-content-primary focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+          </div>
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {[{ label: 'Este ano', from: `${thisYear}-01-01`, to: today }, { label: 'Este mês', from: `${today.slice(0,7)}-01`, to: today }, { label: 'Q1', from: `${thisYear}-01-01`, to: `${thisYear}-03-31` }, { label: 'Q2', from: `${thisYear}-04-01`, to: `${thisYear}-06-30` }].map(p => {
+              const active = fromDate === p.from && toDate === p.to;
+              return (
+                <button key={p.label} onClick={() => { setFromDate(p.from); setToDate(p.to); }}
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors ${active ? 'border-brand-600 bg-brand-600/10 text-brand-700 dark:text-brand-300' : 'border-border-default text-content-muted hover:bg-surface-base'}`}>
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
       {tab === TAB.BALANCE && (
@@ -336,7 +348,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
             ].map(k => (
               <div key={k.label} className="bg-surface-raised border border-border-default rounded-xl p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-2">{k.icon}<span className="text-xs text-content-muted font-medium">{k.label}</span></div>
-                <p className={`text-xl font-bold font-mono ${k.color}`}>{fmt(k.value)}</p>
+                <p className={`text-xl font-bold tabular-nums ${k.color}`}>{fmt(k.value)}</p>
                 {k.sub && <p className="text-xs text-content-muted mt-1">{k.sub}</p>}
               </div>
             ))}
@@ -356,7 +368,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
                 ].map((row, i) => (
                   <div key={i} className={`flex justify-between items-center py-1.5 ${row.border ? 'border-t border-border-default mt-2 pt-2' : ''}`} style={{ paddingLeft: row.indent * 16 }}>
                     <span className={row.bold ? 'font-semibold text-content-primary' : 'text-content-secondary'}>{row.label}</span>
-                    <span className={`font-mono ${row.bold ? 'font-bold text-base' : ''} ${row.color}`}>{fmt(Math.abs(row.value))}{row.value < 0 ? ' (-)'  : ''}</span>
+                    <span className={`tabular-nums ${row.bold ? 'font-bold text-base' : ''} ${row.color}`}>{fmt(Math.abs(row.value))}{row.value < 0 ? ' (-)'  : ''}</span>
                   </div>
                 ))}
               </div>
@@ -378,7 +390,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
                           <div className="flex-1 bg-surface-base rounded-full h-1.5">
                             <div className="h-1.5 rounded-full bg-orange-500/70" style={{ width: `${(e.total / max) * 100}%` }} />
                           </div>
-                          <span className="text-xs font-mono text-content-secondary shrink-0">{fmt(e.total)}</span>
+                          <span className="text-xs tabular-nums text-content-secondary shrink-0">{fmt(e.total)}</span>
                         </div>
                       );
                     })}
@@ -398,11 +410,11 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
             <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-4 flex items-center gap-2"><ArrowUpRight className="w-4 h-4" />ACTIVOS</p>
             <div className="space-y-3 text-sm">
               {[{ label: 'Caixa / Banco', value: balance.assets.cash }, { label: 'Contas a Receber (AR)', value: balance.assets.ar }, { label: 'Stock (valor estimado)', value: balance.assets.stock }].map(r => (
-                <div key={r.label} className="flex justify-between"><span className="text-content-secondary">{r.label}</span><span className="font-mono font-medium text-content-primary">{fmt(r.value)}</span></div>
+                <div key={r.label} className="flex justify-between"><span className="text-content-secondary">{r.label}</span><span className="tabular-nums font-medium text-content-primary">{fmt(r.value)}</span></div>
               ))}
               <div className="border-t border-border-default pt-3 flex justify-between font-bold">
                 <span className="text-blue-600 dark:text-blue-400">Total Activos</span>
-                <span className="font-mono text-blue-600 dark:text-blue-400">{fmt(balance.assets.total)}</span>
+                <span className="tabular-nums text-blue-600 dark:text-blue-400">{fmt(balance.assets.total)}</span>
               </div>
             </div>
           </div>
@@ -412,11 +424,11 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
             <p className="text-sm font-bold text-red-600 dark:text-red-400 mb-4 flex items-center gap-2"><ArrowDownRight className="w-4 h-4" />PASSIVOS</p>
             <div className="space-y-3 text-sm">
               {[{ label: 'Contas a Pagar (AP)', value: balance.liabilities.ap }].map(r => (
-                <div key={r.label} className="flex justify-between"><span className="text-content-secondary">{r.label}</span><span className="font-mono font-medium text-content-primary">{fmt(r.value)}</span></div>
+                <div key={r.label} className="flex justify-between"><span className="text-content-secondary">{r.label}</span><span className="tabular-nums font-medium text-content-primary">{fmt(r.value)}</span></div>
               ))}
               <div className="border-t border-border-default pt-3 flex justify-between font-bold">
                 <span className="text-red-600 dark:text-red-400">Total Passivos</span>
-                <span className="font-mono text-red-600 dark:text-red-400">{fmt(balance.liabilities.total)}</span>
+                <span className="tabular-nums text-red-600 dark:text-red-400">{fmt(balance.liabilities.total)}</span>
               </div>
             </div>
           </div>
@@ -426,16 +438,16 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
             <p className="text-sm font-bold text-purple-600 dark:text-purple-400 mb-4 flex items-center gap-2"><Scale className="w-4 h-4" />CAPITAL PRÓPRIO</p>
             <div className="space-y-3 text-sm">
               {[{ label: 'Resultado Acumulado', value: balance.equity.retained }].map(r => (
-                <div key={r.label} className="flex justify-between"><span className="text-content-secondary">{r.label}</span><span className={`font-mono font-medium ${r.value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600'}`}>{fmt(r.value)}</span></div>
+                <div key={r.label} className="flex justify-between"><span className="text-content-secondary">{r.label}</span><span className={`tabular-nums font-medium ${r.value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600'}`}>{fmt(r.value)}</span></div>
               ))}
               <div className="border-t border-border-default pt-3 flex justify-between font-bold">
                 <span className="text-purple-600 dark:text-purple-400">Total Capital</span>
-                <span className={`font-mono ${balance.equity.total >= 0 ? 'text-purple-600 dark:text-purple-400' : 'text-red-600'}`}>{fmt(balance.equity.total)}</span>
+                <span className={`tabular-nums ${balance.equity.total >= 0 ? 'text-purple-600 dark:text-purple-400' : 'text-red-600'}`}>{fmt(balance.equity.total)}</span>
               </div>
             </div>
             <div className="mt-4 p-3 bg-surface-base rounded-lg border border-border-default">
               <div className="flex justify-between text-xs"><span className="text-content-muted">Activos = Passivos + Capital</span>
-                <span className={`font-mono font-bold ${Math.abs(balance.assets.total - balance.liabilities.total - balance.equity.total) < 1 ? 'text-green-600 dark:text-green-400' : 'text-red-600'}`}>
+                <span className={`tabular-nums font-bold ${Math.abs(balance.assets.total - balance.liabilities.total - balance.equity.total) < 1 ? 'text-green-600 dark:text-green-400' : 'text-red-600'}`}>
                   {fmt(balance.assets.total)} = {fmt(balance.liabilities.total + balance.equity.total)}
                 </span>
               </div>
@@ -459,7 +471,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${TYPE_COLOR[type]}`}>{TYPE_LABELS[type]}</span>
                   <span className="text-xs text-content-muted">({accts.length} contas)</span>
                 </div>
-                <span className="text-xs font-mono font-semibold text-content-primary">
+                <span className="text-xs tabular-nums font-semibold text-content-primary">
                   Saldo: {fmt(accts.reduce((s, a) => s + (balanceMap[a.id]?.balance || 0), 0))}
                 </span>
               </div>
@@ -473,7 +485,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
                         <span className={`text-sm ${a.isActive ? 'text-content-primary' : 'text-content-muted line-through'}`}>{a.name}</span>
                         {a.isSystem && <span className="text-[10px] bg-surface-base border border-border-default rounded px-1.5 text-content-muted">sistema</span>}
                       </div>
-                      <div className="flex items-center gap-4 text-xs font-mono">
+                      <div className="flex items-center gap-4 text-xs tabular-nums">
                         {bal && bal.totalDebit > 0 && <span className="text-blue-600 dark:text-blue-400">D: {fmt(bal.totalDebit)}</span>}
                         {bal && bal.totalCredit > 0 && <span className="text-red-600 dark:text-red-400">C: {fmt(bal.totalCredit)}</span>}
                         {bal && <span className={`font-semibold ${bal.balance >= 0 ? 'text-content-primary' : 'text-red-600'}`}>{fmt(bal.balance)}</span>}
@@ -514,7 +526,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
                         {e.source !== 'manual' && <span className="text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded px-1.5">{e.source}</span>}
                       </div>
                       <div className="flex items-center gap-4 shrink-0">
-                        <span className="text-sm font-mono font-semibold text-content-primary">{fmt(e.totalDebit)}</span>
+                        <span className="text-sm tabular-nums font-semibold text-content-primary">{fmt(e.totalDebit)}</span>
                         {expanded.has(e.id) ? <ChevronUp className="w-4 h-4 text-content-muted" /> : <ChevronDown className="w-4 h-4 text-content-muted" />}
                       </div>
                     </button>
@@ -525,10 +537,10 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
                           <tbody className="divide-y divide-border-default/30">
                             {e.lines.map(l => (
                               <tr key={l.id}>
-                                <td className="py-1 font-mono text-content-muted">{l.accountCode} · {l.accountName}</td>
+                                <td className="py-1 tabular-nums text-content-muted">{l.accountCode} · {l.accountName}</td>
                                 <td className="py-1 text-content-secondary">{l.description || '—'}</td>
-                                <td className="py-1 text-right font-mono text-blue-600 dark:text-blue-400">{l.debit > 0 ? fmt(l.debit) : '—'}</td>
-                                <td className="py-1 text-right font-mono text-red-600 dark:text-red-400">{l.credit > 0 ? fmt(l.credit) : '—'}</td>
+                                <td className="py-1 text-right tabular-nums text-blue-600 dark:text-blue-400">{l.debit > 0 ? fmt(l.debit) : '—'}</td>
+                                <td className="py-1 text-right tabular-nums text-red-600 dark:text-red-400">{l.credit > 0 ? fmt(l.credit) : '—'}</td>
                               </tr>
                             ))}
                           </tbody>

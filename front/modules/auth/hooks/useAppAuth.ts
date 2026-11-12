@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { User, UserRole } from '../../core/types/types';
@@ -104,8 +104,19 @@ export const useAppAuth = (): UseAppAuthReturn => {
     window.location.href = newUrl;
   }, []);
 
+  // A verificação da sessão corre UMA vez, ao abrir a app. O `navigate` do React Router muda
+  // de identidade a cada mudança de página; com ele nas dependências, o efeito voltava a correr
+  // em navegações, punha isAuthLoading=true e a app inteira (painel incluído) era desmontada e
+  // recarregada. Refs dão acesso às versões actuais sem reexecutar o efeito.
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+  const handleLoginRef = useRef(handleLogin);
+  handleLoginRef.current = handleLogin;
+
   // Check for active session on load
   useEffect(() => {
+    const navigate = navigateRef.current;
+    const handleLogin = handleLoginRef.current;
     const checkSession = async () => {
       setIsAuthLoading(true);
 
@@ -266,7 +277,7 @@ export const useAppAuth = (): UseAppAuthReturn => {
       setIsAuthLoading(false);
     };
     checkSession();
-  }, [handleLogin, navigate]);
+  }, []);
 
   // Sessão infinita: não há timeout por inatividade nem logout periódico.
   // A sessão só termina com logout manual ou quando o Supabase invalidar (ex.: refresh token expirado no servidor).

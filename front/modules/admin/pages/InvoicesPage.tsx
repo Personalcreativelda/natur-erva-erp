@@ -8,6 +8,7 @@ import api, { downloadBlob } from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
 import type { Toast } from '../../core/components/ui/Toast';
 import { realPhone } from '../../core/utils/phone';
+import { formatMoney } from '../../core/utils/money';
 
 interface InvoicesPageProps {
   showToast?: (msg: string, type: Toast['type']) => void;
@@ -60,7 +61,7 @@ const STATUS_CONFIG: Record<InvoiceStatus, { label: string; color: string; icon:
   cancelled: { label: 'Cancelada', color: 'bg-surface-overlay text-content-muted border-border-default',         icon: <XCircle className="w-3 h-3" /> },
 };
 
-const fmt = (n: number) => `${Number(n || 0).toFixed(2)} MT`;
+const fmt = formatMoney; // formato único da área financeira (core/utils/money)
 const fmtDate = (d?: string) => d ? new Date(d).toLocaleDateString('pt-MZ') : '—';
 const apiBase = import.meta.env.VITE_API_URL as string;
 
@@ -220,8 +221,8 @@ function InvoiceDetail({
                         {item.variantName && <span className="text-content-muted text-xs"> ({item.variantName})</span>}
                       </td>
                       <td className="px-4 py-2.5 text-right text-content-secondary">{item.quantity}</td>
-                      <td className="px-4 py-2.5 text-right text-content-secondary font-mono">{fmt(item.unitPrice || item.price || 0)}</td>
-                      <td className="px-4 py-2.5 text-right text-content-primary font-semibold font-mono">{fmt((item.quantity || 1) * (item.unitPrice || item.price || 0))}</td>
+                      <td className="px-4 py-2.5 text-right text-content-secondary tabular-nums">{fmt(item.unitPrice || item.price || 0)}</td>
+                      <td className="px-4 py-2.5 text-right text-content-primary font-semibold tabular-nums">{fmt((item.quantity || 1) * (item.unitPrice || item.price || 0))}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -271,7 +272,7 @@ function TotalRow({ label, value, bold, color }: { label: string; value: string;
   return (
     <div className="flex justify-between items-center">
       <span className={`${bold ? 'font-semibold text-content-primary' : 'text-content-muted'}`}>{label}</span>
-      <span className={`font-mono ${bold ? 'font-bold text-base text-content-primary' : ''} ${color || 'text-content-secondary'}`}>{value}</span>
+      <span className={`tabular-nums ${bold ? 'font-bold text-base text-content-primary' : ''} ${color || 'text-content-secondary'}`}>{value}</span>
     </div>
   );
 }
@@ -374,7 +375,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ showToast }) => {
         {kpis.map(k => (
           <div key={k.label} className="bg-surface-raised border border-border-default rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">{k.icon}<span className="text-xs text-content-muted font-medium">{k.label}</span></div>
-            <p className={`text-xl font-bold font-mono ${k.color}`}>{k.value}</p>
+            <p className={`text-xl font-bold tabular-nums ${k.color}`}>{k.value}</p>
           </div>
         ))}
       </div>
@@ -481,8 +482,8 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ showToast }) => {
                         {fmtDate(inv.dueDate)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm font-semibold font-mono text-content-primary">{fmt(inv.totalAmount)}</td>
-                    <td className="px-4 py-3 text-sm font-mono">
+                    <td className="px-4 py-3 text-sm font-semibold tabular-nums text-content-primary">{fmt(inv.totalAmount)}</td>
+                    <td className="px-4 py-3 text-sm tabular-nums">
                       <span className={inv.amountPaid >= inv.totalAmount ? 'text-green-600 dark:text-green-400' : 'text-content-muted'}>
                         {fmt(inv.amountPaid)}
                       </span>

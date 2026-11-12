@@ -6,10 +6,11 @@ import {
   Package, CreditCard, BarChart2, RefreshCw, Loader2,
 } from 'lucide-react';
 import type { Toast } from '../../core/components/ui/Toast';
+import { formatMoney } from '../../core/utils/money';
 
 interface Props { showToast?: (msg: string, type: Toast['type']) => void; }
 
-const fmt = (n: number) => `MT ${Number(n || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmt = formatMoney; // formato único da área financeira (core/utils/money)
 const fmtShort = (n: number) => {
   if (n >= 1_000_000) return `MT ${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000)     return `MT ${(n / 1_000).toFixed(1)}K`;

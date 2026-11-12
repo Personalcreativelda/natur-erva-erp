@@ -7,6 +7,7 @@ import {
 import api from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
 import type { Toast } from '../../core/components/ui/Toast';
+import { formatMoney } from '../../core/utils/money';
 
 interface APPageProps {
   showToast?: (msg: string, type: Toast['type']) => void;
@@ -75,7 +76,7 @@ const STATUS_CFG: Record<BillStatus, { label: string; color: string; icon: React
   cancelled: { label: 'Cancelada', color: 'bg-surface-overlay text-content-muted border-border-default',                                                            icon: <XCircle className="w-3 h-3" /> },
 };
 
-const fmt     = (n: number) => `${Number(n || 0).toFixed(2)} MT`;
+const fmt = formatMoney; // formato único da área financeira (core/utils/money)
 const fmtDate = (d?: string) => d ? new Date(d).toLocaleDateString('pt-MZ') : '—';
 const TAB = { BILLS: 'bills', AGING: 'aging' } as const;
 type Tab = typeof TAB[keyof typeof TAB];
@@ -188,7 +189,7 @@ function CreateBillModal({ onClose, onCreated, showToast }: {
                     className="col-span-2 px-3 py-2 rounded-lg border border-border-default bg-surface-base text-sm text-content-primary text-center focus:ring-2 focus:ring-brand-500 focus:outline-none" />
                   <input type="number" value={item.unitPrice} min={0} step={0.01} onChange={e => setItem(i, 'unitPrice', Number(e.target.value))}
                     placeholder="Preço" className="col-span-3 px-3 py-2 rounded-lg border border-border-default bg-surface-base text-sm text-content-primary focus:ring-2 focus:ring-brand-500 focus:outline-none" />
-                  <p className="col-span-1 text-xs font-mono text-content-muted text-right">{fmt(item.quantity * item.unitPrice)}</p>
+                  <p className="col-span-1 text-xs tabular-nums text-content-muted text-right">{fmt(item.quantity * item.unitPrice)}</p>
                   {items.length > 1 && (
                     <button aria-label="Remover" onClick={() => removeItem(i)} className="tap-target col-span-1 p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
                       <X className="w-3.5 h-3.5" />
@@ -201,11 +202,11 @@ function CreateBillModal({ onClose, onCreated, showToast }: {
 
           {/* Totals */}
           <div className="bg-surface-base rounded-xl p-4 border border-border-default space-y-1.5 text-sm">
-            <div className="flex justify-between"><span className="text-content-muted">Subtotal</span><span className="font-mono">{fmt(subtotal)}</span></div>
-            <div className="flex justify-between"><span className="text-content-muted">IVA ({form.vatRate}%)</span><span className="font-mono">{fmt(vatAmount)}</span></div>
+            <div className="flex justify-between"><span className="text-content-muted">Subtotal</span><span className="tabular-nums">{fmt(subtotal)}</span></div>
+            <div className="flex justify-between"><span className="text-content-muted">IVA ({form.vatRate}%)</span><span className="tabular-nums">{fmt(vatAmount)}</span></div>
             <div className="flex justify-between border-t border-border-default pt-2 mt-2">
               <span className="font-semibold text-content-primary">Total</span>
-              <span className="font-bold font-mono text-base text-content-primary">{fmt(total)}</span>
+              <span className="font-bold tabular-nums text-base text-content-primary">{fmt(total)}</span>
             </div>
           </div>
 
@@ -335,8 +336,8 @@ function BillDetail({ bill, onClose, onAction, showToast }: {
                     {bill.items.map((item: any, i: number) => (
                       <tr key={i}><td className="px-4 py-2.5 text-content-primary">{item.name}</td>
                         <td className="px-4 py-2.5 text-right text-content-secondary">{item.quantity}</td>
-                        <td className="px-4 py-2.5 text-right font-mono text-content-secondary">{fmt(item.unitPrice || item.price || 0)}</td>
-                        <td className="px-4 py-2.5 text-right font-mono font-semibold text-content-primary">{fmt((item.quantity || 1) * (item.unitPrice || item.price || 0))}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-content-secondary">{fmt(item.unitPrice || item.price || 0)}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums font-semibold text-content-primary">{fmt((item.quantity || 1) * (item.unitPrice || item.price || 0))}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -347,17 +348,17 @@ function BillDetail({ bill, onClose, onAction, showToast }: {
 
           {/* Totals */}
           <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between"><span className="text-content-muted">Subtotal</span><span className="font-mono text-content-secondary">{fmt(bill.subtotal)}</span></div>
-            <div className="flex justify-between"><span className="text-content-muted">IVA ({bill.vatRate}%)</span><span className="font-mono text-content-muted">{fmt(bill.vatAmount)}</span></div>
+            <div className="flex justify-between"><span className="text-content-muted">Subtotal</span><span className="tabular-nums text-content-secondary">{fmt(bill.subtotal)}</span></div>
+            <div className="flex justify-between"><span className="text-content-muted">IVA ({bill.vatRate}%)</span><span className="tabular-nums text-content-muted">{fmt(bill.vatAmount)}</span></div>
             <div className="flex justify-between border-t border-border-default pt-2 mt-2">
               <span className="font-semibold text-content-primary">TOTAL</span>
-              <span className="font-bold font-mono text-base text-content-primary">{fmt(bill.totalAmount)}</span>
+              <span className="font-bold tabular-nums text-base text-content-primary">{fmt(bill.totalAmount)}</span>
             </div>
             {bill.amountPaid > 0 && (
-              <div className="flex justify-between"><span className="text-green-600 dark:text-green-400">Pago</span><span className="font-mono text-green-600 dark:text-green-400">{fmt(bill.amountPaid)}</span></div>
+              <div className="flex justify-between"><span className="text-green-600 dark:text-green-400">Pago</span><span className="tabular-nums text-green-600 dark:text-green-400">{fmt(bill.amountPaid)}</span></div>
             )}
             {bill.status === 'partial' && (
-              <div className="flex justify-between"><span className="text-yellow-600 font-semibold">Em dívida</span><span className="font-bold font-mono text-yellow-600">{fmt(bill.totalAmount - bill.amountPaid)}</span></div>
+              <div className="flex justify-between"><span className="text-yellow-600 font-semibold">Em dívida</span><span className="font-bold tabular-nums text-yellow-600">{fmt(bill.totalAmount - bill.amountPaid)}</span></div>
             )}
           </div>
         </div>
@@ -438,17 +439,17 @@ export const APPage: React.FC<APPageProps> = ({ showToast }) => {
         {kpis.map(k => (
           <div key={k.label} className="bg-surface-raised border border-border-default rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">{k.icon}<span className="text-xs text-content-muted font-medium">{k.label}</span></div>
-            <p className={`text-xl font-bold font-mono ${k.color}`}>{k.value}</p>
+            <p className={`text-xl font-bold tabular-nums ${k.color}`}>{k.value}</p>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
       <div className="border-b border-border-default -mx-3 sm:-mx-4 md:-mx-8 px-3 sm:px-4 md:px-8 mb-5">
-        <div className="flex gap-1">
+        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
           {[{ id: TAB.BILLS, label: 'Facturas' }, { id: TAB.AGING, label: 'Aging AP' }].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t.id ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400' : 'border-transparent text-content-muted hover:text-content-primary'}`}>
+              className={`shrink-0 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t.id ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400' : 'border-transparent text-content-muted hover:text-content-primary'}`}>
               {t.label}
             </button>
           ))}
@@ -464,10 +465,11 @@ export const APPage: React.FC<APPageProps> = ({ showToast }) => {
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar fornecedor ou nº…"
                 className="w-full pl-9 pr-3 py-2 rounded-lg border border-border-default bg-surface-base text-sm text-content-primary focus:ring-2 focus:ring-brand-500 focus:outline-none" />
             </div>
-            <div className="flex gap-1 flex-wrap">
+            {/* Telemóvel: uma fila com deslize (como nas Cotações); desktop: quebra normal */}
+            <div className="flex gap-1 overflow-x-auto scrollbar-hide w-full sm:w-auto sm:flex-wrap sm:overflow-visible">
               {STATUS_FILTERS.map(f => (
                 <button key={f.value} onClick={() => setStatusFilter(f.value)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${statusFilter === f.value ? 'bg-brand-600 text-white border-brand-600' : 'border-border-default text-content-muted hover:bg-surface-base'}`}>
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${statusFilter === f.value ? 'bg-brand-600 text-white border-brand-600' : 'border-border-default text-content-muted hover:bg-surface-base'}`}>
                   {f.label}
                 </button>
               ))}
@@ -504,8 +506,8 @@ export const APPage: React.FC<APPageProps> = ({ showToast }) => {
                         <td className="px-4 py-3 text-xs">
                           <span className={bill.status === 'overdue' ? 'text-red-600 dark:text-red-400 font-medium' : 'text-content-muted'}>{fmtDate(bill.dueDate)}</span>
                         </td>
-                        <td className="px-4 py-3 text-sm font-semibold font-mono text-content-primary">{fmt(bill.totalAmount)}</td>
-                        <td className="px-4 py-3 text-sm font-mono">
+                        <td className="px-4 py-3 text-sm font-semibold tabular-nums text-content-primary">{fmt(bill.totalAmount)}</td>
+                        <td className="px-4 py-3 text-sm tabular-nums">
                           <span className={bill.amountPaid >= bill.totalAmount ? 'text-green-600 dark:text-green-400' : 'text-content-muted'}>{fmt(bill.amountPaid)}</span>
                         </td>
                         <td className="px-4 py-3"><StatusBadge status={bill.status} /></td>
@@ -533,7 +535,7 @@ export const APPage: React.FC<APPageProps> = ({ showToast }) => {
               {BUCKET_LABELS.map(b => (
                 <div key={b.key} className="bg-surface-raised border border-border-default rounded-xl p-4 shadow-sm">
                   <p className="text-xs text-content-muted mb-1">{b.label}</p>
-                  <p className={`text-lg font-bold font-mono ${b.color}`}>{fmt((aging.buckets as any)[b.key] || 0)}</p>
+                  <p className={`text-lg font-bold tabular-nums ${b.color}`}>{fmt((aging.buckets as any)[b.key] || 0)}</p>
                 </div>
               ))}
             </div>
@@ -563,11 +565,11 @@ export const APPage: React.FC<APPageProps> = ({ showToast }) => {
                       <tr key={s.supplierName} className="hover:bg-surface-base transition-colors">
                         <td className="px-4 py-3 text-sm font-medium text-content-primary">{s.supplierName}</td>
                         {BUCKET_LABELS.map(b => (
-                          <td key={b.key} className={`px-4 py-3 text-sm font-mono text-right ${(s as any)[b.key] > 0 ? b.color : 'text-content-muted/40'}`}>
+                          <td key={b.key} className={`px-4 py-3 text-sm tabular-nums text-right ${(s as any)[b.key] > 0 ? b.color : 'text-content-muted/40'}`}>
                             {(s as any)[b.key] > 0 ? fmt((s as any)[b.key]) : '—'}
                           </td>
                         ))}
-                        <td className="px-4 py-3 text-sm font-bold font-mono text-right text-content-primary">{fmt(s.totalOutstanding)}</td>
+                        <td className="px-4 py-3 text-sm font-bold tabular-nums text-right text-content-primary">{fmt(s.totalOutstanding)}</td>
                       </tr>
                     ))}
                   </tbody>

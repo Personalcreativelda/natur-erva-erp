@@ -6,6 +6,7 @@ import api, { downloadBlob } from '../../core/services/apiClient';
 import { uploadService } from '../../../services/uploadService';
 import { invalidateLogoCache } from '../../core/services/systemSettingsService';
 import type { Toast } from '../../core/components/ui/Toast';
+import { formatMoney } from '../../core/utils/money';
 
 interface FinancasProps {
  showToast?: (msg: string, type: Toast['type']) => void;
@@ -24,7 +25,7 @@ type TaxReport = {
  byMonth: { month: string; count: number; incVat: number; exVat: number; vat: number }[];
 };
 
-const fmt = (n: number) => `MT ${Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+const fmt = formatMoney; // formato único da área financeira (core/utils/money)
 const TAB = { CONFIG: 'config', REPORT: 'report', SESSIONS: 'sessions', EXPORT: 'export', AR: 'ar' } as const;
 
 const thisMonth = () => {
@@ -196,7 +197,7 @@ ${s.summary?.expectedCash !== undefined ? `<p class="bold">Fundo esperado em cai
  <PageShell title="Finanças / IVA" description="Configuração fiscal e relatório de IVA" compactHeaderMobile>
  {/* Tabs */}
  <div className="border-b border-border-default -mx-3 sm:-mx-4 md:-mx-8 px-3 sm:px-4 md:px-8">
- <div className="flex overflow-x-auto">
+ <div className="flex overflow-x-auto scrollbar-hide">
  {[
  { id: TAB.CONFIG, label: 'Config. Fiscal', icon: FileText },
  { id: TAB.REPORT, label: 'Relatório IVA', icon: TrendingUp },

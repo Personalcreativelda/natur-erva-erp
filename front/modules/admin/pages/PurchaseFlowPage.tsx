@@ -7,10 +7,11 @@ import {
   Plus, Loader2, ChevronDown, ChevronUp, AlertTriangle, RefreshCw,
 } from 'lucide-react';
 import type { Toast } from '../../core/components/ui/Toast';
+import { formatMoney } from '../../core/utils/money';
 
 interface Props { showToast?: (msg: string, type: Toast['type']) => void; }
 
-const fmt = (n: number) => `MT ${Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+const fmt = formatMoney; // formato único da área financeira (core/utils/money)
 const fmtDate = (s?: string) => s ? new Date(s).toLocaleDateString('pt-PT') : '—';
 
 const STATUS_CFG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -77,10 +78,10 @@ export function PurchaseFlowPage({ showToast }: Props) {
   return (
     <PageShell title="Fluxo de Compras" description="Requisições, aprovação, encomendas e recepção de mercadoria">
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-border-default -mx-6 px-6 mb-6">
+      <div className="flex gap-1 overflow-x-auto scrollbar-hide border-b border-border-default -mx-3 sm:-mx-6 px-3 sm:px-6 mb-6">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id as any)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            className={`shrink-0 whitespace-nowrap px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               tab === t.id
                 ? 'border-brand-500 text-brand-600 dark:text-brand-400'
                 : 'border-transparent text-content-muted hover:text-content-primary'

@@ -7,6 +7,7 @@ import api, { downloadBlob } from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
 import type { Toast } from '../../core/components/ui/Toast';
 import { useConfirm } from '../../core/contexts/ConfirmContext';
+import { formatMoney } from '../../core/utils/money';
 
 function KpiCard({ label, value, sub, icon, accent }: { label: string; value: string | number; sub?: string; icon: React.ReactNode; accent: string }) {
  return (
@@ -49,7 +50,7 @@ type Order = {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const TZ = 'Africa/Maputo';
 const PAY_LABELS: Record<string, string> = { cash: 'Dinheiro', mpesa: 'M-Pesa', transfer: 'Transferência' };
-const fmt = (n: number | string) => `MT ${Number(n ?? 0).toFixed(2)}`;
+const fmt = formatMoney; // formato único da área financeira (core/utils/money)
 const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone: TZ });
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-PT', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric' });
 const fmtDuration = (from: string) => {
@@ -226,7 +227,7 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  <p className="text-sm font-medium text-content-primary">{PAY_LABELS[m.method] || m.method}</p>
  <p className="text-xs text-content-muted">{m.count} {m.count === 1 ? 'venda' : 'vendas'}</p>
  </div>
- <p className="font-semibold text-content-primary font-mono">{fmt(m.total)}</p>
+ <p className="font-semibold text-content-primary tabular-nums">{fmt(m.total)}</p>
  </div>
  ))}
  </div>
@@ -278,7 +279,7 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  { id: 'anteriores', label: 'Caixas Anteriores' },
  ] as const).map(t => (
  <button key={t.id} onClick={() => setTab(t.id)}
- className={`px-4 py-3.5 text-sm font-medium border-b-2 transition-colors ${
+ className={`shrink-0 whitespace-nowrap px-4 py-3.5 text-sm font-medium border-b-2 transition-colors ${
  tab === t.id
  ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400'
  : 'border-transparent text-content-muted hover:text-content-primary'
@@ -348,11 +349,11 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  <div className="space-y-2.5">
  <div className="flex justify-between items-center">
  <span className="text-sm text-content-muted">Saldo inicial</span>
- <span className="text-sm font-semibold text-content-primary font-mono">{fmt(sess.initial_amount)}</span>
+ <span className="text-sm font-semibold text-content-primary tabular-nums">{fmt(sess.initial_amount)}</span>
  </div>
  <div className="flex justify-between items-center">
  <span className="text-sm text-content-muted">Total de vendas</span>
- <span className="text-sm font-semibold font-mono" style={{ color: 'var(--brand-600)' }}>{fmt(liveTotalSales)}</span>
+ <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--brand-600)' }}>{fmt(liveTotalSales)}</span>
  </div>
  <div className="flex justify-between items-center">
  <span className="text-sm text-content-muted">Nº de vendas</span>
@@ -360,7 +361,7 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  </div>
  <div className="flex justify-between items-center border-t border-border-default pt-3 mt-1">
  <span className="text-sm font-medium text-content-secondary">Saldo Final (est.)</span>
- <span className="text-base font-bold text-content-primary font-mono">
+ <span className="text-base font-bold text-content-primary tabular-nums">
  {fmt(Number(sess.initial_amount) + liveTotalSales)}
  </span>
  </div>
@@ -401,7 +402,7 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  <p className="text-xs text-content-muted">{m.count} {m.count === 1 ? 'venda' : 'vendas'}</p>
  )}
  </div>
- <span className={`text-sm font-semibold font-mono ${m.total > 0 ? 'text-content-primary' : 'text-content-muted/50'}`}>
+ <span className={`text-sm font-semibold tabular-nums ${m.total > 0 ? 'text-content-primary' : 'text-content-muted/50'}`}>
  {fmt(m.total)}
  </span>
  </div>
@@ -454,7 +455,7 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  <div className="border-t border-border-default p-5 space-y-3 shrink-0">
  <div className="flex items-center justify-between">
  <span className="text-sm text-content-muted font-medium">Saldo Final</span>
- <span className="text-xl font-bold text-content-primary font-mono">
+ <span className="text-xl font-bold text-content-primary tabular-nums">
  {fmt(Number(sess.initial_amount) + liveTotalSales)}
  </span>
  </div>
@@ -502,9 +503,9 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  <><div>{fmtDate(s.closedAt)}</div><div className="text-content-muted/70">{fmtTime(s.closedAt)}</div></>
  ) : '—'}
  </td>
- <td className="px-4 py-3 text-sm font-mono text-content-secondary">{fmt(s.initialAmount)}</td>
+ <td className="px-4 py-3 text-sm tabular-nums text-content-secondary">{fmt(s.initialAmount)}</td>
  <td className="px-4 py-3 text-sm text-content-muted">{s.totalOrders}</td>
- <td className="px-4 py-3 text-sm font-semibold font-mono text-content-primary">{fmt(s.totalSales)}</td>
+ <td className="px-4 py-3 text-sm font-semibold tabular-nums text-content-primary">{fmt(s.totalSales)}</td>
  <td className="px-4 py-3">
  {s.isOpen
  ? <span className="inline-flex items-center gap-1 text-xs bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium border border-green-200 dark:border-green-800"><span className="w-1.5 h-1.5 bg-green-500 rounded-full" />Aberta</span>
