@@ -111,10 +111,10 @@ export const SetPasswordModal: React.FC<SetPasswordModalProps> = ({
  Definir Senha
  </h2>
  </div>
- <button
+ <button aria-label="Fechar"
  onClick={handleClose}
  disabled={isSubmitting}
- className="text-content-muted hover:text-content-secondary disabled:opacity-50"
+ className="tap-target text-content-muted hover:text-content-secondary disabled:opacity-50"
  >
  <X className="w-5 h-5" />
  </button>

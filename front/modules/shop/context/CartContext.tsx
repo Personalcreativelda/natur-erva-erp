@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { Product, ProductVariant } from '../../core/types/types';
 import { getAvailableStock, getDefaultVariant, getEffectivePrice } from '../utils/pricing';
+import { haptic } from '../../core/mobile/native';
 
 /**
  * Carrinho único da loja (antes existiam 3 implementações a sincronizar via localStorage:
@@ -117,6 +118,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ? current.map(i => (sameLine(i, product.id, v?.id) ? line : i))
       : [...current, line]);
 
+    haptic('MEDIUM');
     return { ok: true, message: `${displayName} adicionado ao carrinho` };
   }, [commit]);
 

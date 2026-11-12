@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
@@ -183,15 +184,15 @@ export function Documents({ showToast }: Props) {
 
           {/* Folders */}
           {!searchResults && folders.map(f => (
-            <div key={f.id} className="flex items-center gap-3 px-4 py-3 bg-surface-raised border border-border-default rounded-xl hover:bg-surface-overlay transition-colors cursor-pointer group"
+            <div tabIndex={0} onKeyDown={activateOnKey} key={f.id} className="flex items-center gap-3 px-4 py-3 bg-surface-raised border border-border-default rounded-xl hover:bg-surface-overlay transition-colors cursor-pointer group"
               onClick={() => openFolder(f)}>
               <FolderOpen className="w-5 h-5 text-yellow-500 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-content-primary">{f.name}</p>
                 <p className="text-xs text-content-muted">{f.doc_count} ficheiros · {f.subfolder_count} subpastas</p>
               </div>
-              <button onClick={e => { e.stopPropagation(); deleteFolder(f.id); }}
-                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600">
+              <button aria-label="Eliminar" onClick={e => { e.stopPropagation(); deleteFolder(f.id); }}
+                className="tap-target opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -210,7 +211,7 @@ export function Documents({ showToast }: Props) {
                   className="px-2.5 py-1.5 text-xs border border-border-default rounded-lg text-content-secondary hover:bg-surface-overlay">
                   Abrir
                 </a>
-                <button onClick={() => deleteDoc(d.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600">
+                <button aria-label="Eliminar" onClick={() => deleteDoc(d.id)} className="tap-target p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -231,7 +232,7 @@ export function Documents({ showToast }: Props) {
           <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-sm animate-modal-enter">
             <div className="flex items-center justify-between p-5 border-b border-border-default">
               <h3 className="font-semibold text-content-primary">Nova Pasta</h3>
-              <button onClick={() => setModal(null)} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
+              <button aria-label="Fechar" onClick={() => setModal(null)} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>

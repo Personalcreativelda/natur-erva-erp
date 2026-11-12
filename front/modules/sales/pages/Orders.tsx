@@ -1,9 +1,10 @@
+import { activateOnKey } from '../../core/utils/a11y';
+import { loadJsPDF } from '../../core/utils/lazyLibs';
 ﻿// Orders Component
 import React, { useState, useMemo, useEffect } from 'react';
 import { Customer, Order, OrderItem, OrderStatus, Product, ProductVariant, DeliveryZone, User, UserRole } from '../../core/types/types';
 import { Plus, Filter, CheckCircle, Clock, Truck, XCircle, Search, Package, Printer, Eye, Upload, FileSpreadsheet, Loader2, Edit2, Trash2, Save, X, CheckSquare, Square, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, DollarSign, User as UserIcon, Smartphone, MapPin, ShoppingCart, FileText, Download } from 'lucide-react';
 import { createWorkbook, addWorksheet, addJsonToSheetAt, writeWorkbookToFile } from '../../core/services/excelService';
-import jsPDF from 'jspdf';
 import { dataService } from '../../core/services/dataService';
 import { addPDFHeader, addPDFFooter, getBrandColors, addExcelHeader, addExcelFooter, formatExcelTableHeaders, formatExcelDataCells } from '../../core/services/reportService';
 import { Toast } from '../../core/components/ui/Toast';
@@ -2349,7 +2350,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  };
  });
 
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Pedidos');
 
  const headerRow = await addExcelHeader(ws, 'Gestão de Pedidos', {
@@ -2400,6 +2401,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  const startStr = toDateStringInTimezone(start);
  const endStr = toDateStringInTimezone(end);
 
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape para mais espaço
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -2767,7 +2769,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  setFilterPayment('ALL');
  setCurrentPage(1);
  }}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default dark:border-border-strong rounded text-content-secondary dark:text-content-secondary hover:bg-surface-base dark:hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default dark:border-border-strong rounded text-content-secondary dark:text-content-secondary hover:bg-surface-base dark:hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  title="Limpar filtros"
  >
  <X className="w-3 h-3" />
@@ -2780,9 +2782,9 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <div className="sticky top-[60px] z-20 bg-surface-raised rounded-xl shadow-lg border border-border-default p-4 mb-4">
  <div className="flex items-center justify-between mb-4">
  <h4 className="text-sm font-semibold text-content-primary">Filtros</h4>
- <button
+ <button aria-label="Fechar"
  onClick={() => setShowFilters(false)}
- className="p-1 rounded-lg hover:bg-surface-base dark:hover:bg-surface-base transition-colors"
+ className="tap-target p-1 rounded-lg hover:bg-surface-base dark:hover:bg-surface-base transition-colors"
  >
  <X className="w-4 h-4 text-content-muted" />
  </button>
@@ -2948,7 +2950,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  };
 
  return (
- <div
+ <div tabIndex={0} onKeyDown={activateOnKey}
  key={order.id}
  className={`bg-surface-raised rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group relative ${isSelected ? 'border-brand-500 ring-1 ring-brand-500 dark:border-brand-500' : 'border-border-default '
  }`}
@@ -2956,7 +2958,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  >
  {/* Selection Checkbox */}
  {canDelete && onDeleteOrders && (
- <div
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey}
  className="absolute top-4 right-4 z-10"
  onClick={(e) => { e.stopPropagation(); toggleSelectOrder(order.id); }}
  >
@@ -3347,7 +3349,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
 
  return (
  <React.Fragment key={order.id}>
- <tr
+ <tr tabIndex={0} onKeyDown={activateOnKey}
  className={`bg-surface-raised hover:bg-surface-base dark:hover:bg-surface-base transition-colors cursor-pointer group ${isSelected ? 'bg-brand-50 dark:bg-brand-600/20 border-l-2 border-l-brand-600 dark:border-l-brand-400' : ''
  } ${order.isDelivery ? 'border-l-2 border-l-purple-500' : ''}`}
  onClick={() => { setSelectedOrder(order); setIsEditing(false); }}
@@ -3517,7 +3519,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  setSelectedOrder(order);
  setIsEditing(false);
  }}
- className="p-1.5 text-content-muted hover:text-brand-600 dark:hover:text-brand-400 hover:bg-surface-base dark:hover:bg-surface-base rounded transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-brand-600 dark:hover:text-brand-400 hover:bg-surface-base dark:hover:bg-surface-base rounded transition-colors"
  title="Ver detalhes"
  >
  <Eye className="w-4 h-4" />
@@ -3695,9 +3697,9 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <Trash2 className="w-4 h-4 mr-2" /> Apagar
  </button>
  )}
- <button
+ <button aria-label="Limpar seleção"
  onClick={() => setSelectedOrderIds([])}
- className="ml-2 text-content-muted hover:text-content-primary"
+ className="tap-target ml-2 text-content-muted hover:text-content-primary"
  >
  <X className="w-4 h-4" />
  </button>
@@ -3761,7 +3763,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  </h3>
  <p className="text-xs text-content-muted">ID: {selectedOrder.externalId || selectedOrder.id}</p>
  </div>
- <button onClick={() => { if (isEditing) cancelEditing(); setSelectedOrder(null); }} className="text-content-muted hover:text-content-secondary p-2 rounded-full hover:bg-surface-base">
+ <button aria-label="Fechar" onClick={() => { if (isEditing) cancelEditing(); setSelectedOrder(null); }} className="tap-target text-content-muted hover:text-content-secondary p-2 rounded-full hover:bg-surface-base">
  <XCircle className="w-6 h-6" />
  </button>
  </div>
@@ -4471,18 +4473,18 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  {!isEditing ? (
  <>
  <div className="flex gap-2">
- <button onClick={() => handlePrint(selectedOrder)} className="p-2 text-content-secondary border dark:border-border-strong rounded-lg hover:bg-surface-base transition-colors" title="Imprimir">
+ <button onClick={() => handlePrint(selectedOrder)} className="tap-target p-2 text-content-secondary border dark:border-border-strong rounded-lg hover:bg-surface-base transition-colors" title="Imprimir">
  <Printer className="w-5 h-5" />
  </button>
  <button
  onClick={() => downloadBlob(`/pdf/order/${selectedOrder.id}`, `fatura-${selectedOrder.orderNumber || selectedOrder.id}.pdf`).catch(() => {})}
- className="p-2 text-content-secondary border dark:border-border-strong rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-2 text-content-secondary border dark:border-border-strong rounded-lg hover:bg-surface-base transition-colors"
  title="Descarregar Fatura PDF"
  >
  <Download className="w-5 h-5" />
  </button>
  {canDelete && onDeleteOrder && (
- <button onClick={handleDelete} className="p-2 text-red-600 dark:text-red-400 border dark:border-border-strong rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors" title="Apagar">
+ <button onClick={handleDelete} className="tap-target p-2 text-red-600 dark:text-red-400 border dark:border-border-strong rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors" title="Apagar">
  <Trash2 className="w-5 h-5" />
  </button>
  )}
@@ -4532,7 +4534,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <h3 className="text-lg sm:text-xl font-bold text-content-primary">Novo Pedido</h3>
  <p className="text-xs sm:text-sm text-content-muted mt-0.5 hidden sm:block">Preencha os dados abaixo para criar um novo pedido</p>
  </div>
- <button onClick={resetModal} className="text-content-muted hover:text-content-secondary p-2 hover:bg-surface-base rounded-full transition-colors">
+ <button aria-label="Fechar" onClick={resetModal} className="tap-target text-content-muted hover:text-content-secondary p-2 hover:bg-surface-base rounded-full transition-colors">
  <X className="w-5 h-5" />
  </button>
  </div>
@@ -4976,12 +4978,12 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <h3 className="text-xl font-bold text-content-primary">
  Selecionar Variação: {variantSelectionModal.product.name}
  </h3>
- <button
+ <button aria-label="Fechar"
  onClick={() => {
  setVariantSelectionModal({ isOpen: false, product: null });
  setVariantSearchQuery('');
  }}
- className="text-content-muted hover:text-content-secondary p-2 hover:bg-surface-base dark:hover:bg-surface-base rounded-full transition-colors"
+ className="tap-target text-content-muted hover:text-content-secondary p-2 hover:bg-surface-base dark:hover:bg-surface-base rounded-full transition-colors"
  >
  <X className="w-5 h-5" />
  </button>
@@ -5216,12 +5218,12 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  {duplicateGroups.length} grupo(s) de duplicados encontrado(s)
  </p>
  </div>
- <button
+ <button aria-label="Fechar"
  onClick={() => {
  setIsDuplicateModalOpen(false);
  setDuplicateGroups([]);
  }}
- className="text-content-muted hover:text-content-secondary p-2 rounded-full hover:bg-surface-base"
+ className="tap-target text-content-muted hover:text-content-secondary p-2 rounded-full hover:bg-surface-base"
  >
  <X className="w-6 h-6" />
  </button>
@@ -5264,7 +5266,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  {group.orders.map((order, orderIndex) => {
  const isSelected = group.keepOrderId === order.id;
  return (
- <div
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey}
  key={order.id}
  className={`p-3 rounded-lg border-2 transition-all ${isSelected
  ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
@@ -5370,12 +5372,12 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  {duplicateGroups.length} grupo(s) de duplicados encontrado(s)
  </p>
  </div>
- <button
+ <button aria-label="Fechar"
  onClick={() => {
  setIsDuplicateModalOpen(false);
  setDuplicateGroups([]);
  }}
- className="text-content-muted hover:text-content-secondary p-2 rounded-full hover:bg-surface-base"
+ className="tap-target text-content-muted hover:text-content-secondary p-2 rounded-full hover:bg-surface-base"
  >
  <X className="w-6 h-6" />
  </button>
@@ -5418,7 +5420,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  {group.orders.map((order, orderIndex) => {
  const isSelected = group.keepOrderId === order.id;
  return (
- <div
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey}
  key={order.id}
  className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${isSelected
  ? 'border-green-500 bg-green-50 dark:bg-green-900/20'

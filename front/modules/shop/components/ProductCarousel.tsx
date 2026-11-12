@@ -118,7 +118,7 @@ export const ProductCarousel: React.FC<{
             onClick={() => scrollByPage(-1)}
             disabled={!canPrev}
             aria-label={`${title}: anteriores`}
-            className="w-10 h-10 rounded-full border border-border-default bg-surface-raised flex items-center justify-center text-content-secondary hover:border-green-500 hover:text-green-700 disabled:opacity-30 disabled:pointer-events-none transition"
+            className="tap-target w-10 h-10 rounded-full border border-border-default bg-surface-raised flex items-center justify-center text-content-secondary hover:border-green-500 hover:text-green-700 disabled:opacity-30 disabled:pointer-events-none transition"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -126,7 +126,7 @@ export const ProductCarousel: React.FC<{
             onClick={() => scrollByPage(1)}
             disabled={!canNext}
             aria-label={`${title}: seguintes`}
-            className="w-10 h-10 rounded-full border border-border-default bg-surface-raised flex items-center justify-center text-content-secondary hover:border-green-500 hover:text-green-700 disabled:opacity-30 disabled:pointer-events-none transition"
+            className="tap-target w-10 h-10 rounded-full border border-border-default bg-surface-raised flex items-center justify-center text-content-secondary hover:border-green-500 hover:text-green-700 disabled:opacity-30 disabled:pointer-events-none transition"
           >
             <ChevronRight className="w-5 h-5" />
           </button>

@@ -234,10 +234,10 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
  key={file.id}
  className="relative border border-border-default rounded-lg p-3 bg-surface-raised"
  >
- <button
+ <button aria-label="Remover"
  type="button"
  onClick={() => removeFile(file.id)}
- className="absolute top-2 right-2 p-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+ className="tap-target absolute top-2 right-2 p-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
  >
  <X className="w-4 h-4" />
  </button>

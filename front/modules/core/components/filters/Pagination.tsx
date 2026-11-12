@@ -31,7 +31,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
  const goTo = (page: number) => onPageChange(Math.min(Math.max(1, page), totalPages));
 
- const btnCls = 'p-2 rounded-lg border border-border-default disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base transition-colors text-content-secondary';
+ const btnCls = 'tap-target p-2 rounded-lg border border-border-default disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base transition-colors text-content-secondary';
 
  if (mode === 'simple') {
  return (

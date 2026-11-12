@@ -1,10 +1,10 @@
+import { loadJsPDF } from '../../../core/utils/lazyLibs';
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Purchase, PurchaseRequest, Supplier, Product, ProductVariant, ProductType, ProductUnit, PurchaseItem } from '../../../core/types/types';
 import type { OrderItem } from '../../../core/types/order';
 import { Plus, Search, Edit2, Eye, Trash2, X, Calendar, DollarSign, Package, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ShoppingCart, CheckCircle, Clock, User, FileText, Printer, Table, Grid, LayoutGrid, Filter, FileSpreadsheet, ChevronUp, ChevronDown, Download } from 'lucide-react';
 import { ProductGrid } from './ProductGrid';
 import { createWorkbook, addWorksheet, addJsonToSheetAt, writeWorkbookToFile } from '../../../core/services/excelService';
-import jsPDF from 'jspdf';
 import { dataService } from '../../../core/services/dataService';
 import { authService } from '../../../auth/services/authService';
 import { Toast } from '../../../core/components/ui/Toast';
@@ -821,13 +821,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
  }, 300);
  };
 
- const downloadInvoicePDF = (purchase: Purchase) => {
+ const downloadInvoicePDF = async (purchase: Purchase) => {
  const companyName = appSystemConfig.company_name || '';
  const systemName = appSystemConfig.system_name || '';
  const supplierName = purchase.supplierName || purchase.supplierLocationName || 'Fornecedor não especificado';
  const supplierType = purchase.supplierLocationName ? 'Local Comercial' : 'Fornecedor Externo';
  const invoiceNum = purchase.invoiceNumber || purchase.id;
  const colors = getBrandColors();
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('p', 'mm', 'a4');
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -1621,7 +1622,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  };
  });
 
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Compras');
 
  const headerRow = await addExcelHeader(ws, 'Gestão de Compras', {
@@ -1672,6 +1673,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  const startStr = toDateStringInTimezone(start);
  const endStr = toDateStringInTimezone(end);
 
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape para mais espaço
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -1858,7 +1860,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  };
  });
 
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Compras por Produto');
 
  const headerRow = await addExcelHeader(ws, 'Compras por Produto', {
@@ -1909,6 +1911,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  const startStr = toDateStringInTimezone(start);
  const endStr = toDateStringInTimezone(end);
 
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape para mais espaço
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -2224,7 +2227,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  setFilterPaymentStatus('ALL');
  setCurrentPage(1);
  }}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  title="Limpar filtros"
  >
  <X className="w-3 h-3" />
@@ -2237,9 +2240,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
  <div className="sticky top-[60px] z-20 bg-surface-raised rounded-xl shadow-lg border border-border-default p-4 mb-4">
  <div className="flex items-center justify-between mb-4">
  <h4 className="text-sm font-semibold text-content-primary">Filtros</h4>
- <button
+ <button aria-label="Fechar"
  onClick={() => setShowFilters(false)}
- className="p-1 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-1 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-4 h-4 text-content-muted" />
  </button>
@@ -2384,7 +2387,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  <div className="flex gap-1">
  <button
  onClick={() => setPurchaseForInvoicePreview(purchase)}
- className="p-1 text-content-muted hover:text-blue-600 transition-colors"
+ className="tap-target p-1 text-content-muted hover:text-blue-600 transition-colors"
  title="Imprimir fatura"
  >
  <Printer className="w-4 h-4" />
@@ -2394,7 +2397,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  setViewingPurchase(purchase);
  setIsViewModalOpen(true);
  }}
- className="p-1 text-content-muted hover:text-brand-600 transition-colors"
+ className="tap-target p-1 text-content-muted hover:text-brand-600 transition-colors"
  title="Ver detalhes"
  >
  <Eye className="w-4 h-4" />
@@ -2402,7 +2405,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  {onUpdatePurchase && (
  <button
  onClick={() => handleEditPurchase(purchase)}
- className="p-1 text-content-muted hover:text-blue-600 transition-colors"
+ className="tap-target p-1 text-content-muted hover:text-blue-600 transition-colors"
  title="Editar"
  >
  <Edit2 className="w-4 h-4" />
@@ -2411,7 +2414,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  {onDeletePurchase && (
  <button
  onClick={() => handleDeletePurchase(purchase.id)}
- className="p-1 text-content-muted hover:text-red-600 transition-colors"
+ className="tap-target p-1 text-content-muted hover:text-red-600 transition-colors"
  title="Apagar"
  >
  <Trash2 className="w-4 h-4" />
@@ -2572,7 +2575,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  <div className="flex items-center justify-end gap-2">
  <button
  onClick={() => setPurchaseForInvoicePreview(purchase)}
- className="p-1.5 text-content-muted hover:text-blue-600 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-blue-600 transition-colors"
  title="Imprimir fatura"
  >
  <Printer className="w-4 h-4" />
@@ -2582,7 +2585,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  setViewingPurchase(purchase);
  setIsViewModalOpen(true);
  }}
- className="p-1.5 text-content-muted hover:text-brand-600 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-brand-600 transition-colors"
  title="Ver detalhes"
  >
  <Eye className="w-4 h-4" />
@@ -2590,7 +2593,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  {onUpdatePurchase && (
  <button
  onClick={() => handleEditPurchase(purchase)}
- className="p-1.5 text-content-muted hover:text-blue-600 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-blue-600 transition-colors"
  title="Editar"
  >
  <Edit2 className="w-4 h-4" />
@@ -2599,7 +2602,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  {onDeletePurchase && (
  <button
  onClick={() => handleDeletePurchase(purchase.id)}
- className="p-1.5 text-content-muted hover:text-red-600 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-red-600 transition-colors"
  title="Apagar"
  >
  <Trash2 className="w-4 h-4" />
@@ -2789,7 +2792,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  setSelectedProductForHistory(item);
  setIsHistoryModalOpen(true);
  }}
- className="p-1.5 text-content-muted hover:text-brand-600 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-brand-600 transition-colors"
  title="Ver histórico"
  >
  <Eye className="w-4 h-4" />
@@ -2984,7 +2987,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  setSelectedProductForHistory(item);
  setIsHistoryModalOpen(true);
  }}
- className="p-1.5 text-content-muted hover:text-brand-600 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-brand-600 transition-colors"
  title="Ver histórico"
  >
  <Eye className="w-4 h-4" />
@@ -3203,7 +3206,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  setSelectedSupplierStats(stats);
  setIsSupplierDetailModalOpen(true);
  }}
- className="p-1 text-content-muted hover:text-brand-600 transition-colors"
+ className="tap-target p-1 text-content-muted hover:text-brand-600 transition-colors"
  title="Ver detalhes"
  >
  <Eye className="w-4 h-4" />
@@ -3211,7 +3214,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  {onUpdateSupplier && (
  <button
  onClick={() => handleEditSupplier(stats.supplier)}
- className="p-1 text-content-muted hover:text-blue-600 transition-colors"
+ className="tap-target p-1 text-content-muted hover:text-blue-600 transition-colors"
  title="Editar"
  >
  <Edit2 className="w-4 h-4" />
@@ -3220,7 +3223,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  {onDeleteSupplier && (
  <button
  onClick={() => handleDeleteSupplier(stats.supplierId)}
- className="p-1 text-content-muted hover:text-red-600 transition-colors"
+ className="tap-target p-1 text-content-muted hover:text-red-600 transition-colors"
  title="Apagar"
  >
  <Trash2 className="w-4 h-4" />
@@ -3277,7 +3280,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  setSelectedSupplierStats(stats);
  setIsSupplierDetailModalOpen(true);
  }}
- className="p-1.5 text-content-muted hover:text-brand-600 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-brand-600 transition-colors"
  title="Ver detalhes"
  >
  <Eye className="w-4 h-4" />
@@ -3285,7 +3288,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  {onUpdateSupplier && (
  <button
  onClick={() => handleEditSupplier(stats.supplier)}
- className="p-1.5 text-content-muted hover:text-blue-600 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-blue-600 transition-colors"
  title="Editar"
  >
  <Edit2 className="w-4 h-4" />
@@ -3294,7 +3297,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  {onDeleteSupplier && (
  <button
  onClick={() => handleDeleteSupplier(stats.supplierId)}
- className="p-1.5 text-content-muted hover:text-red-600 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-red-600 transition-colors"
  title="Apagar"
  >
  <Trash2 className="w-4 h-4" />
@@ -3388,7 +3391,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  <h2 className="text-xl font-bold text-content-primary">
  {editingPurchase ? 'Editar Compra' : 'Nova Compra'}
  </h2>
- <button onClick={resetPurchaseForm} className="text-content-muted hover:text-content-secondary ">
+ <button aria-label="Fechar" onClick={resetPurchaseForm} className="tap-target text-content-muted hover:text-content-secondary ">
  <X className="w-6 h-6" />
  </button>
  </div>
@@ -3663,7 +3666,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  <button
  type="button"
  onClick={() => handleRemovePurchaseItem(index)}
- className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+ className="tap-target p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
  title="Remover item"
  >
  <X className="w-4 h-4" />
@@ -3721,7 +3724,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  <h2 className="text-xl font-bold text-content-primary">
  {editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}
  </h2>
- <button onClick={resetSupplierForm} className="text-content-muted hover:text-content-secondary">
+ <button aria-label="Fechar" onClick={resetSupplierForm} className="tap-target text-content-muted hover:text-content-secondary">
  <X className="w-6 h-6" />
  </button>
  </div>
@@ -3827,12 +3830,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
  <Printer className="w-4 h-4" />
  Imprimir Fatura
  </button>
- <button
+ <button aria-label="Fechar"
  onClick={() => {
  setIsViewModalOpen(false);
  setViewingPurchase(null);
  }}
- className="text-content-muted hover:text-content-secondary"
+ className="tap-target text-content-muted hover:text-content-secondary"
  >
  <X className="w-6 h-6" />
  </button>
@@ -3944,12 +3947,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
  </p>
  )}
  </div>
- <button
+ <button aria-label="Fechar"
  onClick={() => {
  setIsHistoryModalOpen(false);
  setSelectedProductForHistory(null);
  }}
- className="text-content-muted hover:text-content-secondary "
+ className="tap-target text-content-muted hover:text-content-secondary "
  >
  <X className="w-6 h-6" />
  </button>
@@ -4111,12 +4114,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
  )}
  </div>
  </div>
- <button
+ <button aria-label="Fechar"
  onClick={() => {
  setIsSupplierDetailModalOpen(false);
  setSelectedSupplierStats(null);
  }}
- className="text-content-muted hover:text-content-secondary "
+ className="tap-target text-content-muted hover:text-content-secondary "
  >
  <X className="w-6 h-6" />
  </button>
@@ -4255,14 +4258,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
  setViewingPurchase(purchase);
  setIsViewModalOpen(true);
  }}
- className="p-1 text-content-muted hover:text-brand-600 transition-colors"
+ className="tap-target p-1 text-content-muted hover:text-brand-600 transition-colors"
  title="Ver detalhes"
  >
  <Eye className="w-4 h-4" />
  </button>
  <button
  onClick={() => setPurchaseForInvoicePreview(purchase)}
- className="p-1 text-content-muted hover:text-blue-600 transition-colors"
+ className="tap-target p-1 text-content-muted hover:text-blue-600 transition-colors"
  title="Ver fatura"
  >
  <Printer className="w-4 h-4" />
@@ -4316,7 +4319,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
  <h2 className="text-lg font-bold text-content-primary">Pré-visualização da Fatura</h2>
  <button
  onClick={() => setPurchaseForInvoicePreview(null)}
- className="text-content-muted hover:text-content-secondary "
+ className="tap-target text-content-muted hover:text-content-secondary "
  aria-label="Fechar"
  >
  <X className="w-5 h-5" />

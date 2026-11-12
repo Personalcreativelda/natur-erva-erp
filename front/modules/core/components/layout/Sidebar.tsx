@@ -473,7 +473,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
  <button
  onClick={() => onNavigate(item.id)}
  title={item.label}
- className={`w-full flex items-center justify-center py-2.5 px-2 rounded-lg transition-all duration-150 text-sm font-medium relative ${isActive
+ className={`tap-target w-full flex items-center justify-center py-2.5 px-2 rounded-lg transition-all duration-150 text-sm font-medium relative ${isActive
  ? ''
  : 'text-content-secondary hover:bg-black/[0.04] dark:hover:bg-surface-raised/[0.05] hover:text-content-primary'
  }`}
@@ -681,7 +681,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
  <button
  onClick={() => setLanguage(language === 'pt' ? 'en' : 'pt')}
  title={language === 'pt' ? 'Switch to English' : 'Mudar para Português'}
- className="w-full py-2 rounded-lg text-content-secondary hover:bg-surface-raised transition-all duration-200 hover:scale-105 flex items-center justify-center gap-1"
+ className="tap-target w-full py-2 rounded-lg text-content-secondary hover:bg-surface-raised transition-all duration-200 hover:scale-105 flex items-center justify-center gap-1"
  >
  <LanguageFlag language={language === 'pt' ? 'en' : 'pt'} size="sm" />
  </button>
@@ -693,14 +693,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
  <button
  onClick={() => navigate('/')}
  title="Voltar ao Site"
- className={`flex items-center justify-center ${isOpen ? 'flex-1 px-3 py-2' : 'w-full py-2'} rounded-lg text-content-secondary hover:bg-surface-raised hover:text-content-primary transition-colors relative group`}
+ className={`tap-target flex items-center justify-center ${isOpen ? 'flex-1 px-3 py-2' : 'w-full py-2'} rounded-lg text-content-secondary hover:bg-surface-raised hover:text-content-primary transition-colors relative group`}
  >
  <Globe className="w-4 h-4" />
  </button>
  <button
  onClick={onLogout}
  title={t.auth.logout}
- className={`flex items-center justify-center ${isOpen ? 'flex-1 px-3 py-2' : 'w-full py-2'} rounded-lg text-content-secondary hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors relative group`}
+ className={`tap-target flex items-center justify-center ${isOpen ? 'flex-1 px-3 py-2' : 'w-full py-2'} rounded-lg text-content-secondary hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors relative group`}
  >
  <LogOut className="w-4 h-4" />
  </button>

@@ -80,7 +80,7 @@ const FooterComponent: React.FC<FooterProps> = () => {
 
  return (
   <footer
-   className="mt-8 sm:mt-16"
+   className="site-footer mt-8 sm:mt-16"
    style={{ background: '#18181b', color: '#ffffff', paddingBottom: 'env(safe-area-inset-bottom)' }}
   >
    {/* ── MOBILE: compacto ── */}

@@ -622,7 +622,7 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  }
  }
 
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Produtos');
  addRowsFromJson(ws, exportData);
 
@@ -801,7 +801,7 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  setFilterProductType('all');
  setCurrentPage(1);
  }}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  title="Limpar filtros"
  >
  <X className="w-3 h-3" />
@@ -814,9 +814,9 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  <div className="sticky top-[60px] z-20 bg-surface-raised rounded-xl shadow-lg border border-border-default p-4 mb-4">
  <div className="flex items-center justify-between mb-4">
  <h4 className="text-sm font-semibold text-content-primary">Filtros</h4>
- <button
+ <button aria-label="Fechar"
  onClick={() => setShowFilters(false)}
- className="p-1 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-1 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-4 h-4 text-content-muted" />
  </button>
@@ -1000,7 +1000,7 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  </button>
  <button
  onClick={() => openVariantModal(product)}
- className="w-10 h-10 !min-h-0 inline-flex items-center justify-center bg-surface-base hover:bg-surface-overlay text-content-secondary border border-border-default rounded-xl transition-colors"
+ className="tap-target w-10 h-10 !min-h-0 inline-flex items-center justify-center bg-surface-base hover:bg-surface-overlay text-content-secondary border border-border-default rounded-xl transition-colors"
  title="Gerir variações"
  aria-label="Gerir variações"
  >
@@ -1008,7 +1008,7 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  </button>
  <button
  onClick={() => handleDelete(product.id)}
- className="w-10 h-10 !min-h-0 inline-flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-xl transition-colors"
+ className="tap-target w-10 h-10 !min-h-0 inline-flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-xl transition-colors"
  title="Eliminar"
  aria-label="Eliminar produto"
  >
@@ -1182,13 +1182,13 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  </td>
  <td className="px-6 py-4">
  <div className="flex items-center gap-2">
- <button onClick={() => handleEdit(product)} className="p-2 text-content-secondary hover:text-brand-600 dark:hover:text-brand-400 hover:bg-surface-base rounded-lg transition-colors" title="Editar">
+ <button onClick={() => handleEdit(product)} className="tap-target p-2 text-content-secondary hover:text-brand-600 dark:hover:text-brand-400 hover:bg-surface-base rounded-lg transition-colors" title="Editar">
  <Edit2 className="w-4 h-4" />
  </button>
- <button onClick={() => openVariantModal(product)} className="p-2 text-content-secondary hover:text-content-secondary dark:hover:text-content-muted hover:bg-surface-base rounded-lg transition-colors" title="Gerir variações">
+ <button onClick={() => openVariantModal(product)} className="tap-target p-2 text-content-secondary hover:text-content-secondary dark:hover:text-content-muted hover:bg-surface-base rounded-lg transition-colors" title="Gerir variações">
  <Layers className="w-4 h-4" />
  </button>
- <button onClick={() => handleDelete(product.id)} className="p-2 text-content-secondary hover:text-red-600 dark:hover:text-red-400 hover:bg-surface-base rounded-lg transition-colors" title="Apagar">
+ <button onClick={() => handleDelete(product.id)} className="tap-target p-2 text-content-secondary hover:text-red-600 dark:hover:text-red-400 hover:bg-surface-base rounded-lg transition-colors" title="Apagar">
  <Trash2 className="w-4 h-4" />
  </button>
  </div>
@@ -1213,7 +1213,7 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  <button
  onClick={() => setCurrentPage(1)}
  disabled={currentPage === 1}
- className="p-2 border border-border-default rounded-lg text-content-secondary hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+ className="tap-target p-2 border border-border-default rounded-lg text-content-secondary hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
  title="Primeira página"
  >
  <ChevronsLeft className="w-4 h-4" />
@@ -1223,7 +1223,7 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  <button
  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
  disabled={currentPage === 1}
- className="p-2 border border-border-default rounded-lg text-content-secondary hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+ className="tap-target p-2 border border-border-default rounded-lg text-content-secondary hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
  title="Página anterior"
  >
  <ChevronLeft className="w-4 h-4" />
@@ -1260,7 +1260,7 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  <button
  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
  disabled={currentPage === totalPages}
- className="p-2 border border-border-default rounded-lg text-content-secondary hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+ className="tap-target p-2 border border-border-default rounded-lg text-content-secondary hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
  title="Próxima página"
  >
  <ChevronRight className="w-4 h-4" />
@@ -1270,7 +1270,7 @@ export const Products: React.FC<ProductsProps> = ({ showToast, onReloadData, tot
  <button
  onClick={() => setCurrentPage(totalPages)}
  disabled={currentPage === totalPages}
- className="p-2 border border-border-default rounded-lg text-content-secondary hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+ className="tap-target p-2 border border-border-default rounded-lg text-content-secondary hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
  title="Última página"
  >
  <ChevronsRight className="w-4 h-4" />

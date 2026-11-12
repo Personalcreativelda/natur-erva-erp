@@ -33,9 +33,9 @@ export const PurchaseViewerModal: React.FC<PurchaseViewerModalProps> = ({ open, 
  Imprimir Fatura
  </button>
  )}
- <button
+ <button aria-label="Fechar"
  onClick={onClose}
- className="text-content-muted hover:text-content-secondary"
+ className="tap-target text-content-muted hover:text-content-secondary"
  >
  <X className="w-6 h-6" />
  </button>

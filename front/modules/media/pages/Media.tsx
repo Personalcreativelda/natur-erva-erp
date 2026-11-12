@@ -1,7 +1,7 @@
+import { loadJsPDF } from '../../core/utils/lazyLibs';
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Image, Upload, FileSpreadsheet, FileText, Plus, X, Filter, Trash2, Download, Eye, Loader2 } from 'lucide-react';
 import { createWorkbook, addWorksheet, addRowsFromJson, writeWorkbookToFile } from '../../core/services/excelService';
-import jsPDF from 'jspdf';
 import { addPDFHeader, addPDFFooter, getBrandColors, calculateColumnWidths, addPDFTableHeader, addPDFTableRow } from '../../core/services/reportService';
 import { useMobile } from '../../core/hooks/useMobile';
 import { PageShell } from '../../core/components/layout/PageShell';
@@ -338,7 +338,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  URL: file.url
  }));
  
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Média');
  addRowsFromJson(ws, exportData as Record<string, unknown>[]);
  [30, 12, 15, 12, 15, 50].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
@@ -362,6 +362,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  
  showToast('Gerando PDF...', 'info');
  
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('l', 'mm', 'a4');
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -598,7 +599,7 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  setFilterDateTo('');
  setCurrentPage(1);
  }}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  title="Limpar filtros"
  >
  <X className="w-3 h-3" />
@@ -611,9 +612,9 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  <div className="sticky top-[60px] z-20 bg-surface-raised rounded-xl shadow-lg border border-border-default p-4 mb-4">
  <div className="flex items-center justify-between mb-4">
  <h4 className="text-sm font-semibold text-content-primary">Filtros</h4>
- <button
+ <button aria-label="Fechar"
  onClick={() => setShowFilters(false)}
- className="p-1 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-1 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-4 h-4 text-content-muted" />
  </button>
@@ -835,14 +836,14 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  <div className="flex items-center gap-2">
  <button
  onClick={() => handleView(file)}
- className="p-1.5 hover:bg-surface-base rounded transition-colors"
+ className="tap-target p-1.5 hover:bg-surface-base rounded transition-colors"
  title="Visualizar"
  >
  <Eye className="w-4 h-4 text-content-secondary" />
  </button>
  <button
  onClick={() => handleDelete(file)}
- className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+ className="tap-target p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
  title="Deletar"
  >
  <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -874,9 +875,9 @@ export const Media: React.FC<MediaProps> = ({ showToast }) => {
  <div className="bg-surface-raised rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
  <div className="p-6 border-b border-border-default flex items-center justify-between">
  <h2 className="text-xl font-semibold text-content-primary">Upload de Arquivos</h2>
- <button
+ <button aria-label="Fechar"
  onClick={() => setIsUploadModalOpen(false)}
- className="p-2 hover:bg-surface-base rounded-lg transition-colors"
+ className="tap-target p-2 hover:bg-surface-base rounded-lg transition-colors"
  >
  <X className="w-5 h-5 text-content-muted" />
  </button>

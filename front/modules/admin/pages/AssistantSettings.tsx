@@ -204,7 +204,7 @@ export function AssistantSettings({ showToast }: Props) {
                 {authorizedNumbers.map(n => (
                   <div key={n} className="flex items-center justify-between gap-2 border border-border-default rounded-lg px-3 py-2 text-sm">
                     <span className="text-content-primary">+{n}</span>
-                    <button onClick={() => setAuthorizedNumbers(prev => prev.filter(x => x !== n))} className="text-content-muted hover:text-red-600">
+                    <button aria-label="Remover" onClick={() => setAuthorizedNumbers(prev => prev.filter(x => x !== n))} className="tap-target text-content-muted hover:text-red-600">
                       <X className="w-4 h-4" />
                     </button>
                   </div>

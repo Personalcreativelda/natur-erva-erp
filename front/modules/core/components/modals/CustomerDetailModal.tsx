@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../utils/a11y';
 ﻿import React, { useState, useEffect } from 'react';
 import { Customer, Order, CustomerAction, CustomerFeedback, LoyaltyTier, CustomerInsight, ActionStatus, ActionType } from '../../../core/types/types';
 import {
@@ -401,13 +402,13 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  {onEdit && (
  <button
  onClick={() => onEdit(customer)}
- className="p-1.5 text-content-muted hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
  title="Editar perfil"
  >
  <Edit2 className="w-4 h-4" />
  </button>
  )}
- <button onClick={onClose} className="p-1.5 text-content-muted hover:text-content-secondary ">
+ <button aria-label="Fechar" onClick={onClose} className="tap-target p-1.5 text-content-muted hover:text-content-secondary ">
  <X className="w-5 h-5" />
  </button>
  </div>
@@ -510,7 +511,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  setEditingCustomerField('phone');
  setEditingCustomerData({ phone: customer.phone });
  }}
- className="ml-2 p-1 text-content-muted hover:text-brand-600 dark:hover:text-brand-400"
+ className="tap-target ml-2 p-1 text-content-muted hover:text-brand-600 dark:hover:text-brand-400"
  title="Editar telefone"
  >
  <Edit2 className="w-3 h-3" />
@@ -559,7 +560,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  setEditingCustomerField('address');
  setEditingCustomerData({ address: customer.address || '' });
  }}
- className="ml-2 p-1 text-content-muted hover:text-brand-600 dark:hover:text-brand-400"
+ className="tap-target ml-2 p-1 text-content-muted hover:text-brand-600 dark:hover:text-brand-400"
  title="Editar endereço"
  >
  <Edit2 className="w-3 h-3" />
@@ -702,7 +703,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  ) : (
  <div className="space-y-2">
  {sortedOrders.map(order => (
- <div
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey}
  key={order.id}
  onClick={() => handleOrderClick(order)}
  className="border border-border-default/50 rounded-xl p-3 bg-surface-raised/60 backdrop-blur-sm hover:bg-surface-raised/80 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md transform hover:scale-[1.01]"
@@ -952,7 +953,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  notes: action.notes || ''
  });
  }}
- className="p-1.5 text-content-secondary hover:text-brand-600 dark:hover:text-brand-400 hover:bg-surface-base rounded transition-colors"
+ className="tap-target p-1.5 text-content-secondary hover:text-brand-600 dark:hover:text-brand-400 hover:bg-surface-base rounded transition-colors"
  title="Editar ação"
  >
  <Edit2 className="w-4 h-4" />
@@ -973,7 +974,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  }
  }
  }}
- className="p-1.5 text-content-secondary hover:text-red-600 dark:hover:text-red-400 hover:bg-surface-base rounded transition-colors"
+ className="tap-target p-1.5 text-content-secondary hover:text-red-600 dark:hover:text-red-400 hover:bg-surface-base rounded transition-colors"
  title="Apagar ação"
  >
  <Trash2 className="w-4 h-4" />
@@ -1067,7 +1068,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  outcome: feedback.outcome || 'positive'
  });
  }}
- className="p-1.5 text-content-secondary hover:text-brand-600 dark:hover:text-brand-400 hover:bg-surface-base rounded transition-colors"
+ className="tap-target p-1.5 text-content-secondary hover:text-brand-600 dark:hover:text-brand-400 hover:bg-surface-base rounded transition-colors"
  title="Editar feedback"
  >
  <Edit2 className="w-4 h-4" />
@@ -1088,7 +1089,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  }
  }
  }}
- className="p-1.5 text-content-secondary hover:text-red-600 dark:hover:text-red-400 hover:bg-surface-base rounded transition-colors"
+ className="tap-target p-1.5 text-content-secondary hover:text-red-600 dark:hover:text-red-400 hover:bg-surface-base rounded transition-colors"
  title="Apagar feedback"
  >
  <Trash2 className="w-4 h-4" />
@@ -1112,9 +1113,9 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  <div className="bg-surface-raised/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-white/20" onClick={(e) => e.stopPropagation()}>
  <div className="sticky top-0 bg-gradient-to-r from-white/80 to-white/60 dark:from-gray-900/80 dark:to-gray-900/60 backdrop-blur-md border-b border-border-default/50 p-4 flex justify-between items-center z-10">
  <h3 className="text-lg font-bold text-content-primary">Editar Ação Comercial</h3>
- <button
+ <button aria-label="Fechar"
  onClick={() => setEditingAction(null)}
- className="text-content-muted hover:text-content-secondary "
+ className="tap-target text-content-muted hover:text-content-secondary "
  >
  <X className="w-5 h-5" />
  </button>
@@ -1222,9 +1223,9 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  <div className="bg-surface-raised/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-white/20" onClick={(e) => e.stopPropagation()}>
  <div className="sticky top-0 bg-gradient-to-r from-white/80 to-white/60 dark:from-gray-900/80 dark:to-gray-900/60 backdrop-blur-md border-b border-border-default/50 p-4 flex justify-between items-center z-10">
  <h3 className="text-lg font-bold text-content-primary">Editar Feedback</h3>
- <button
+ <button aria-label="Fechar"
  onClick={() => setEditingFeedback(null)}
- className="text-content-muted hover:text-content-secondary "
+ className="tap-target text-content-muted hover:text-content-secondary "
  >
  <X className="w-5 h-5" />
  </button>
@@ -1234,11 +1235,11 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  <label className="block text-sm font-medium text-content-secondary mb-2">Avaliação</label>
  <div className="flex items-center gap-2">
  {[1, 2, 3, 4, 5].map(star => (
- <button
+ <button aria-label={`${star} estrela${star === 1 ? '' : 's'}`}
  key={star}
  type="button"
  onClick={() => setFeedbackFormData({ ...feedbackFormData, rating: star })}
- className="focus:outline-none"
+ className="tap-target focus:outline-none"
  >
  <Star
  className={`w-8 h-8 transition-colors ${feedbackFormData.rating >= star
@@ -1330,9 +1331,9 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  {formatDateTimeLong(selectedOrder.createdAt)}
  </p>
  </div>
- <button
+ <button aria-label="Fechar"
  onClick={() => setSelectedOrder(null)}
- className="text-content-muted hover:text-content-secondary "
+ className="tap-target text-content-muted hover:text-content-secondary "
  >
  <X className="w-6 h-6" />
  </button>

@@ -1,6 +1,6 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import { activateOnKey } from '../utils/a11y';
+import React, { useMemo, useEffect, useState, lazy, Suspense } from 'react';
 import { Customer, Order, OrderStatus, Sale, Product, Purchase, PurchaseRequest, StockMovement, Activity } from '../../core/types/types';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getChartTheme } from '../../core/utils/chartTheme';
 import { TrendingUp, Users, ShoppingBag, Clock, Calendar, DollarSign, TrendingDown, Award, Package, Percent, CreditCard, Truck, Settings, ExternalLink, AlertTriangle } from 'lucide-react';
 import { PeriodFilter, PeriodOption } from '../../core/components/forms/PeriodFilter';
@@ -10,6 +10,9 @@ import { useLanguage } from '../../core/contexts/LanguageContext';
 import { normalizeOrderStatus } from '../../core/services/serviceUtils';
 import { getDateRangeFromPeriod } from '../../core/utils/dateUtils';
 import { getStockForecast, type StockForecastItem } from '../../products/services/stockForecastService';
+
+const SalesEvolutionChart = lazy(() => import('../components/charts/DashboardCharts').then(m => ({ default: m.SalesEvolutionChart })));
+const PeriodBarChart = lazy(() => import('../components/charts/DashboardCharts').then(m => ({ default: m.PeriodBarChart })));
 
 export interface DashboardCounts {
  customers: number;
@@ -1037,7 +1040,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  const id = card.id;
  if (id === 'total-purchases') {
  return (
- <div key={id} onClick={() => handleCardClick('purchases')} className={`${cardBaseClass} ${cardClickClass}`}>
+ <div tabIndex={0} onKeyDown={activateOnKey} key={id} onClick={() => handleCardClick('purchases')} className={`${cardBaseClass} ${cardClickClass}`}>
  <div className="flex-1 min-w-0">
  <div className="flex items-center justify-between mb-1">
  <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">{t.dashboard.totalPurchases}</p>
@@ -1057,7 +1060,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'active-orders') {
  return (
- <div key={id} onClick={() => handleCardClick('orders')} className={`${cardBaseClass} ${cardClickClass}`}>
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey} key={id} onClick={() => handleCardClick('orders')} className={`${cardBaseClass} ${cardClickClass}`}>
  <div className="flex items-center justify-between h-full min-w-0 flex-1">
  <div>
  <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">{t.dashboard.activeOrders}</p>
@@ -1072,7 +1075,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'customers-in-period') {
  return (
- <div key={id} onClick={() => handleCardClick('customers')} className={`${cardBaseClass} ${cardClickClass}`}>
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey} key={id} onClick={() => handleCardClick('customers')} className={`${cardBaseClass} ${cardClickClass}`}>
  <div className="flex items-center justify-between h-full min-w-0 flex-1">
  <div>
  <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">Clientes</p>
@@ -1088,7 +1091,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'total-sales') {
  return (
- <div key={id} onClick={() => handleCardClick('sales')} className={`${cardBaseClass} ${cardClickClass}`} style={{}}>
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey} key={id} onClick={() => handleCardClick('sales')} className={`${cardBaseClass} ${cardClickClass}`} style={{}}>
  <div className="flex-1 min-w-0">
  <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">Vendas</p>
  <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5"><MoneyValue value={currentPeriodSales} /></h3>
@@ -1105,7 +1108,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'total-orders') {
  return (
- <div key={id} onClick={() => handleCardClick('orders')} className={`${cardBaseClass} ${cardClickClass}`} style={{}}>
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey} key={id} onClick={() => handleCardClick('orders')} className={`${cardBaseClass} ${cardClickClass}`} style={{}}>
  <div className="flex-1 min-w-0">
  <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">Pedidos</p>
  <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5">{currentPeriodOrders}</h3>
@@ -1148,7 +1151,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'new-customers') {
  return (
- <div key={id} onClick={() => handleCardClick('customers')} className={`${cardBaseClass} ${cardClickClass}`}>
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey} key={id} onClick={() => handleCardClick('customers')} className={`${cardBaseClass} ${cardClickClass}`}>
  <div className="flex-1 min-w-0">
  <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">Novos clientes</p>
  <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5">{newCustomersInPeriod}</h3>
@@ -1197,38 +1200,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  </div>
  </div>
  <div className="h-44 sm:h-52 lg:h-60">
- <ResponsiveContainer width="100%" height="100%">
- <LineChart data={salesEvolutionData} margin={{ top: 5, right: 12, left: -18, bottom: 0 }}>
- <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.grid.stroke} strokeOpacity={chartTheme.grid.strokeOpacity} />
- <XAxis
- dataKey="name"
- axisLine={false}
- tickLine={false}
- tick={{ fill: chartTheme.tick.fill, fontSize: 10 }}
- interval={salesEvolutionPeriod === '7D' ? 0 : 'preserveStartEnd'}
- minTickGap={12}
- />
- <YAxis
- axisLine={false}
- tickLine={false}
- tick={{ fill: chartTheme.tick.fill, fontSize: 10 }}
- tickFormatter={(v: number) => v === 0 ? '0' : `${(v / 1000).toFixed(0)}k`}
- />
- <Tooltip
- contentStyle={chartTheme.tooltip.contentStyle}
- labelStyle={chartTheme.tooltip.labelStyle}
- formatter={(value: number) => [value.toLocaleString('pt-PT', { minimumFractionDigits: 2 }) + ' MT', 'Vendas']}
- />
- <Line
- type="monotone"
- dataKey="vendas"
- stroke="var(--brand-600)"
- strokeWidth={2}
- dot={false}
- activeDot={{ r: 4, fill: 'var(--brand-600)' }}
- />
- </LineChart>
- </ResponsiveContainer>
+ <Suspense fallback={<div className="h-full w-full rounded-xl bg-surface-base animate-pulse" />}>
+ <SalesEvolutionChart data={salesEvolutionData} showAllTicks={salesEvolutionPeriod === '7D'} theme={chartTheme} />
+ </Suspense>
  </div>
  </div>
 
@@ -1248,15 +1222,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  <p className="text-sm">Sem pedidos registados neste período.</p>
  </div>
  ) : (
- <ResponsiveContainer width="100%" height="100%">
- <BarChart data={ordersChartData}>
- <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.grid.stroke} strokeOpacity={chartTheme.grid.strokeOpacity} />
- <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: chartTheme.tick.fill, fontSize: 10 }} className="text-[10px] sm:text-xs" />
- <YAxis axisLine={false} tickLine={false} tick={{ fill: chartTheme.tick.fill, fontSize: 10 }} className="text-[10px] sm:text-xs" />
- <Tooltip cursor={chartTheme.tooltip.cursor} contentStyle={chartTheme.tooltip.contentStyle} formatter={(value: number) => [`${value}`, 'Pedidos']} labelStyle={chartTheme.tooltip.labelStyle} />
- <Bar dataKey="orders" fill={chartTheme.colors.ordersBar} radius={[4, 4, 0, 0]} />
- </BarChart>
- </ResponsiveContainer>
+ <Suspense fallback={<div className="h-full w-full rounded-xl bg-surface-base animate-pulse" />}>
+ <PeriodBarChart data={ordersChartData} dataKey="orders" fill={chartTheme.colors.ordersBar} label="Pedidos" formatValue={(v) => `${v}`} theme={chartTheme} />
+ </Suspense>
  )}
  </div>
  </div>
@@ -1275,15 +1243,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  <p className="text-sm">Sem vendas registadas neste período.</p>
  </div>
  ) : (
- <ResponsiveContainer width="100%" height="100%">
- <BarChart data={salesChartData}>
- <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.grid.stroke} strokeOpacity={chartTheme.grid.strokeOpacity} />
- <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: chartTheme.tick.fill, fontSize: 10 }} className="text-[10px] sm:text-xs" />
- <YAxis axisLine={false} tickLine={false} tick={{ fill: chartTheme.tick.fill, fontSize: 10 }} className="text-[10px] sm:text-xs" />
- <Tooltip cursor={chartTheme.tooltip.cursor} contentStyle={chartTheme.tooltip.contentStyle} formatter={(value: number) => [`${formatMoney(value)}`, 'Vendas']} labelStyle={chartTheme.tooltip.labelStyle} />
- <Bar dataKey="sales" fill={chartTheme.colors.salesBar} radius={[4, 4, 0, 0]} />
- </BarChart>
- </ResponsiveContainer>
+ <Suspense fallback={<div className="h-full w-full rounded-xl bg-surface-base animate-pulse" />}>
+ <PeriodBarChart data={salesChartData} dataKey="sales" fill={chartTheme.colors.salesBar} label="Vendas" formatValue={(v) => `${formatMoney(v)}`} theme={chartTheme} />
+ </Suspense>
  )}
  </div>
  </div>
@@ -1291,7 +1253,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'low-stock') {
  return (
- <div key={id} onClick={() => handleCardClick('stock-alerts')} className={`bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col ${onNavigate ? 'cursor-pointer hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/40 transition-all' : ''}`}>
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey} key={id} onClick={() => handleCardClick('stock-alerts')} className={`bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col ${onNavigate ? 'cursor-pointer hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/40 transition-all' : ''}`}>
  <div className="flex items-center justify-between min-h-[2.25rem] sm:min-h-[2.5rem] mb-3 sm:mb-4">
  <h3 className="text-base sm:text-lg font-bold text-content-primary flex items-center gap-2">
  <AlertTriangle className="w-5 h-5 text-amber-500" />
@@ -1326,7 +1288,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  }
  if (id === 'stock-forecast') {
  return (
- <div key={id} onClick={() => handleCardClick('stock-alerts')} className={`bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col ${onNavigate ? 'cursor-pointer hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/40 transition-all' : ''}`}>
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey} key={id} onClick={() => handleCardClick('stock-alerts')} className={`bg-surface-raised p-4 sm:p-5 lg:p-6 rounded-2xl shadow-sm border border-border-default dark:border-white/[0.07] flex flex-col ${onNavigate ? 'cursor-pointer hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/40 transition-all' : ''}`}>
  <div className="flex items-center justify-between min-h-[2.25rem] sm:min-h-[2.5rem] mb-3 sm:mb-4">
  <h3 className="text-base sm:text-lg font-bold text-content-primary flex items-center gap-2">
  <TrendingUp className="w-5 h-5 text-orange-500" />

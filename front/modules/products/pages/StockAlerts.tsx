@@ -1,3 +1,4 @@
+import { loadJsPDF } from '../../core/utils/lazyLibs';
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product, Order } from '../../core/types/types';
@@ -10,7 +11,6 @@ import { productService } from '../services/productService';
 import { PageShell } from '../../core/components/layout/PageShell';
 import { FilterBar, SearchInput, SelectFilter, ItemsPerPageSelect, Pagination } from '../../core/components/filters';
 import { createWorkbook, addWorksheet, addJsonToSheetAt, writeWorkbookToFile } from '../../core/services/excelService';
-import jsPDF from 'jspdf';
 import {
  addPDFHeader,
  addPDFFooter,
@@ -346,7 +346,7 @@ export const StockAlerts: React.FC<StockAlertsProps> = ({ products, orders, show
  'Tipo Alerta': getAlertLabel(item.alertType),
  }));
 
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Alertas de Stock');
 
  ws.getRow(1).getCell(1).value = 'Relatório:';
@@ -382,6 +382,7 @@ export const StockAlerts: React.FC<StockAlertsProps> = ({ products, orders, show
 
  const exportToPDF = async () => {
  try {
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('l', 'mm', 'a4');
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();

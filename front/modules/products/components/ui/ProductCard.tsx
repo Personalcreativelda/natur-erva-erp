@@ -208,7 +208,7 @@ const ProductCardComponent: React.FC<{
  {hasStock ? (
  <button
  onClick={handleAddToCart}
- className="shrink-0 w-10 h-10 !min-h-0 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"
+ className="tap-target shrink-0 w-10 h-10 !min-h-0 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"
  style={{ background: 'var(--brand-600)', boxShadow: '0 4px 10px -4px var(--brand-600)' }}
  aria-label={`Adicionar ${product.name} ao carrinho`}
  >
@@ -305,7 +305,7 @@ const ProductCardComponent: React.FC<{
  <h3 className="text-lg font-semibold text-content-primary">Escolher variante</h3>
  <button
  onClick={() => setShowVariantModal(false)}
- className="p-2 rounded-lg text-content-muted hover:bg-surface-base transition-colors"
+ className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base transition-colors"
  aria-label="Fechar"
  >
  <X className="h-5 w-5" />

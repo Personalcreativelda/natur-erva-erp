@@ -1,3 +1,5 @@
+import { activateOnKey } from '../../core/utils/a11y';
+import { loadJsPDF } from '../../core/utils/lazyLibs';
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Customer, LoyaltyTier, Order, CustomerAction, CustomerFeedback, CustomerInsight, ActionType, ActionStatus, OrderStatus, type User } from '../../core/types/types';
 import { Search, Award, Phone, Mail, MapPin, ChevronRight, History, ArrowDown, ArrowUp, Edit2, Trash2, Filter, X, ChevronLeft, ChevronsLeft, ChevronsRight, CheckSquare, Square, RefreshCw, MessageCircle, Save, Download, UserPlus, Calendar, Users, Merge, BarChart3, LayoutGrid, Table, FileSpreadsheet, FileText, AlertTriangle, Clock, CheckCircle, XCircle, Target, Plus, User as UserIcon } from 'lucide-react';
@@ -11,7 +13,6 @@ import { Tooltip } from '../../core/components/ui/Tooltip';
 import { FilterBar, SearchInput, ViewModeToggle, SelectFilter, ItemsPerPageSelect, Pagination } from '../../core/components/filters';
 import { PeriodFilter, PeriodOption } from '../../core/components/forms/PeriodFilter';
 import { createWorkbook, addWorksheet, addRowsFromJson, writeWorkbookToFile } from '../../core/services/excelService';
-import jsPDF from 'jspdf';
 import { addPDFHeader, addPDFFooter, getBrandColors, calculateColumnWidths, addPDFTableHeader, addPDFTableRow } from '../../core/services/reportService';
 import { normalizeForSearch, normalizeOrderStatus } from '../../core/services/serviceUtils';
 import { getTodayDateString, toDateStringInTimezone } from '../../core/utils/dateUtils';
@@ -535,7 +536,7 @@ export const Customers: React.FC<CustomersProps> = ({
  };
  });
 
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Clientes');
  addRowsFromJson(ws, exportData as Record<string, unknown>[]);
  [25, 15, 30, 40, 18, 15, 12, 15, 15, 15, 30, 15, 40].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
@@ -563,6 +564,7 @@ export const Customers: React.FC<CustomersProps> = ({
  showToast('Gerando PDF...', 'info');
 
  const { start, end } = getDateRangeFromPeriod(filterPeriod, filterDateFrom, filterDateTo);
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape para mais espaço
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -1012,7 +1014,7 @@ export const Customers: React.FC<CustomersProps> = ({
  <div className="bg-surface-raised rounded-xl shadow-2xl max-w-2xl w-full p-5 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
  <div className="flex justify-between items-center mb-4">
  <h2 className="text-xl font-bold text-content-primary">{isNewCustomer ? 'Novo Cliente' : 'Editar Cliente'}</h2>
- <button onClick={() => setEditingCustomer(null)} className="text-content-muted hover:text-content-secondary p-1">
+ <button aria-label="Fechar" onClick={() => setEditingCustomer(null)} className="tap-target text-content-muted hover:text-content-secondary p-1">
  <X className="w-5 h-5" />
  </button>
  </div>
@@ -1404,7 +1406,7 @@ export const Customers: React.FC<CustomersProps> = ({
  {hasActiveFilters && (
  <button
  onClick={clearFilters}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  title="Limpar filtros"
  >
  <X className="w-3 h-3" />
@@ -1417,9 +1419,9 @@ export const Customers: React.FC<CustomersProps> = ({
  <div className="sticky top-[60px] z-20 bg-surface-raised rounded-xl shadow-lg border border-border-default p-4 mb-4">
  <div className="flex items-center justify-between mb-4">
  <h4 className="text-sm font-semibold text-content-primary">Filtros</h4>
- <button
+ <button aria-label="Fechar"
  onClick={() => setShowFilters(false)}
- className="p-1 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-1 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-4 h-4 text-content-muted" />
  </button>
@@ -1793,7 +1795,7 @@ export const Customers: React.FC<CustomersProps> = ({
  const isSelected = selectedIds.has(customer.id);
  
  return (
- <div
+ <div tabIndex={0} onKeyDown={activateOnKey}
  key={customer.id}
  className={`bg-surface-raised rounded-lg p-4 shadow-sm border-2 transition-all cursor-pointer ${
  isSelected 
@@ -1819,14 +1821,14 @@ export const Customers: React.FC<CustomersProps> = ({
  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
  <button
  onClick={(e) => handleEdit(customer, e)}
- className="p-1.5 text-content-muted hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
  title="Editar"
  >
  <Edit2 className="w-4 h-4" />
  </button>
  <button
  onClick={(e) => handleDelete(customer.id, e)}
- className="p-1.5 text-content-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
  title="Apagar"
  >
  <Trash2 className="w-4 h-4" />
@@ -1939,7 +1941,7 @@ export const Customers: React.FC<CustomersProps> = ({
  setSelectedActionCustomer(customer);
  setShowActionModal(true);
  }}
- className="text-sm text-green-600 hover:text-green-700 dark:text-green-400 flex items-center gap-1"
+ className="tap-target text-sm text-green-600 hover:text-green-700 dark:text-green-400 flex items-center gap-1"
  title="Criar ação comercial"
  >
  <Plus className="w-4 h-4" />
@@ -1956,7 +1958,7 @@ export const Customers: React.FC<CustomersProps> = ({
  <ChevronRight className="w-4 h-4" />
  </button>
  </div>
- <div
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey}
  onClick={(e) => {
  e.stopPropagation();
  handleSelectCustomer(customer.id);
@@ -2154,7 +2156,7 @@ export const Customers: React.FC<CustomersProps> = ({
  setSelectedActionCustomer(customer);
  setShowActionModal(true);
  }}
- className="p-1.5 text-content-muted hover:text-green-600 dark:hover:text-green-400 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-green-600 dark:hover:text-green-400 transition-colors"
  title="Criar ação comercial"
  >
  <Plus className="w-4 h-4" />
@@ -2162,21 +2164,21 @@ export const Customers: React.FC<CustomersProps> = ({
  )}
  <button
  onClick={(e) => handleEdit(customer, e)}
- className="p-1.5 text-content-muted hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
  title="Editar"
  >
  <Edit2 className="w-4 h-4" />
  </button>
  <button
  onClick={(e) => handleDelete(customer.id, e)}
- className="p-1.5 text-content-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
  title="Apagar"
  >
  <Trash2 className="w-4 h-4" />
  </button>
  <button
  onClick={() => setSelectedCustomer(customer)}
- className="p-1.5 text-content-muted hover:text-content-secondary transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-content-secondary transition-colors"
  title="Ver detalhes"
  >
  <ChevronRight className="w-4 h-4" />
@@ -2244,12 +2246,12 @@ export const Customers: React.FC<CustomersProps> = ({
  <h3 className="text-xl font-bold text-content-primary">
  Mesclar Clientes Duplicados
  </h3>
- <button
+ <button aria-label="Fechar"
  onClick={() => {
  setShowMergeModal(false);
  setDuplicateGroups([]);
  }}
- className="text-content-muted hover:text-content-secondary "
+ className="tap-target text-content-muted hover:text-content-secondary "
  >
  <X className="w-6 h-6" />
  </button>
@@ -2472,7 +2474,7 @@ const ActionModal: React.FC<{
  <div className="bg-surface-raised rounded-xl shadow-2xl max-w-sm w-full p-4" onClick={(e) => e.stopPropagation()}>
  <div className="flex justify-between items-center mb-3">
  <h3 className="text-lg font-bold text-content-primary">Nova Ação Comercial</h3>
- <button onClick={onClose} className="text-content-muted hover:text-content-secondary p-1">
+ <button aria-label="Fechar" onClick={onClose} className="tap-target text-content-muted hover:text-content-secondary p-1">
  <X className="w-5 h-5" />
  </button>
  </div>

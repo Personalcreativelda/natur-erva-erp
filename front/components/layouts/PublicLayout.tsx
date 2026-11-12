@@ -7,6 +7,8 @@ import { User } from '../../modules/core/types/types';
 import { useShopContextSafe } from '../../contexts/ShopContext';
 import { CartDrawer } from '../../modules/shop/components/CartDrawer';
 import { useCart } from '../../modules/shop/context/CartContext';
+import { ShopTabBar } from '../../modules/shop/components/ShopTabBar';
+import { RouteTransition } from '../../modules/core/mobile/RouteTransition';
 
 interface PublicLayoutProps {
   currentUser: User | null;
@@ -75,13 +77,22 @@ const PublicLayoutContent: React.FC<PublicLayoutProps> = ({
         onCartClick={cart.open}
         onProfileClick={effectiveOnProfileClick}
       />
-      <main className="flex-1 shop-main-offset">
+      <main className="flex-1 shop-main-offset shop-main-tabbar">
         {/* Só o conteúdo mostra o carregamento; o cabeçalho e o rodapé ficam no lugar */}
         <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center" role="status" aria-label="A carregar"><Loader2 className="w-7 h-7 animate-spin text-green-600" /></div>}>
-          <Outlet />
+          <RouteTransition>
+            <Outlet />
+          </RouteTransition>
         </Suspense>
       </main>
       <Footer isShopMode={true} />
+      <ShopTabBar
+        currentUser={currentUser}
+        cartCount={cart.count}
+        onCartClick={cart.open}
+        onShowProducts={shopContext?.onFilterClick}
+        onLogin={handleLoginFallback}
+      />
       <CartDrawer />
     </div>
   );

@@ -70,7 +70,7 @@ export const CartDrawer: React.FC = () => {
           </div>
           <button
             onClick={close}
-            className="w-11 h-11 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-overlay transition-colors"
+            className="tap-target w-11 h-11 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-overlay transition-colors"
             aria-label="Fechar carrinho"
           >
             <X className="h-5 w-5" />
@@ -131,7 +131,7 @@ export const CartDrawer: React.FC = () => {
                         </div>
                         <button
                           onClick={() => removeItem(item.productId, item.variantId)}
-                          className="w-9 h-9 -mt-1 -mr-1 flex items-center justify-center rounded-full text-content-muted hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
+                          className="tap-target w-9 h-9 -mt-1 -mr-1 flex items-center justify-center rounded-full text-content-muted hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
                           aria-label={`Remover ${item.productName}`}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -142,7 +142,7 @@ export const CartDrawer: React.FC = () => {
                         <div className="flex items-center rounded-xl border border-border-default bg-surface-raised">
                           <button
                             onClick={() => handleQty(item.productId, item.variantId, -1)}
-                            className="w-10 h-10 flex items-center justify-center text-content-secondary hover:bg-surface-overlay rounded-l-xl transition-colors"
+                            className="tap-target w-10 h-10 flex items-center justify-center text-content-secondary hover:bg-surface-overlay rounded-l-xl transition-colors"
                             aria-label="Diminuir quantidade"
                           >
                             <Minus className="h-4 w-4" />
@@ -153,7 +153,7 @@ export const CartDrawer: React.FC = () => {
                           <button
                             onClick={() => handleQty(item.productId, item.variantId, 1)}
                             disabled={atMax}
-                            className="w-10 h-10 flex items-center justify-center text-content-secondary hover:bg-surface-overlay rounded-r-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="tap-target w-10 h-10 flex items-center justify-center text-content-secondary hover:bg-surface-overlay rounded-r-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             aria-label="Aumentar quantidade"
                           >
                             <Plus className="h-4 w-4" />

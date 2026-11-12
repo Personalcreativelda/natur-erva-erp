@@ -292,7 +292,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
  <button
  type="button"
  onClick={() => handleRemoveImage(imageKey)}
- className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 shadow-lg transition-colors"
+ className="tap-target absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 shadow-lg transition-colors"
  title="Remover imagem"
  >
  <X className="w-3 h-3" />
@@ -415,7 +415,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
  type="button"
  onClick={() => setShowScanner(true)}
  title="Fazer scan de QR ou código de barras"
- className="flex-shrink-0 px-2.5 py-2 border border-border-default rounded-lg bg-surface-raised text-content-muted hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-400 transition-colors"
+ className="tap-target flex-shrink-0 px-2.5 py-2 border border-border-default rounded-lg bg-surface-raised text-content-muted hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-400 transition-colors"
  >
  <ScanLine className="w-4 h-4" />
  </button>

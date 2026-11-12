@@ -115,7 +115,7 @@ export const CustomerOrderDetail: React.FC = () => {
     <div className="min-h-screen bg-surface-base py-8 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/minha-conta/encomendas')} className="p-2 rounded-lg hover:bg-surface-overlay transition-colors text-content-muted">
+          <button aria-label="Voltar" onClick={() => navigate('/minha-conta/encomendas')} className="tap-target p-2 rounded-lg hover:bg-surface-overlay transition-colors text-content-muted">
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div>

@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "mz.co.naturerva.app",
+      "sha256_cert_fingerprints": [
+        "78:F5:D0:44:E5:0E:C0:CA:CB:1C:0C:54:C0:31:C6:E9:2F:F9:33:24:F1:25:DE:B2:D8:4E:41:2D:B4:71:B7:BB"
+      ]
+    }
+  }
+]

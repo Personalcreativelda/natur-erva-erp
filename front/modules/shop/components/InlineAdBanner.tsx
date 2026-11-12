@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, Settings, Loader2, Check, Image as ImageIcon, ArrowRight, Plus } from 'lucide-react';
@@ -128,7 +129,7 @@ export const InlineAdBanner: React.FC<InlineAdBannerProps> = ({ slot, isAdmin = 
         <div className="bg-surface-raised rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
           <div className="flex items-center justify-between p-5 border-b border-border-default">
             <h2 className="text-lg font-bold text-content-primary">Anúncio em Linha · Slot {slot}</h2>
-            <button onClick={() => setEditing(false)} className="p-2 text-content-muted hover:text-gray-600 hover:bg-surface-overlay rounded-lg">
+            <button aria-label="Fechar" onClick={() => setEditing(false)} className="tap-target p-2 text-content-muted hover:text-gray-600 hover:bg-surface-overlay rounded-lg">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -241,7 +242,7 @@ export const InlineAdBanner: React.FC<InlineAdBannerProps> = ({ slot, isAdmin = 
 
   return (
     <>
-      <div
+      <div tabIndex={0} onKeyDown={activateOnKey}
         className="relative w-full overflow-hidden cursor-pointer group rounded-2xl my-6 flex items-center min-h-[160px]"
         style={{ backgroundColor: banner!.bgColor }}
         onClick={handleClick}

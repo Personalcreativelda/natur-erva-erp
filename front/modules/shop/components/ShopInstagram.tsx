@@ -142,16 +142,16 @@ export const ShopInstagram: React.FC = () => {
             </div>
 
             {/* Setas */}
-            <button
+            <button aria-label="Anterior"
               onClick={prev}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-9 h-9 bg-surface-raised rounded-full shadow-lg flex items-center justify-center text-content-secondary hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover/carousel:opacity-100 disabled:opacity-0"
+              className="tap-target absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-9 h-9 bg-surface-raised rounded-full shadow-lg flex items-center justify-center text-content-secondary hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover/carousel:opacity-100 focus-visible:opacity-100 disabled:opacity-0"
               disabled={activeDot === 0}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <button
+            <button aria-label="Seguinte"
               onClick={next}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-9 h-9 bg-surface-raised rounded-full shadow-lg flex items-center justify-center text-content-secondary hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover/carousel:opacity-100"
+              className="tap-target absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-9 h-9 bg-surface-raised rounded-full shadow-lg flex items-center justify-center text-content-secondary hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover/carousel:opacity-100 focus-visible:opacity-100"
             >
               <ChevronRight className="w-5 h-5" />
             </button>

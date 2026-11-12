@@ -213,7 +213,7 @@ export const StockAuditPage: React.FC<StockAuditProps> = ({ products, showToast 
  {(audit.status === StockAuditStatus.DRAFT || isSuperAdmin) && (
  <button
  onClick={() => handleOpenCount(audit)}
- className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+ className="tap-target p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
  title={t.stock.registerCounts || 'Registar contagens'}
  >
  <Edit className="w-4 h-4" />
@@ -222,7 +222,7 @@ export const StockAuditPage: React.FC<StockAuditProps> = ({ products, showToast 
  {(audit.status === StockAuditStatus.COMPLETED || audit.status === StockAuditStatus.APPLIED) && (
  <button
  onClick={() => handleOpenReport(audit)}
- className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
+ className="tap-target p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
  title={t.stock.viewReport || 'Ver relatório'}
  >
  <FileText className="w-4 h-4" />
@@ -231,7 +231,7 @@ export const StockAuditPage: React.FC<StockAuditProps> = ({ products, showToast 
  {(audit.status === StockAuditStatus.DRAFT || isSuperAdmin) && (
  <button
  onClick={() => handleDelete(audit)}
- className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+ className="tap-target p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
  title={t.common.delete}
  >
  <Trash2 className="w-4 h-4" />

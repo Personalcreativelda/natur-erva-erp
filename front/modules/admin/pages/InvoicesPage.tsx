@@ -114,7 +114,7 @@ function InvoiceDetail({
             </div>
             <StatusBadge status={invoice.status} />
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-content-muted hover:bg-surface-base transition-colors">
+          <button aria-label="Fechar" onClick={onClose} className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -362,7 +362,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ showToast }) => {
       title="Faturas"
       description="Gestão de faturação formal"
       actions={
-        <button onClick={load} className="p-2 rounded-lg text-content-muted hover:bg-surface-base transition-colors" title="Atualizar">
+        <button onClick={load} className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base transition-colors" title="Atualizar">
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
       }

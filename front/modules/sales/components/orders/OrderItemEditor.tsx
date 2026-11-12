@@ -83,7 +83,7 @@ export const OrderItemEditor: React.FC<OrderItemEditorProps> = ({
  <button
  type="button"
  onClick={() => onUpdateQuantity(itemIndex, Math.max(0, item.quantity - 1))}
- className="p-1.5 bg-surface-base text-content-secondary rounded-md hover:bg-surface-base transition-colors"
+ className="tap-target p-1.5 bg-surface-base text-content-secondary rounded-md hover:bg-surface-base transition-colors"
  aria-label="Diminuir quantidade"
  >
  <Minus className="w-3.5 h-3.5" />
@@ -102,7 +102,7 @@ export const OrderItemEditor: React.FC<OrderItemEditorProps> = ({
  <button
  type="button"
  onClick={() => onUpdateQuantity(itemIndex, item.quantity + 1)}
- className="p-1.5 bg-surface-base text-content-secondary rounded-md hover:bg-surface-base transition-colors"
+ className="tap-target p-1.5 bg-surface-base text-content-secondary rounded-md hover:bg-surface-base transition-colors"
  aria-label="Aumentar quantidade"
  >
  <Plus className="w-3.5 h-3.5" />
@@ -141,7 +141,7 @@ export const OrderItemEditor: React.FC<OrderItemEditorProps> = ({
  <button
  type="button"
  onClick={() => onRemove(itemIndex)}
- className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors shrink-0"
+ className="tap-target p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors shrink-0"
  title="Remover item"
  >
  <Trash2 className="w-4 h-4" />

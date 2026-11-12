@@ -487,7 +487,7 @@ export const ProductVariantModal: React.FC<ProductVariantModalProps> = ({
  setVariantToEdit(variant);
  setAddVariantModalOpen(true);
  }}
- className="p-1.5 text-content-secondary hover:bg-surface-base rounded transition-colors"
+ className="tap-target p-1.5 text-content-secondary hover:bg-surface-base rounded transition-colors"
  title="Editar variação"
  >
  <Pencil className="w-4 h-4" />
@@ -496,7 +496,7 @@ export const ProductVariantModal: React.FC<ProductVariantModalProps> = ({
  <button
  type="button"
  onClick={() => handleSetDefaultVariant(variant.id)}
- className="p-1.5 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded transition-colors"
+ className="tap-target p-1.5 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded transition-colors"
  title="Definir como padrão"
  >
  <Star className="w-4 h-4" />
@@ -510,7 +510,7 @@ export const ProductVariantModal: React.FC<ProductVariantModalProps> = ({
  <button
  type="button"
  onClick={() => setConfirmDelete({ isOpen: true, variantId: variant.id })}
- className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+ className="tap-target p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
  title="Eliminar variação"
  >
  <Trash2 className="w-4 h-4" />

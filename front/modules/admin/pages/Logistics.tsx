@@ -381,9 +381,9 @@ export const Logistics: React.FC<{
  {/* Dropdown + expand */}
  <div className="flex items-center gap-2 shrink-0">
  <StatusDropdown order={order} onUpdate={handleStatusUpdate} updating={updatingId === order.id} />
- <button
+ <button aria-expanded={isExpanded} aria-label="Expandir detalhes"
  onClick={() => setExpandedId(isExpanded ? null : order.id)}
- className="p-1.5 text-content-muted hover:text-content-secondary rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-1.5 text-content-muted hover:text-content-secondary rounded-lg hover:bg-surface-base transition-colors"
  >
  <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
  </button>

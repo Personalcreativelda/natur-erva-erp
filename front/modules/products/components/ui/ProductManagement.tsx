@@ -501,14 +501,14 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  <div className="flex items-center justify-end gap-1">
  <button
  onClick={() => openCategorySheet(category)}
- className="w-10 h-10 !min-h-0 inline-flex items-center justify-center rounded-xl text-content-secondary hover:bg-surface-base hover:text-brand-600 transition-colors"
+ className="tap-target w-10 h-10 !min-h-0 inline-flex items-center justify-center rounded-xl text-content-secondary hover:bg-surface-base hover:text-brand-600 transition-colors"
  title="Editar" aria-label={`Editar ${category.name}`}
  >
  <Edit2 className="w-4 h-4" />
  </button>
  <button
  onClick={() => handleDeleteCategory(category.id)}
- className="w-10 h-10 !min-h-0 inline-flex items-center justify-center rounded-xl text-content-muted hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors"
+ className="tap-target w-10 h-10 !min-h-0 inline-flex items-center justify-center rounded-xl text-content-muted hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors"
  title="Eliminar" aria-label={`Eliminar ${category.name}`}
  >
  <Trash2 className="w-4 h-4" />
@@ -528,7 +528,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  <div className="relative w-full md:w-[440px] max-h-[92dvh] md:max-h-none md:h-full bg-surface-raised rounded-t-3xl md:rounded-none md:rounded-l-3xl shadow-2xl flex flex-col animate-sheet-panel">
  <div className="flex items-center justify-between gap-3 px-5 h-16 border-b border-border-default shrink-0">
  <h3 className="text-lg font-semibold text-content-primary">{editingCategory ? 'Editar categoria' : 'Nova categoria'}</h3>
- <button onClick={closeCategorySheet} className="w-10 h-10 !min-h-0 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-base" aria-label="Fechar">
+ <button onClick={closeCategorySheet} className="tap-target w-10 h-10 !min-h-0 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-base" aria-label="Fechar">
  <X className="w-5 h-5" />
  </button>
  </div>
@@ -734,7 +734,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  </td>
  <td className="px-4 py-3 text-right">
  <div className="flex justify-end gap-2">
- <button
+ <button aria-label="Editar"
  onClick={() => {
  setEditingUnit(unit);
  setUnitForm({
@@ -743,13 +743,13 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  description: unit.description || ''
  });
  }}
- className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded"
+ className="tap-target p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded"
  >
  <Edit2 className="w-4 h-4" />
  </button>
- <button
+ <button aria-label="Eliminar"
  onClick={() => handleDeleteUnit(unit.id)}
- className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded"
+ className="tap-target p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded"
  >
  <Trash2 className="w-4 h-4" />
  </button>
@@ -812,9 +812,9 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  placeholder="Ex: 500g, 1kg, 2kg"
  />
  {templateForm.values.length > 1 && (
- <button
+ <button aria-label="Remover"
  onClick={() => removeTemplateValue(index)}
- className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+ className="tap-target px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
  >
  <X className="w-4 h-4" />
  </button>
@@ -891,7 +891,7 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  </td>
  <td className="px-4 py-3 text-right">
  <div className="flex justify-end gap-2">
- <button
+ <button aria-label="Editar"
  onClick={() => {
  setEditingTemplate(template);
  setTemplateForm({
@@ -900,13 +900,13 @@ export const ProductManagement: React.FC<ProductManagementProps> = ({ showToast,
  values: template.values.length > 0 ? template.values : ['']
  });
  }}
- className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded"
+ className="tap-target p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded"
  >
  <Edit2 className="w-4 h-4" />
  </button>
- <button
+ <button aria-label="Eliminar"
  onClick={() => handleDeleteTemplate(template.id)}
- className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded"
+ className="tap-target p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded"
  >
  <Trash2 className="w-4 h-4" />
  </button>

@@ -66,7 +66,7 @@ function Modal({ title, onClose, children, wide }: { title: string; onClose: () 
       <div className={`bg-surface-raised rounded-2xl shadow-xl w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} animate-modal-enter`}>
         <div className="flex items-center justify-between p-5 border-b border-border-default">
           <h3 className="font-semibold text-content-primary">{title}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
+          <button aria-label="Fechar" onClick={onClose} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
         </div>
         <div className="p-5 max-h-[75vh] overflow-y-auto">{children}</div>
       </div>
@@ -279,10 +279,10 @@ export function StaffIncentives({ showToast }: Props) {
                     <button onClick={() => toggleGoalActive(g)} title={g.isActive ? 'Desativar' : 'Ativar'} className="shrink-0 text-content-muted hover:text-brand-600">
                       {g.isActive ? <ToggleRight className="w-6 h-6 text-brand-600" /> : <ToggleLeft className="w-6 h-6" />}
                     </button>
-                    <button onClick={() => openEditGoal(g)} title="Editar" className="shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-surface-overlay">
+                    <button onClick={() => openEditGoal(g)} title="Editar" className="tap-target shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-surface-overlay">
                       <Pencil className="w-4 h-4" />
                     </button>
-                    <button onClick={() => deleteGoal(g)} title="Apagar" className="shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
+                    <button onClick={() => deleteGoal(g)} title="Apagar" className="tap-target shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

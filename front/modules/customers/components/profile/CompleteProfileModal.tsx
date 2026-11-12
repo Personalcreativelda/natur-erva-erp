@@ -77,9 +77,9 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
  <h2 className="text-2xl font-bold text-content-primary">
  Completar Perfil
  </h2>
- <button
+ <button aria-label="Fechar"
  onClick={onClose}
- className="p-2 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-2 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-5 h-5 text-content-muted" />
  </button>

@@ -122,10 +122,10 @@ export const TestimonialsSection: React.FC = () => {
           <>
             {/* Desktop carousel */}
             <div className="hidden sm:flex items-stretch gap-4">
-              <button
+              <button aria-label="Anterior"
                 onClick={prev}
                 disabled={startIndex === 0}
-                className="flex-shrink-0 w-10 h-10 self-center rounded-full border border-gray-300 dark:border-border-strong flex items-center justify-center bg-surface-raised shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 transition"
+                className="tap-target flex-shrink-0 w-10 h-10 self-center rounded-full border border-gray-300 dark:border-border-strong flex items-center justify-center bg-surface-raised shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 transition"
               >
                 <ChevronLeft className="w-5 h-5 text-content-secondary" />
               </button>
@@ -136,10 +136,10 @@ export const TestimonialsSection: React.FC = () => {
                 ))}
               </div>
 
-              <button
+              <button aria-label="Seguinte"
                 onClick={next}
                 disabled={startIndex >= reviews.length - VISIBLE_DESKTOP}
-                className="flex-shrink-0 w-10 h-10 self-center rounded-full border border-gray-300 dark:border-border-strong flex items-center justify-center bg-surface-raised shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 transition"
+                className="tap-target flex-shrink-0 w-10 h-10 self-center rounded-full border border-gray-300 dark:border-border-strong flex items-center justify-center bg-surface-raised shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 transition"
               >
                 <ChevronRight className="w-5 h-5 text-content-secondary" />
               </button>
@@ -148,20 +148,20 @@ export const TestimonialsSection: React.FC = () => {
             {/* Mobile: single card */}
             <div className="sm:hidden">
               <div className="flex items-center gap-3">
-                <button
+                <button aria-label="Anterior"
                   onClick={prev}
                   disabled={startIndex === 0}
-                  className="flex-shrink-0 w-9 h-9 rounded-full border border-gray-300 dark:border-border-strong flex items-center justify-center bg-surface-raised shadow-sm disabled:opacity-30"
+                  className="tap-target flex-shrink-0 w-9 h-9 rounded-full border border-gray-300 dark:border-border-strong flex items-center justify-center bg-surface-raised shadow-sm disabled:opacity-30"
                 >
                   <ChevronLeft className="w-4 h-4 text-content-secondary" />
                 </button>
                 <div className="flex-1">
                   <ReviewCard review={reviews[startIndex]} />
                 </div>
-                <button
+                <button aria-label="Seguinte"
                   onClick={next}
                   disabled={startIndex >= reviews.length - 1}
-                  className="flex-shrink-0 w-9 h-9 rounded-full border border-gray-300 dark:border-border-strong flex items-center justify-center bg-surface-raised shadow-sm disabled:opacity-30"
+                  className="tap-target flex-shrink-0 w-9 h-9 rounded-full border border-gray-300 dark:border-border-strong flex items-center justify-center bg-surface-raised shadow-sm disabled:opacity-30"
                 >
                   <ChevronRight className="w-4 h-4 text-content-secondary" />
                 </button>

@@ -1,3 +1,4 @@
+import { loadJsPDF } from '../../core/utils/lazyLibs';
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { ShopReceipt, ShopReceiptItem, ShopReceiptSource, Product, FactoryOutput } from '../../core/types/types';
 import {
@@ -14,7 +15,6 @@ import { useMobile } from '../../core/hooks/useMobile';
 import { createWorkbook, addWorksheet, addRowsFromJson, writeWorkbookToFile } from '../../core/services/excelService';
 import { formatDateTimeForReport, formatDateOnly, getTodayDateString } from '../../core/utils/dateUtils';
 import { normalizeForSearch } from '../../core/services/serviceUtils';
-import jsPDF from 'jspdf';
 
 interface ShopReceiptsProps {
  products: Product[];
@@ -426,7 +426,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  }))
  );
 
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Recebimentos');
  addRowsFromJson(ws, exportData as Record<string, unknown>[]);
  [12, 15, 12, 20, 15, 25, 15, 12, 8, 12, 12, 10, 30].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
@@ -451,6 +451,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  }
 
  showToast('Gerando PDF...', 'info');
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('l', 'mm', 'a4');
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -697,7 +698,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  />
  </div>
  {(searchQuery || filterPeriod !== 'thisMonth' || filterStatus !== 'ALL' || filterSource !== 'ALL') && (
- <button
+ <button aria-label="Limpar filtros"
  onClick={() => {
  setSearchQuery('');
  setFilterPeriod('thisMonth');
@@ -707,7 +708,7 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  setFilterSource('ALL');
  setCurrentPage(1);
  }}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  >
  <X className="w-3 h-3" />
  </button>
@@ -718,9 +719,9 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  <div className="sticky top-[60px] z-20 bg-surface-raised rounded-xl shadow-lg border border-border-default p-4 mb-4">
  <div className="flex items-center justify-between mb-4">
  <h4 className="text-sm font-semibold text-content-primary">Filtros</h4>
- <button
+ <button aria-label="Fechar"
  onClick={() => setShowFilters(false)}
- className="p-1 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-1 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-4 h-4 text-content-muted" />
  </button>
@@ -867,9 +868,9 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  <Edit2 className="w-3 h-3" />
  Editar
  </button>
- <button
+ <button aria-label="Eliminar"
  onClick={() => handleDeleteReceipt(receipt.id)}
- className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+ className="tap-target px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
  >
  <Trash2 className="w-3 h-3" />
  </button>
@@ -915,14 +916,14 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  <div className="flex items-center gap-2">
  <button
  onClick={() => handleOpenModal(receipt)}
- className="p-1.5 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded transition-colors"
+ className="tap-target p-1.5 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded transition-colors"
  title="Editar"
  >
  <Edit2 className="w-4 h-4" />
  </button>
  <button
  onClick={() => handleDeleteReceipt(receipt.id)}
- className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+ className="tap-target p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
  title="Excluir"
  >
  <Trash2 className="w-4 h-4" />
@@ -938,20 +939,20 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
 
  {totalPages > 1 && (
  <div className="flex justify-center items-center gap-2 mt-6">
- <button
+ <button aria-label="Página anterior"
  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
  disabled={currentPage === 1}
- className="px-3 py-1.5 text-sm border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
+ className="tap-target px-3 py-1.5 text-sm border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
  >
  <ChevronLeft className="w-4 h-4" />
  </button>
  <span className="text-sm text-content-secondary">
  Página {currentPage} de {totalPages}
  </span>
- <button
+ <button aria-label="Página seguinte"
  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
  disabled={currentPage === totalPages}
- className="px-3 py-1.5 text-sm border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
+ className="tap-target px-3 py-1.5 text-sm border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
  >
  <ChevronRight className="w-4 h-4" />
  </button>
@@ -965,9 +966,9 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  <h2 className="text-xl font-bold text-content-primary">
  {editingReceipt ? 'Editar Recebimento' : 'Novo Recebimento'}
  </h2>
- <button
+ <button aria-label="Fechar"
  onClick={() => setIsModalOpen(false)}
- className="p-1 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-1 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-5 h-5" />
  </button>
@@ -1182,9 +1183,9 @@ export const ShopReceipts: React.FC<ShopReceiptsProps> = ({ products, showToast 
  {item.costPrice && ` • ${item.costPrice.toFixed(2)} MZN`}
  </p>
  </div>
- <button
+ <button aria-label="Remover"
  onClick={() => handleRemoveItem(index)}
- className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+ className="tap-target p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
  >
  <X className="w-4 h-4" />
  </button>

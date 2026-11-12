@@ -139,7 +139,7 @@ export const CustomerAffiliate: React.FC = () => {
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/minha-conta')} className="p-2 rounded-lg hover:bg-surface-overlay transition-colors text-content-muted">
+          <button aria-label="Voltar" onClick={() => navigate('/minha-conta')} className="tap-target p-2 rounded-lg hover:bg-surface-overlay transition-colors text-content-muted">
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div>
@@ -282,7 +282,7 @@ export const CustomerAffiliate: React.FC = () => {
               <div className="bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-default">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="font-semibold text-content-primary">Solicitar Levantamento</h2>
-                  <button onClick={() => { setShowWithdraw(false); setWdError(''); }} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted">
+                  <button aria-label="Fechar" onClick={() => { setShowWithdraw(false); setWdError(''); }} className="tap-target p-2.5 rounded-lg hover:bg-surface-overlay text-content-muted">
                     <X className="w-4 h-4" />
                   </button>
                 </div>

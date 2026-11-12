@@ -118,9 +118,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
  className="w-full pl-10 pr-10 py-3 border border-border-default rounded-lg bg-surface-raised text-content-primary focus:ring-2 focus:ring-brand-500 focus:border-transparent"
  />
  {searchQuery && (
- <button
+ <button aria-label="Limpar pesquisa"
  onClick={() => onSearchChange('')}
- className="absolute right-3 top-1/2 transform -translate-y-1/2 text-content-muted hover:text-content-secondary "
+ className="tap-target absolute right-3 top-1/2 transform -translate-y-1/2 text-content-muted hover:text-content-secondary "
  >
  <X className="w-5 h-5" />
  </button>

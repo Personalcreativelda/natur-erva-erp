@@ -272,7 +272,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
  {canScrollLeft && (
  <button
  onClick={scrollLeft}
- className="absolute left-0 z-10 p-1.5 bg-surface-raised/90 backdrop-blur-sm hover:bg-surface-raised rounded-lg shadow-md border border-border-default transition-all"
+ className="tap-target absolute left-0 z-10 p-1.5 bg-surface-raised/90 backdrop-blur-sm hover:bg-surface-raised rounded-lg shadow-md border border-border-default transition-all"
  aria-label="Scroll esquerda"
  >
  <ChevronLeft className="w-4 h-4 text-content-secondary" />
@@ -327,7 +327,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
  {canScrollRight && (
  <button
  onClick={scrollRight}
- className="absolute right-0 z-10 p-1.5 bg-surface-raised/90 backdrop-blur-sm hover:bg-surface-raised rounded-lg shadow-md border border-border-default transition-all"
+ className="tap-target absolute right-0 z-10 p-1.5 bg-surface-raised/90 backdrop-blur-sm hover:bg-surface-raised rounded-lg shadow-md border border-border-default transition-all"
  aria-label="Scroll direita"
  >
  <ChevronRight className="w-4 h-4 text-content-secondary" />

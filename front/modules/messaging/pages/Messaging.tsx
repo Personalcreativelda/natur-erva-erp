@@ -175,7 +175,7 @@ export function Messaging({ showToast }: Props) {
           <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-sm animate-modal-enter">
             <div className="flex items-center justify-between p-5 border-b border-border-default">
               <h3 className="font-semibold text-content-primary">Nova Conversa</h3>
-              <button onClick={() => { setNewConvModal(false); setSelectedUsers([]); }} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
+              <button aria-label="Fechar" onClick={() => { setNewConvModal(false); setSelectedUsers([]); }} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-4">
               {selectedUsers.length > 1 && (

@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 ﻿import React from 'react';
 import { FileText, FileImage, Download, Trash2, Eye } from 'lucide-react';
 import { formatFileSize, getFileIcon } from '../services/mediaService';
@@ -65,7 +66,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
  const isImage = file.type === 'image';
 
  return (
- <div
+ <div tabIndex={0} onKeyDown={activateOnKey}
  className={`
  relative group border rounded-lg overflow-hidden transition-all
  ${isSelected
@@ -126,7 +127,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
  {onView && (
  <button
  onClick={handleView}
- className="p-2 bg-surface-raised/90 hover:bg-surface-raised rounded-lg transition-colors"
+ className="tap-target p-2 bg-surface-raised/90 hover:bg-surface-raised rounded-lg transition-colors"
  title="Visualizar"
  >
  <Eye className="w-5 h-5 text-content-secondary" />
@@ -134,7 +135,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
  )}
  <button
  onClick={handleDownload}
- className="p-2 bg-surface-raised/90 hover:bg-surface-raised rounded-lg transition-colors"
+ className="tap-target p-2 bg-surface-raised/90 hover:bg-surface-raised rounded-lg transition-colors"
  title="Download"
  >
  <Download className="w-5 h-5 text-content-secondary" />
@@ -142,7 +143,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
  {onDelete && (
  <button
  onClick={handleDelete}
- className="p-2 bg-red-500/90 hover:bg-red-500 text-white rounded-lg transition-colors"
+ className="tap-target p-2 bg-red-500/90 hover:bg-red-500 text-white rounded-lg transition-colors"
  title="Deletar"
  >
  <Trash2 className="w-5 h-5" />

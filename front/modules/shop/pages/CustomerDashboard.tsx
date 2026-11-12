@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 ﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, RefreshCw, ChevronRight, Loader2, Gift, Star, Copy, Check, TrendingUp } from 'lucide-react';
@@ -194,7 +195,7 @@ export const CustomerDashboard: React.FC<{ currentUser: any }> = ({ currentUser 
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
               {orders.map(o => (
-                <div
+                <div tabIndex={0} onKeyDown={activateOnKey}
                   key={o.id}
                   onClick={() => navigate(`/minha-conta/encomendas/${o.id}`)}
                   className="w-full flex items-center justify-between px-5 py-3 hover:bg-surface-overlay/50 transition-colors text-left cursor-pointer"

@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
@@ -94,7 +95,7 @@ export function ClinicDashboard({ showToast }: Props) {
               ) : (
                 <div className="space-y-2">
                   {recentPatients.map(p => (
-                    <div key={p.id} onClick={() => openPatient(p.id)}
+                    <div role="button" tabIndex={0} onKeyDown={activateOnKey} key={p.id} onClick={() => openPatient(p.id)}
                       className="flex items-center gap-3 border border-border-default rounded-lg px-3 py-2.5 hover:bg-surface-overlay/30 transition-colors cursor-pointer">
                       <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 text-xs font-bold shrink-0">
                         {p.customerName?.charAt(0)}

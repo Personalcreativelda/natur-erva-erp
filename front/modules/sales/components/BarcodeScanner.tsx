@@ -248,8 +248,8 @@ export const BarcodeScanner: React.FC<Props> = ({ onScan, onClose }) => {
  <ScanLine className="w-5 h-5 text-brand-400" />
  <span className="font-medium text-sm">Escanear Código de Barras</span>
  </div>
- <button onClick={() => { stopAll(); onClose(); }}
- className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-surface-raised/10 transition-colors">
+ <button aria-label="Fechar" onClick={() => { stopAll(); onClose(); }}
+ className="tap-target text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-surface-raised/10 transition-colors">
  <X className="w-6 h-6" />
  </button>
  </div>
@@ -349,8 +349,8 @@ export const BarcodeScanner: React.FC<Props> = ({ onScan, onClose }) => {
  className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold disabled:opacity-40 transition-colors">
  OK
  </button>
- <button type="button" onClick={() => setShowManual(false)}
- className="px-3 py-2.5 border border-gray-600 text-content-muted hover:text-white rounded-xl text-sm transition-colors">
+ <button aria-label="Fechar" type="button" onClick={() => setShowManual(false)}
+ className="tap-target px-3 py-2.5 border border-gray-600 text-content-muted hover:text-white rounded-xl text-sm transition-colors">
  <X className="w-4 h-4" />
  </button>
  </form>

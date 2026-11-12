@@ -788,10 +788,10 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  </p>
  </div>
  <div className="flex items-center gap-1 shrink-0">
- <button onClick={() => setQty(idx, c.quantity - 1)} className="w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-red-100 dark:hover:bg-red-900/40"><Minus className="w-3 h-3" /></button>
+ <button aria-label="Diminuir quantidade" onClick={() => setQty(idx, c.quantity - 1)} className="tap-target w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-red-100 dark:hover:bg-red-900/40"><Minus className="w-3 h-3" /></button>
  <span className="w-5 text-center text-xs font-medium">{c.quantity}</span>
- <button onClick={() => setQty(idx, c.quantity + 1)} disabled={c.maxStock > 0 && c.quantity >= c.maxStock} className="w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-green-100 disabled:opacity-40"><Plus className="w-3 h-3" /></button>
- <button onClick={() => setCart(prev => prev.filter((_, i) => i !== idx))} className="w-6 h-6 flex items-center justify-center rounded bg-red-100 dark:bg-red-900/30 hover:bg-red-200 text-red-500 ml-0.5"><X className="w-3 h-3" /></button>
+ <button aria-label="Aumentar quantidade" onClick={() => setQty(idx, c.quantity + 1)} disabled={c.maxStock > 0 && c.quantity >= c.maxStock} className="tap-target w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-green-100 disabled:opacity-40"><Plus className="w-3 h-3" /></button>
+ <button aria-label="Remover" onClick={() => setCart(prev => prev.filter((_, i) => i !== idx))} className="tap-target w-6 h-6 flex items-center justify-center rounded bg-red-100 dark:bg-red-900/30 hover:bg-red-200 text-red-500 ml-0.5"><X className="w-3 h-3" /></button>
  </div>
  </div>
  ))}
@@ -873,7 +873,7 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  className="w-full h-11 pl-9 pr-3 rounded-xl border border-border-default bg-surface-raised text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none" />
  </div>
  <button onClick={() => setShowScanner(true)} title="Câmera" aria-label="Ler código com a câmara"
- className="w-11 h-11 flex items-center justify-center bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl transition-colors shrink-0">
+ className="tap-target w-11 h-11 flex items-center justify-center bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl transition-colors shrink-0">
  <ScanLine className="w-5 h-5" />
  </button>
  <button onClick={() => remoteSession ? setShowRemoteModal(true) : startRemoteScanner()} title="Scanner remoto" aria-label="Scanner remoto pelo telemóvel"
@@ -951,8 +951,8 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  <div className="flex flex-col flex-1 overflow-hidden min-h-0 bg-surface-raised">
  {/* Cabeçalho */}
  <div className="flex items-center gap-3 px-4 py-3 border-b border-border-default shrink-0">
- <button onClick={() => setMobileCartOpen(false)}
- className="p-1.5 -ml-1.5 rounded-lg hover:bg-surface-base active:bg-surface-base transition-colors">
+ <button aria-label="Voltar" onClick={() => setMobileCartOpen(false)}
+ className="tap-target p-1.5 -ml-1.5 rounded-lg hover:bg-surface-base active:bg-surface-base transition-colors">
  <ChevronLeft className="w-5 h-5 text-content-secondary" />
  </button>
  <ShoppingCart className="w-5 h-5 text-brand-600" />
@@ -983,10 +983,10 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  </p>
  </div>
  <div className="flex items-center gap-1 shrink-0">
- <button onClick={() => setQty(idx, c.quantity - 1)} className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-base hover:bg-red-100 dark:hover:bg-red-900/40 active:scale-95"><Minus className="w-3.5 h-3.5" /></button>
+ <button aria-label="Diminuir quantidade" onClick={() => setQty(idx, c.quantity - 1)} className="tap-target w-7 h-7 flex items-center justify-center rounded-lg bg-surface-base hover:bg-red-100 dark:hover:bg-red-900/40 active:scale-95"><Minus className="w-3.5 h-3.5" /></button>
  <span className="w-6 text-center text-sm font-semibold">{c.quantity}</span>
- <button onClick={() => setQty(idx, c.quantity + 1)} disabled={c.maxStock > 0 && c.quantity >= c.maxStock} className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-base hover:bg-green-100 disabled:opacity-40 active:scale-95"><Plus className="w-3.5 h-3.5" /></button>
- <button onClick={() => setCart(prev => prev.filter((_, i) => i !== idx))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 active:scale-95 ml-0.5"><X className="w-3.5 h-3.5" /></button>
+ <button aria-label="Aumentar quantidade" onClick={() => setQty(idx, c.quantity + 1)} disabled={c.maxStock > 0 && c.quantity >= c.maxStock} className="tap-target w-7 h-7 flex items-center justify-center rounded-lg bg-surface-base hover:bg-green-100 disabled:opacity-40 active:scale-95"><Plus className="w-3.5 h-3.5" /></button>
+ <button aria-label="Remover" onClick={() => setCart(prev => prev.filter((_, i) => i !== idx))} className="tap-target w-7 h-7 flex items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 active:scale-95 ml-0.5"><X className="w-3.5 h-3.5" /></button>
  </div>
  </div>
  ))}
@@ -1103,7 +1103,7 @@ export const POS: React.FC<POSProps> = ({ showToast }) => {
  <div className="bg-surface-raised rounded-xl p-5 w-full max-w-sm" onClick={e => e.stopPropagation()}>
  <div className="flex items-center justify-between mb-4">
  <h3 className="font-semibold text-content-primary">{variantPicker.name}</h3>
- <button onClick={() => setVariantPicker(null)}><X className="w-5 h-5 text-content-muted" /></button>
+ <button aria-label="Fechar" className="tap-target" onClick={() => setVariantPicker(null)}><X className="w-5 h-5 text-content-muted" /></button>
  </div>
  <div className="space-y-2">
  {variantPicker.variants?.map(v => (

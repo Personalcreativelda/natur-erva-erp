@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
@@ -43,7 +44,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-2xl animate-modal-enter">
         <div className="flex items-center justify-between p-5 border-b border-border-default">
           <h3 className="font-semibold text-content-primary">{title}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
+          <button aria-label="Fechar" onClick={onClose} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
         </div>
         <div className="p-5 max-h-[80vh] overflow-y-auto">{children}</div>
       </div>
@@ -183,7 +184,7 @@ export function Helpdesk({ showToast }: Props) {
               </tr></thead>
               <tbody>
                 {tickets.map(t => (
-                  <tr key={t.id} className="border-b border-border-default/50 hover:bg-surface-overlay/50 cursor-pointer" onClick={() => openTicket(t)}>
+                  <tr tabIndex={0} onKeyDown={activateOnKey} key={t.id} className="border-b border-border-default/50 hover:bg-surface-overlay/50 cursor-pointer" onClick={() => openTicket(t)}>
                     <td className="py-3 px-3 text-content-muted text-xs">#{t.id}</td>
                     <td className="py-3 px-3 font-medium text-content-primary max-w-xs truncate">{t.title}</td>
                     <td className="py-3 px-3">
@@ -205,7 +206,7 @@ export function Helpdesk({ showToast }: Props) {
                     </td>
                     <td className="py-3 px-3 text-xs text-content-muted">{fmtDate(t.created_at)}</td>
                     <td className="py-3 px-3">
-                      <button onClick={e => { e.stopPropagation(); deleteTicket(t.id); }} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600">
+                      <button aria-label="Eliminar" onClick={e => { e.stopPropagation(); deleteTicket(t.id); }} className="tap-target p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </td>

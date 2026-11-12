@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
@@ -95,7 +96,7 @@ function Modal({ title, onClose, children, wide }: { title: string; onClose: () 
       <div className={`bg-surface-raised rounded-2xl shadow-xl w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} animate-modal-enter`}>
         <div className="flex items-center justify-between p-5 border-b border-border-default">
           <h3 className="font-semibold text-content-primary">{title}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
+          <button aria-label="Fechar" onClick={onClose} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
         </div>
         <div className="p-5 max-h-[70vh] overflow-y-auto">{children}</div>
       </div>
@@ -523,8 +524,8 @@ export function HR({ showToast }: Props) {
                         </td>
                         <td className="py-3 px-3">
                           <div className="flex items-center gap-1 justify-end">
-                            <button onClick={() => openEdit('employee', emp)} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted hover:text-content-primary"><Pencil className="w-4 h-4" /></button>
-                            <button onClick={() => deleteEmployee(emp.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                            <button aria-label="Editar" onClick={() => openEdit('employee', emp)} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted hover:text-content-primary"><Pencil className="w-4 h-4" /></button>
+                            <button aria-label="Eliminar" onClick={() => deleteEmployee(emp.id)} className="tap-target p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -546,7 +547,7 @@ export function HR({ showToast }: Props) {
                       {d.description && <p className="text-xs text-content-muted mt-0.5">{d.description}</p>}
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => openEdit('department', d)} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><Pencil className="w-3.5 h-3.5" /></button>
+                      <button aria-label="Editar" onClick={() => openEdit('department', d)} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><Pencil className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-border-default flex items-center gap-4 text-xs text-content-muted">
@@ -564,7 +565,7 @@ export function HR({ showToast }: Props) {
             selectedPeriod ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <button onClick={() => { setSelectedPeriod(null); setPayslips([]); }} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted">
+                  <button aria-label="Voltar" onClick={() => { setSelectedPeriod(null); setPayslips([]); }} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted">
                     <ChevronRight className="w-4 h-4 rotate-180" />
                   </button>
                   <div>
@@ -687,11 +688,11 @@ export function HR({ showToast }: Props) {
                                   className="p-1 rounded hover:bg-surface-overlay text-content-muted hover:text-content-primary disabled:opacity-50" title="Imprimir / PDF">
                                   {printingSlipId === slip.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
                                 </button>
-                                <button onClick={() => openSlipEdit(slip)} className="p-1 rounded hover:bg-surface-overlay text-content-muted" title="Editar">
+                                <button onClick={() => openSlipEdit(slip)} className="tap-target p-1 rounded hover:bg-surface-overlay text-content-muted" title="Editar">
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
                                 {slip.status !== 'paid' && selectedPeriod.status !== 'closed' && (
-                                  <button onClick={() => markPaid(slip.id)} className="p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/20 text-content-muted hover:text-green-600" title="Marcar como pago">
+                                  <button onClick={() => markPaid(slip.id)} className="tap-target p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/20 text-content-muted hover:text-green-600" title="Marcar como pago">
                                     <Check className="w-3.5 h-3.5" />
                                   </button>
                                 )}
@@ -735,7 +736,7 @@ export function HR({ showToast }: Props) {
                   <p className="text-center py-12 text-content-muted">Nenhum período criado. Clique em "Novo Período" para começar.</p>
                 )}
                 {periods.map(pp => (
-                  <div key={pp.id} className="flex items-center gap-4 border border-border-default rounded-xl p-4 hover:bg-surface-overlay/30 transition-colors cursor-pointer"
+                  <div tabIndex={0} onKeyDown={activateOnKey} key={pp.id} className="flex items-center gap-4 border border-border-default rounded-xl p-4 hover:bg-surface-overlay/30 transition-colors cursor-pointer"
                     onClick={() => { setSelectedPeriod(pp); loadPayslips(pp.id); }}>
                     <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
                       <DollarSign className="w-5 h-5 text-brand-600" />
@@ -764,7 +765,7 @@ export function HR({ showToast }: Props) {
                         </button>
                       )}
                       <button onClick={e => { e.stopPropagation(); deletePeriod(pp); }}
-                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600"
+                        className="tap-target p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600"
                         title="Apagar período">
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -809,7 +810,7 @@ export function HR({ showToast }: Props) {
                         <td className="py-3 px-3 text-content-secondary max-w-xs truncate">{e.description || '—'}</td>
                         <td className="py-3 px-3">{e.billable ? <span className="text-green-600 text-xs font-medium">Sim</span> : <span className="text-content-muted text-xs">Não</span>}</td>
                         <td className="py-3 px-3">
-                          <button onClick={() => deleteTimesheet(e.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                          <button aria-label="Eliminar" onClick={() => deleteTimesheet(e.id)} className="tap-target p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                         </td>
                       </tr>
                     ))}
@@ -836,8 +837,8 @@ export function HR({ showToast }: Props) {
                     </span>
                     {l.status === 'pending' && (
                       <>
-                        <button onClick={() => updateLeaveStatus(l.id, 'approved')} className="p-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 hover:bg-green-100"><Check className="w-4 h-4" /></button>
-                        <button onClick={() => updateLeaveStatus(l.id, 'rejected')} className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100"><X className="w-4 h-4" /></button>
+                        <button aria-label="Aprovar" onClick={() => updateLeaveStatus(l.id, 'approved')} className="tap-target p-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 hover:bg-green-100"><Check className="w-4 h-4" /></button>
+                        <button aria-label="Rejeitar" onClick={() => updateLeaveStatus(l.id, 'rejected')} className="tap-target p-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100"><X className="w-4 h-4" /></button>
                       </>
                     )}
                   </div>

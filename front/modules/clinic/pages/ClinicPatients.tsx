@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
@@ -407,7 +408,7 @@ export function ClinicPatients({ showToast }: Props) {
             </div>
             <div className="space-y-2">
               {filteredPatients.map(p => (
-                <div key={p.id} onClick={() => { setDetailPatientId(p.id); setDetailTab('ficha'); }}
+                <div tabIndex={0} onKeyDown={activateOnKey} key={p.id} onClick={() => { setDetailPatientId(p.id); setDetailTab('ficha'); }}
                   className="flex items-center gap-4 border border-border-default rounded-xl p-4 hover:bg-surface-overlay/30 transition-colors cursor-pointer">
                   <div className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 text-xs font-bold shrink-0">
                     {p.customerName?.charAt(0)}
@@ -420,7 +421,7 @@ export function ClinicPatients({ showToast }: Props) {
                     <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">Alergias</span>
                   )}
                   <button onClick={(e) => deletePatient(p, e)} title="Apagar paciente"
-                    className="shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
+                    className="tap-target shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
                     <Trash2 className="w-4 h-4" />
                   </button>
                   <ChevronRight className="w-4 h-4 text-content-muted shrink-0" />
@@ -573,7 +574,7 @@ export function ClinicPatients({ showToast }: Props) {
                 ) : (
                   <div className="space-y-2">
                     {patientRecords.map(r => (
-                      <div key={r.id} onClick={() => openEditRecord(r)}
+                      <div role="button" tabIndex={0} onKeyDown={activateOnKey} key={r.id} onClick={() => openEditRecord(r)}
                         className="border border-border-default rounded-xl p-3 cursor-pointer hover:bg-surface-overlay/30 transition-colors">
                         <div className="flex items-center justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -918,7 +919,7 @@ export function ClinicPatients({ showToast }: Props) {
                   <div key={idx} className="flex items-center gap-2">
                     <span className="text-xs text-content-muted w-4 shrink-0">{idx + 1}.</span>
                     <input value={item} onChange={e => setRecordPriorities(items => items.map((it, i) => i === idx ? e.target.value : it))} className={inputCls} />
-                    <button onClick={() => setRecordPriorities(items => items.filter((_, i) => i !== idx))} className="shrink-0 text-content-muted hover:text-red-600 p-1">
+                    <button aria-label="Eliminar" onClick={() => setRecordPriorities(items => items.filter((_, i) => i !== idx))} className="tap-target shrink-0 text-content-muted hover:text-red-600 p-1">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -982,7 +983,7 @@ export function ClinicPatients({ showToast }: Props) {
                       <a href={att.url} target="_blank" rel="noopener noreferrer" title="Ver / Descarregar" className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted">
                         <Download className="w-4 h-4" />
                       </a>
-                      <button onClick={() => deleteAttachment(idx)} title="Remover" className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted hover:text-red-600">
+                      <button onClick={() => deleteAttachment(idx)} title="Remover" className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted hover:text-red-600">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -1003,7 +1004,7 @@ export function ClinicPatients({ showToast }: Props) {
                         <p className="text-sm text-content-primary truncate">{file.name}</p>
                         <p className="text-xs text-content-muted">{isImage ? 'Imagem' : 'PDF'} · {formatFileSize(file.size)} · será carregado ao guardar</p>
                       </div>
-                      <button onClick={() => deleteAttachment(idx)} title="Remover" className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted hover:text-red-600">
+                      <button onClick={() => deleteAttachment(idx)} title="Remover" className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted hover:text-red-600">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>

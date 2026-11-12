@@ -323,7 +323,7 @@ export const ProductLandingPage: React.FC = () => {
                                                 <button
                                                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                                                     disabled={quantity <= 1}
-                                                    className="w-11 h-14 flex items-center justify-center hover:bg-surface-base disabled:opacity-30 transition-colors text-content-primary"
+                                                    className="tap-target w-11 h-14 flex items-center justify-center hover:bg-surface-base disabled:opacity-30 transition-colors text-content-primary"
                                                     aria-label="Diminuir quantidade"
                                                 >
                                                     <Minus className="w-4 h-4" />
@@ -332,7 +332,7 @@ export const ProductLandingPage: React.FC = () => {
                                                 <button
                                                     onClick={() => setQuantity(q => Math.min(currentStock, q + 1))}
                                                     disabled={quantity >= currentStock}
-                                                    className="w-11 h-14 flex items-center justify-center hover:bg-surface-base disabled:opacity-30 transition-colors text-content-primary"
+                                                    className="tap-target w-11 h-14 flex items-center justify-center hover:bg-surface-base disabled:opacity-30 transition-colors text-content-primary"
                                                     aria-label="Aumentar quantidade"
                                                 >
                                                     <Plus className="w-4 h-4" />
@@ -580,7 +580,7 @@ export const ProductLandingPage: React.FC = () => {
             {/* Barra fixa de compra — mobile, quando o botão principal já não está visível */}
             {showStickyBar && getAvailableStock(product, selectedVariant) > 0 && (
                 <div
-                    className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-raised/95 backdrop-blur-xl border-t border-border-default px-4 pt-3 animate-fade-in-up"
+                    className="buy-bar lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-raised/95 backdrop-blur-xl border-t border-border-default px-4 pt-3 animate-fade-in-up"
                     style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))', boxShadow: '0 -8px 24px -12px rgba(48,49,61,0.2)' }}
                 >
                     <div className="flex items-center gap-3">

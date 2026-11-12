@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
  Activity, Eye, Download, X, ChevronLeft, ChevronRight,
@@ -569,7 +570,7 @@ export const Statistics: React.FC = () => {
  setFilterDateTo('');
  setCurrentPage(1);
  }}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  title="Limpar filtros"
  >
  <X className="w-3 h-3" />
@@ -663,7 +664,7 @@ export const Statistics: React.FC = () => {
  : Activity;
  
  return (
- <tr
+ <tr role="button" tabIndex={0} onKeyDown={activateOnKey}
  key={activity.id}
  className="hover:bg-surface-base cursor-pointer"
  onClick={() => setSelectedActivity(activity)}
@@ -735,20 +736,20 @@ export const Statistics: React.FC = () => {
  {/* Paginação */}
  {totalPages > 1 && (
  <div className="px-6 py-4 border-t border-border-default flex items-center justify-center gap-2">
- <button
+ <button aria-label="Página anterior"
  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
  disabled={currentPage === 1}
- className="p-2 border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
+ className="tap-target p-2 border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
  >
  <ChevronLeft className="w-4 h-4" />
  </button>
  <span className="px-4 py-2 text-sm text-content-secondary">
  Página {currentPage} de {totalPages}
  </span>
- <button
+ <button aria-label="Página seguinte"
  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
  disabled={currentPage === totalPages}
- className="p-2 border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
+ className="tap-target p-2 border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
  >
  <ChevronRight className="w-4 h-4" />
  </button>

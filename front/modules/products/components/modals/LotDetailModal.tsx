@@ -40,10 +40,10 @@ export const LotDetailModal: React.FC<LotDetailModalProps> = ({ open, lot, onClo
  <Edit2 className="w-4 h-4" />
  Editar
  </button>
- <button
+ <button aria-label="Fechar"
  type="button"
  onClick={onClose}
- className="text-content-muted hover:text-content-secondary "
+ className="tap-target text-content-muted hover:text-content-secondary "
  >
  <X className="w-6 h-6" />
  </button>

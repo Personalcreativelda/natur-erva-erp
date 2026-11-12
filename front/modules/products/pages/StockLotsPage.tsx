@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 ﻿/**
  * Página de visualização de lotes de stock.
  * Mostra detalhes de cada lote (quantidade, custo unitário, valor, origem) para rastreabilidade FIFO.
@@ -582,7 +583,7 @@ export const StockLotsPage: React.FC<StockLotsPageProps> = ({ products, showToas
  </tr>
  )}
  {group.lots.map((lot) => (
- <tr
+ <tr tabIndex={0} onKeyDown={activateOnKey}
  key={lot.id}
  className={`hover:bg-surface-raised/50 cursor-pointer ${selectedIds.has(lot.id) ? 'bg-brand-50 dark:bg-brand-600/15' : ''}`}
  onClick={() => setViewingLot(lot)}
@@ -644,9 +645,9 @@ export const StockLotsPage: React.FC<StockLotsPageProps> = ({ products, showToas
  <td className="px-3 py-2 text-sm text-content-secondary">{formatDate(lot.receivedAt)}</td>
  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
  <div className="flex gap-1">
- <button type="button" onClick={() => setViewingLot(lot)} className="p-1 text-content-muted hover:text-brand-600" title="Ver detalhes"><Eye className="w-4 h-4" /></button>
- <button type="button" onClick={() => setEditingLot(lot)} className="p-1 text-content-muted hover:text-brand-600" title="Editar"><Edit2 className="w-4 h-4" /></button>
- <button type="button" onClick={() => handleDeleteSingle(lot)} disabled={deletingId === lot.id} className="p-1 text-content-muted hover:text-red-600 disabled:opacity-50" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+ <button type="button" onClick={() => setViewingLot(lot)} className="tap-target p-1 text-content-muted hover:text-brand-600" title="Ver detalhes"><Eye className="w-4 h-4" /></button>
+ <button type="button" onClick={() => setEditingLot(lot)} className="tap-target p-1 text-content-muted hover:text-brand-600" title="Editar"><Edit2 className="w-4 h-4" /></button>
+ <button type="button" onClick={() => handleDeleteSingle(lot)} disabled={deletingId === lot.id} className="tap-target p-1 text-content-muted hover:text-red-600 disabled:opacity-50" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
  </div>
  </td>
  </tr>
@@ -670,7 +671,7 @@ export const StockLotsPage: React.FC<StockLotsPageProps> = ({ products, showToas
  </div>
  )}
  {group.lots.map((lot) => (
- <div
+ <div tabIndex={0} onKeyDown={activateOnKey}
  key={lot.id}
  className={`bg-surface-raised rounded-lg border p-4 transition-colors cursor-pointer ${
  selectedIds.has(lot.id)
@@ -694,9 +695,9 @@ export const StockLotsPage: React.FC<StockLotsPageProps> = ({ products, showToas
  </div>
  </div>
  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
- <button type="button" onClick={() => setViewingLot(lot)} className="p-1 text-content-muted hover:text-brand-600" title="Ver detalhes"><Eye className="w-4 h-4" /></button>
- <button type="button" onClick={() => setEditingLot(lot)} className="p-1 text-content-muted hover:text-brand-600" title="Editar"><Edit2 className="w-4 h-4" /></button>
- <button type="button" onClick={() => handleDeleteSingle(lot)} disabled={deletingId === lot.id} className="p-1 text-content-muted hover:text-red-600 disabled:opacity-50" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+ <button type="button" onClick={() => setViewingLot(lot)} className="tap-target p-1 text-content-muted hover:text-brand-600" title="Ver detalhes"><Eye className="w-4 h-4" /></button>
+ <button type="button" onClick={() => setEditingLot(lot)} className="tap-target p-1 text-content-muted hover:text-brand-600" title="Editar"><Edit2 className="w-4 h-4" /></button>
+ <button type="button" onClick={() => handleDeleteSingle(lot)} disabled={deletingId === lot.id} className="tap-target p-1 text-content-muted hover:text-red-600 disabled:opacity-50" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
  </div>
  </div>
  <p className="text-xs text-content-muted mb-1">{stockLotsService.getSourceTypeLabel(lot.sourceType)}{lot.invoiceNumber ? ` • ${lot.invoiceNumber}` : ''}</p>

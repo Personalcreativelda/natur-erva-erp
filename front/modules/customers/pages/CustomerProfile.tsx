@@ -157,9 +157,9 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
  <div className="flex items-center justify-between">
  <div className="flex items-center space-x-4">
  {onBack && (
- <button
+ <button aria-label="Voltar"
  onClick={onBack}
- className={`${isMobile ? 'p-1.5' : 'p-2'} rounded-lg hover:bg-surface-base`}
+ className={`tap-target ${isMobile ? 'p-1.5' : 'p-2'} rounded-lg hover:bg-surface-base`}
  >
  <ArrowLeft className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
  </button>
@@ -239,9 +239,9 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
  <div className="space-y-4">
  <div className="flex items-center space-x-3">
  {onBack && (
- <button
+ <button aria-label="Voltar"
  onClick={onBack}
- className={`${isMobile ? 'p-2' : 'p-3'} rounded-lg hover:bg-surface-base transition-all`}
+ className={`tap-target ${isMobile ? 'p-2' : 'p-3'} rounded-lg hover:bg-surface-base transition-all`}
  >
  <ArrowLeft className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-content-secondary`} />
  </button>
@@ -282,9 +282,9 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
  <div className="flex items-center justify-between flex-wrap gap-6">
  <div className="flex items-center space-x-6">
  {onBack && (
- <button
+ <button aria-label="Voltar"
  onClick={onBack}
- className="p-3 rounded-xl hover:bg-surface-base transition-all hover:scale-105"
+ className="tap-target p-3 rounded-xl hover:bg-surface-base transition-all hover:scale-105"
  >
  <ArrowLeft className="w-5 h-5 text-content-secondary" />
  </button>

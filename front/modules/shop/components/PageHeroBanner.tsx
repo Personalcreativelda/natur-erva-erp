@@ -166,7 +166,7 @@ export const PageHeroBanner: React.FC<PageHeroBannerProps> = ({
           <div className="bg-surface-raised rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-5 border-b border-border-default">
               <h2 className="text-lg font-bold text-content-primary">Banner da Página</h2>
-              <button onClick={() => setEditing(false)} className="p-2 text-content-muted hover:text-gray-600 hover:bg-surface-overlay rounded-lg">
+              <button aria-label="Fechar" onClick={() => setEditing(false)} className="tap-target p-2 text-content-muted hover:text-gray-600 hover:bg-surface-overlay rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>

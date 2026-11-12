@@ -140,8 +140,8 @@ export function KPIPage({ showToast }: Props) {
               </button>
             ))}
           </div>
-          <button onClick={load} disabled={loading}
-            className="p-2 border border-border-default rounded-lg text-content-muted hover:text-content-primary hover:bg-surface-base transition-colors disabled:opacity-50">
+          <button aria-label="Atualizar" onClick={load} disabled={loading}
+            className="tap-target p-2 border border-border-default rounded-lg text-content-muted hover:text-content-primary hover:bg-surface-base transition-colors disabled:opacity-50">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>

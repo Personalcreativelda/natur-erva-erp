@@ -147,7 +147,7 @@ export function Modal({ title, onClose, children, wide }: { title: string; onClo
       <div className={`bg-surface-raised rounded-2xl shadow-xl w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} animate-modal-enter`}>
         <div className="flex items-center justify-between p-5 border-b border-border-default">
           <h3 className="font-semibold text-content-primary">{title}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
+          <button aria-label="Fechar" onClick={onClose} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
         </div>
         <div className="p-5 max-h-[75vh] overflow-y-auto">{children}</div>
       </div>

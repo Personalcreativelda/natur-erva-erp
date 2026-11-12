@@ -181,7 +181,7 @@ ${toolbar}
 <div id="doc">
 <div class="header">
  <div style="display:flex;align-items:center;gap:14px">
- ${logoUrl ? `<img src="${logoUrl}" style="max-width:90px;max-height:55px;object-fit:contain">` : ''}
+ ${logoUrl ? `<img src="${logoUrl}" alt="${tax.companyName}" style="max-width:90px;max-height:55px;object-fit:contain">` : ''}
  <div>
  <div class="company">${tax.companyName}</div>
  <div style="font-size:11px;color:#666;margin-top:3px">NUIT: ${tax.companyNuit || '—'}</div>
@@ -422,7 +422,7 @@ export const QuotesPage: React.FC = () => {
  <div className="flex items-center gap-2">
  <button onClick={() => setSettingsOpen(true)}
  title="Configurar dados bancários"
- className="p-2 text-content-muted border border-border-default rounded-lg hover:bg-surface-base transition-colors">
+ className="tap-target p-2 text-content-muted border border-border-default rounded-lg hover:bg-surface-base transition-colors">
  <Settings className="w-4 h-4" />
  </button>
  <button onClick={openNew}
@@ -534,7 +534,7 @@ export const QuotesPage: React.FC = () => {
  <Download className="w-3 h-3" /> PDF
  </button>
  <button onClick={() => openQuote(q, 'print')} title="Imprimir"
- className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded font-medium transition-colors">
+ className="tap-target flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded font-medium transition-colors">
  <Printer className="w-3 h-3" />
  </button>
  <button onClick={() => openEdit(q)} className="px-2 py-1 text-xs text-content-muted hover:text-content-primary hover:bg-surface-base rounded font-medium transition-colors">Editar</button>
@@ -576,8 +576,8 @@ export const QuotesPage: React.FC = () => {
  <div className="flex items-start justify-between gap-2">
  <div className="font-semibold text-sm text-content-primary">{acc.name || '—'}</div>
  <div className="flex gap-1 shrink-0">
- <button onClick={() => setAccountForm({ ...acc })} className="p-1 rounded text-content-muted hover:text-blue-600 transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
- <button onClick={() => setBankAccounts(p => p.filter(a => a.id !== acc.id))} className="p-1 rounded text-content-muted hover:text-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+ <button aria-label="Editar" onClick={() => setAccountForm({ ...acc })} className="tap-target p-1 rounded text-content-muted hover:text-blue-600 transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
+ <button aria-label="Eliminar" onClick={() => setBankAccounts(p => p.filter(a => a.id !== acc.id))} className="tap-target p-1 rounded text-content-muted hover:text-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
  </div>
  </div>
  <p className="text-xs text-content-muted">Titular: <strong>{acc.holder || taxConfig.companyName || '—'}</strong></p>
@@ -599,7 +599,7 @@ export const QuotesPage: React.FC = () => {
  <div className="border-2 border-brand-300 dark:border-brand-700 rounded-xl p-4 space-y-3 bg-brand-50/40 dark:bg-brand-900/10">
  <div className="flex items-center justify-between">
  <p className="text-sm font-semibold text-content-primary">{bankAccounts.find(a => a.id === accountForm.id) ? 'Editar Conta' : 'Nova Conta'}</p>
- <button onClick={() => setAccountForm(null)}><XIcon className="w-4 h-4 text-content-muted" /></button>
+ <button aria-label="Fechar" className="tap-target" onClick={() => setAccountForm(null)}><XIcon className="w-4 h-4 text-content-muted" /></button>
  </div>
  {[
  { key: 'name', label: 'Nome do Banco', placeholder: 'BCI, BIM, Millennium BIM…', mono: false },

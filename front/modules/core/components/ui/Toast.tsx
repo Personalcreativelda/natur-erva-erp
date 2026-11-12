@@ -61,7 +61,7 @@ export const ToastComponent: React.FC<ToastProps> = ({ toast, onClose }) => {
     </div>
     <button
      onClick={() => onClose(toast.id)}
-     className="shrink-0 w-8 h-8 !min-h-0 flex items-center justify-center rounded-lg text-content-muted hover:text-content-primary hover:bg-surface-base transition-colors"
+     className="tap-target shrink-0 w-8 h-8 !min-h-0 flex items-center justify-center rounded-lg text-content-muted hover:text-content-primary hover:bg-surface-base transition-colors"
      aria-label="Fechar notificação"
     >
      <X className="w-4 h-4" />

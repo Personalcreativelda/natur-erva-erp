@@ -130,9 +130,9 @@ export const CreateAuditModal: React.FC<CreateAuditModalProps> = ({
  {t.stock.newAudit}
  </h2>
  </div>
- <button
+ <button aria-label="Fechar"
  onClick={onClose}
- className="p-1 hover:bg-surface-base rounded-lg transition-colors"
+ className="tap-target p-1 hover:bg-surface-base rounded-lg transition-colors"
  >
  <X className="w-5 h-5 text-content-muted" />
  </button>

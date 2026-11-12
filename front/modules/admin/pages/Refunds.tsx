@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 ﻿import React, { useState, useEffect } from 'react';
 import { RefreshCw, Check, X, Loader2, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import api from '../../core/services/apiClient';
@@ -103,7 +104,7 @@ export const Refunds: React.FC<{
  const isExpanded = expanded === r.id;
  return (
  <div key={r.id} className="rounded-xl border border-border-default bg-surface-overlay overflow-hidden">
- <div
+ <div role="button" tabIndex={0} onKeyDown={activateOnKey}
  className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-surface-raised/50 transition-colors"
  onClick={() => setExpanded(isExpanded ? null : r.id)}
  >

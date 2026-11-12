@@ -612,7 +612,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
                 </p>
               </div>
             </div>
-            <button onClick={() => setShowWelcome(false)} className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white" aria-label="Fechar mensagem">
+            <button onClick={() => setShowWelcome(false)} className="tap-target w-10 h-10 flex items-center justify-center text-white/80 hover:text-white" aria-label="Fechar mensagem">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -780,7 +780,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
               className="w-full h-11 pl-10 pr-10 rounded-xl border border-border-default bg-surface-raised text-content-primary placeholder-content-muted text-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition"
             />
             {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-content-muted hover:text-content-primary" aria-label="Limpar pesquisa">
+              <button onClick={() => setSearchTerm('')} className="tap-target absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-content-muted hover:text-content-primary" aria-label="Limpar pesquisa">
                 <XCircle className="w-4 h-4" />
               </button>
             )}
@@ -1123,7 +1123,7 @@ const SheetModal: React.FC<{ title: string; onClose: () => void; children: React
         <div className="sm:hidden flex justify-center pt-3"><span className="w-10 h-1 rounded-full bg-border-strong/60" /></div>
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border-default shrink-0">
           <h2 className="text-lg sm:text-xl font-bold text-content-primary">{title}</h2>
-          <button onClick={onClose} className="w-11 h-11 -mr-2 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-overlay transition-colors" aria-label="Fechar">
+          <button onClick={onClose} className="tap-target w-11 h-11 -mr-2 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-overlay transition-colors" aria-label="Fechar">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -1411,7 +1411,7 @@ const CheckoutModal: React.FC<{
               </div>
               <button
                 onClick={() => { onApplyCoupon(null); setCouponInput(''); setCouponError(''); }}
-                className="w-10 h-10 flex items-center justify-center rounded-full text-green-600 hover:text-red-500 dark:text-green-400 transition-colors"
+                className="tap-target w-10 h-10 flex items-center justify-center rounded-full text-green-600 hover:text-red-500 dark:text-green-400 transition-colors"
                 aria-label="Remover cupão"
               >
                 <X className="h-4 w-4" />

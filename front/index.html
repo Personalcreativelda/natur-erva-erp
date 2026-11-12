@@ -10,83 +10,8 @@
     <!-- Favicon padrão - será atualizado dinamicamente pelo JavaScript -->
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Arial', 'sans-serif'],
-            },
-            colors: {
-              brand: {
-                50: 'var(--brand-50, #ecfdf5)',
-                100: 'var(--brand-100, #d1fae5)',
-                200: 'var(--brand-200, #a7f3d0)',
-                300: 'var(--brand-300, #6ee7b7)',
-                400: 'var(--brand-400, #34d399)',
-                500: 'var(--brand-500, #10b981)',
-                600: 'var(--brand-600, #059669)',
-                700: 'var(--brand-700, #047857)',
-                800: 'var(--brand-800, #065f46)',
-                900: 'var(--brand-900, #064e3b)',
-              },
-              gray: {
-                750: '#2d3748',
-                850: '#1a202c',
-                900: '#111827',
-                950: '#0B0F19',
-              },
-              surface: {
-                base: 'rgb(var(--surface-base-rgb) / <alpha-value>)',
-                raised: 'rgb(var(--surface-raised-rgb) / <alpha-value>)',
-                overlay: 'rgb(var(--surface-overlay-rgb) / <alpha-value>)',
-              },
-              content: {
-                primary: 'var(--text-primary)',
-                secondary: 'var(--text-secondary)',
-                muted: 'var(--text-muted)',
-              },
-              'border-default': 'rgb(var(--border-default-rgb) / <alpha-value>)',
-              'border-strong': 'rgb(var(--border-strong-rgb) / <alpha-value>)',
-              'brand-logo': {
-                dark: 'rgb(var(--brand-logo-dark) / <alpha-value>)',
-                light: 'rgb(var(--brand-logo-light) / <alpha-value>)',
-              },
-              semantic: {
-                success: 'var(--color-success)',
-                error: 'var(--color-error)',
-                warning: 'var(--color-warning)',
-                info: 'var(--color-info)',
-              },
-            },
-            borderRadius: {
-              'none':  '0',
-              'sm':    'var(--radius-sm, 3px)',
-              DEFAULT: 'var(--radius-md, 6px)',
-              'md':    'var(--radius-md, 6px)',
-              'lg':    'var(--radius-lg, 8px)',
-              'xl':    'var(--radius-xl, 12px)',
-              '2xl':   'var(--radius-2xl, 16px)',
-              '3xl':   '24px',
-              'full':  '9999px',
-            },
-            boxShadow: {
-              'sm':  'var(--shadow-sm)',
-              DEFAULT: 'var(--shadow-md)',
-              'md':  'var(--shadow-md)',
-              'lg':  'var(--shadow-lg)',
-              'xl':  'var(--shadow-xl)',
-              '2xl': 'var(--shadow-2xl)',
-              'none': 'none',
-            },
-          }
-        }
-      }
-    </script>
     <style>
       /* Design tokens - Light (default) */
       :root {
@@ -178,6 +103,73 @@
       .dark ::-webkit-scrollbar-thumb { background: #38383a; }
       .dark ::-webkit-scrollbar-thumb:hover { background: #48484a; }
       ::-webkit-scrollbar-thumb:hover { background: #a0a0a5; }
+
+      /* Área de toque mínima 44×44 para botões só com ícone — apenas em ecrãs táteis.
+         Um pseudo-elemento invisível alarga a zona clicável sem mudar o layout. */
+      @media (pointer: coarse) {
+        .tap-target:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+        .tap-target::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: max(100%, 44px);
+          height: max(100%, 44px);
+          transform: translate(-50%, -50%);
+        }
+      }
+
+      /* Chat LeadsFlow (widget externo, z-index 9999): não tapar o carrinho/diálogos,
+         subir acima da barra fixa de compra, e não aparecer na área de administração */
+      body:has([aria-modal="true"]) #lfw-btn,
+      html[data-area="admin"] #lfw-btn,
+      html[data-area="admin"] #lfw-window,
+      html.keyboard-open #lfw-btn { display: none !important; }
+      /* Acima das barras fixas inferiores (só existem abaixo de md / lg) */
+      @media (max-width: 767px) {
+        body:has(.shop-tabbar) #lfw-btn { bottom: calc(84px + env(safe-area-inset-bottom)) !important; }
+      }
+      @media (max-width: 1023px) {
+        body:has(.buy-bar) #lfw-btn { bottom: calc(88px + env(safe-area-inset-bottom)) !important; }
+      }
+
+      /* ── Experiência mobile / app Android ─────────────────────────────────────── */
+
+      /* Conteúdo da loja não fica por baixo da barra de separadores */
+      @media (max-width: 767px) {
+        .shop-main-tabbar { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+      }
+
+      /* Teclado aberto: as barras fixas inferiores sobem com o teclado e roubam espaço — esconder */
+      html.keyboard-open .shop-tabbar,
+      html.keyboard-open .admin-tabbar,
+      html.keyboard-open .buy-bar { display: none !important; }
+      @media (max-width: 767px) {
+        html.keyboard-open .pos-mobile-viewport { bottom: 0; }
+      }
+
+      /* Transição de páginas (só mobile; a primeira página não anima) */
+      @keyframes route-in-forward { from { opacity: 0; transform: translate3d(24px, 0, 0); } }
+      @keyframes route-in-back    { from { opacity: 0; transform: translate3d(-24px, 0, 0); } }
+      @keyframes route-in-fade    { from { opacity: 0; } }
+      @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+        /* fill "backwards": no fim não fica nenhum transform (não afecta position: fixed) */
+        .route-enter-slide[data-dir="forward"] { animation: route-in-forward 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+        .route-enter-slide[data-dir="back"]    { animation: route-in-back 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+        .route-enter-fade:not([data-dir="none"]) { animation: route-in-fade 0.18s ease-out backwards; }
+      }
+
+      /* Dentro da app Android: sem comportamentos de "página web" */
+      html.native-app {
+        -webkit-touch-callout: none;   /* sem menu de pressão longa em links/imagens */
+        touch-action: manipulation;    /* sem zoom por duplo toque (o zoom com dois dedos mantém-se) */
+      }
+      html.native-app body { -webkit-user-select: none; user-select: none; }
+      html.native-app :is(input, textarea, select, [contenteditable="true"], .prose, .allow-select, .allow-select *) {
+        -webkit-user-select: text; user-select: text;
+      }
+      html.native-app img { -webkit-user-drag: none; }
+      html.native-app .site-footer { display: none; } /* rodapé de website — na app a navegação é a barra inferior */
 
       /* Focus ring */
       *:focus-visible {

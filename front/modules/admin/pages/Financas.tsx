@@ -497,7 +497,7 @@ ${s.summary?.expectedCash !== undefined ? `<p class="bold">Fundo esperado em cai
  </div>
  <div className="flex items-center gap-2 shrink-0">
  <button onClick={() => printSession(s)} title="Imprimir relatório"
- className="p-2 rounded-lg hover:bg-surface-base text-content-muted transition-colors">
+ className="tap-target p-2 rounded-lg hover:bg-surface-base text-content-muted transition-colors">
  <Printer className="w-4 h-4" />
  </button>
  {!s.isOpen && <CheckCircle className="w-4 h-4 text-content-muted" />}

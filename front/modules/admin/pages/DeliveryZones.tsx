@@ -172,7 +172,7 @@ export const DeliveryZones: React.FC<{
  </td>
  <td className="px-4 py-3 text-right">
  <div className="flex items-center justify-end gap-2">
- <button onClick={() => openEdit(z)} className="p-1.5 text-content-muted hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+ <button aria-label="Editar" onClick={() => openEdit(z)} className="tap-target p-1.5 text-content-muted hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
  <Edit className="w-4 h-4" />
  </button>
  <button
@@ -200,7 +200,7 @@ export const DeliveryZones: React.FC<{
  <h2 className="text-lg font-bold text-content-primary">
  {editing ? 'Editar Zona' : 'Nova Zona de Entrega'}
  </h2>
- <button onClick={() => setShowModal(false)} className="text-content-muted hover:text-content-secondary ">
+ <button aria-label="Fechar" onClick={() => setShowModal(false)} className="tap-target text-content-muted hover:text-content-secondary ">
  <X className="w-5 h-5" />
  </button>
  </div>

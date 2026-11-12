@@ -591,7 +591,7 @@ export const Users: React.FC<{
  {hasActiveFilters && (
  <button
  onClick={clearFilters}
- className="px-1.5 py-0.5 text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base"
+ className="tap-target px-1.5 py-0.5 text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base"
  title="Limpar filtros"
  >
  <X className="w-3 h-3" />
@@ -767,14 +767,14 @@ export const Users: React.FC<{
  <div className="flex items-center gap-1">
  <button
  onClick={() => { setEditingUser(user); setShowUserModal(true); }}
- className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+ className="tap-target p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
  title="Editar"
  >
  <Edit className="h-4 w-4" />
  </button>
  <button
  onClick={() => handleSetPasswordForUser(user)}
- className="p-1.5 text-content-secondary hover:bg-surface-base rounded"
+ className="tap-target p-1.5 text-content-secondary hover:bg-surface-base rounded"
  title="Definir senha"
  >
  <Lock className="h-4 w-4" />
@@ -783,7 +783,7 @@ export const Users: React.FC<{
  <button
  onClick={() => handleDeleteUser(user.id)}
  disabled={isSubmitting}
- className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded disabled:opacity-50"
+ className="tap-target p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded disabled:opacity-50"
  title="Apagar"
  >
  <Trash2 className="h-4 w-4" />
@@ -857,9 +857,9 @@ export const Users: React.FC<{
  )}
  {canManageUsers(currentUser) && (
  <div className="flex gap-1 ml-auto">
- <button onClick={() => { setEditingUser(user); setShowUserModal(true); }} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Editar"><Edit className="h-4 w-4" /></button>
- <button onClick={() => handleSetPasswordForUser(user)} className="p-1 text-content-secondary hover:bg-surface-base rounded" title="Definir senha"><Lock className="h-4 w-4" /></button>
- {user.id !== currentUser?.id && <button onClick={() => handleDeleteUser(user.id)} disabled={isSubmitting} className="p-1 text-red-600 hover:bg-red-50 rounded disabled:opacity-50" title="Apagar"><Trash2 className="h-4 w-4" /></button>}
+ <button onClick={() => { setEditingUser(user); setShowUserModal(true); }} className="tap-target p-1 text-blue-600 hover:bg-blue-50 rounded" title="Editar"><Edit className="h-4 w-4" /></button>
+ <button onClick={() => handleSetPasswordForUser(user)} className="tap-target p-1 text-content-secondary hover:bg-surface-base rounded" title="Definir senha"><Lock className="h-4 w-4" /></button>
+ {user.id !== currentUser?.id && <button onClick={() => handleDeleteUser(user.id)} disabled={isSubmitting} className="tap-target p-1 text-red-600 hover:bg-red-50 rounded disabled:opacity-50" title="Apagar"><Trash2 className="h-4 w-4" /></button>}
  </div>
  )}
  </div>

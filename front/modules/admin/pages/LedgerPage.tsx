@@ -72,7 +72,7 @@ function AddAccountModal({ onClose, onCreated, showToast }: { onClose: () => voi
       <div className="relative bg-surface-raised rounded-2xl shadow-2xl w-full max-w-md border border-border-default p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-bold text-content-primary">Nova Conta</h2>
-          <button onClick={onClose} className="p-2 rounded-lg text-content-muted hover:bg-surface-base"><X className="w-4 h-4" /></button>
+          <button aria-label="Fechar" onClick={onClose} className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base"><X className="w-4 h-4" /></button>
         </div>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -140,7 +140,7 @@ function ManualEntryModal({ accounts, onClose, onCreated, showToast }: { account
       <div className="relative bg-surface-raised rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border-default">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-default sticky top-0 bg-surface-raised z-10">
           <h2 className="font-bold text-content-primary flex items-center gap-2"><BookOpen className="w-5 h-5 text-content-muted" />Novo Lançamento Manual</h2>
-          <button onClick={onClose} className="p-2 rounded-lg text-content-muted hover:bg-surface-base"><X className="w-5 h-5" /></button>
+          <button aria-label="Fechar" onClick={onClose} className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base"><X className="w-5 h-5" /></button>
         </div>
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -188,7 +188,7 @@ function ManualEntryModal({ accounts, onClose, onCreated, showToast }: { account
                         <input type="number" min={0} step={0.01} value={l.credit || ''} onChange={e => setLine(i, 'credit', Number(e.target.value))} className="w-full px-2 py-1.5 rounded-lg border border-border-default bg-surface-base text-xs text-right focus:ring-2 focus:ring-brand-500 focus:outline-none text-content-primary" />
                       </td>
                       <td className="px-2 py-2">
-                        {lines.length > 2 && <button onClick={() => removeLine(i)} className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><X className="w-3 h-3" /></button>}
+                        {lines.length > 2 && <button aria-label="Remover" onClick={() => removeLine(i)} className="tap-target p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><X className="w-3 h-3" /></button>}
                       </td>
                     </tr>
                   ))}
@@ -284,7 +284,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
     <PageShell title="Razão Geral" description="Demonstrações financeiras e plano de contas"
       actions={
         <div className="flex items-center gap-2">
-          <button onClick={load} className="p-2 rounded-lg text-content-muted hover:bg-surface-base" title="Actualizar">
+          <button onClick={load} className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base" title="Actualizar">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>

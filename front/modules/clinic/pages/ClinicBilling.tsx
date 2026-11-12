@@ -226,10 +226,10 @@ export function ClinicBilling({ showToast }: Props) {
                   <button onClick={() => toggleServiceActive(s)} title={s.isActive ? 'Desativar' : 'Ativar'} className="shrink-0 text-content-muted hover:text-brand-600">
                     {s.isActive ? <ToggleRight className="w-6 h-6 text-brand-600" /> : <ToggleLeft className="w-6 h-6" />}
                   </button>
-                  <button onClick={() => openEditService(s)} title="Editar" className="shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-surface-overlay">
+                  <button onClick={() => openEditService(s)} title="Editar" className="tap-target shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-surface-overlay">
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button onClick={() => deleteService(s)} title="Remover" className="shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
+                  <button onClick={() => deleteService(s)} title="Remover" className="tap-target shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -261,7 +261,7 @@ export function ClinicBilling({ showToast }: Props) {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="font-semibold text-content-primary">{fmtMT(inv.total)}</span>
-                        <button onClick={() => downloadInvoicePdf(inv)} title="Baixar recibo em PDF" className="p-1.5 rounded-lg text-content-muted hover:bg-surface-overlay">
+                        <button onClick={() => downloadInvoicePdf(inv)} title="Baixar recibo em PDF" className="tap-target p-1.5 rounded-lg text-content-muted hover:bg-surface-overlay">
                           <Download className="w-4 h-4" />
                         </button>
                         {inv.status === 'pendente' && (
@@ -271,7 +271,7 @@ export function ClinicBilling({ showToast }: Props) {
                               Marcar como pago
                             </button>
                             <button onClick={() => setInvoiceStatus(inv, 'cancelado')} title="Cancelar"
-                              className="p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
+                              className="tap-target p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
                               <Ban className="w-4 h-4" />
                             </button>
                           </>
@@ -389,8 +389,8 @@ export function ClinicBilling({ showToast }: Props) {
                       <input type="number" min="1" value={it.quantity} onChange={e => setInvoiceItems(p => p.map((row, i) => i === idx ? { ...row, quantity: e.target.value } : row))}
                         className={inputCls + ' w-20'} />
                       <span className="text-sm text-content-muted w-24 text-right shrink-0">{svc ? fmtMT(svc.price * (Number(it.quantity) || 0)) : '—'}</span>
-                      <button onClick={() => setInvoiceItems(p => p.filter((_, i) => i !== idx))} disabled={invoiceItems.length === 1}
-                        className="p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 disabled:opacity-30">
+                      <button aria-label="Eliminar" onClick={() => setInvoiceItems(p => p.filter((_, i) => i !== idx))} disabled={invoiceItems.length === 1}
+                        className="tap-target p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 disabled:opacity-30">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>

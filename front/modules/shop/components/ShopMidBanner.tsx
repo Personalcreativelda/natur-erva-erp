@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -145,7 +146,7 @@ export const ShopMidBanner: React.FC<ShopMidBannerProps> = ({ isAdmin = false, p
         <div className="bg-surface-raised rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
           <div className="flex items-center justify-between p-5 border-b border-border-default">
             <h2 className="text-lg font-bold text-content-primary">Banner Promocional</h2>
-            <button onClick={() => setEditing(false)} className="p-2 text-content-muted hover:text-gray-600 hover:bg-surface-overlay rounded-lg">
+            <button aria-label="Fechar" onClick={() => setEditing(false)} className="tap-target p-2 text-content-muted hover:text-gray-600 hover:bg-surface-overlay rounded-lg">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -303,7 +304,7 @@ export const ShopMidBanner: React.FC<ShopMidBannerProps> = ({ isAdmin = false, p
 
   return (
     <section className="mt-2 sm:mt-6">
-      <div
+      <div tabIndex={0} onKeyDown={activateOnKey}
         className="banner-hero relative overflow-hidden cursor-pointer group flex items-center"
         style={{ backgroundColor: banner!.bgColor }}
         onClick={handleClick}

@@ -1,3 +1,5 @@
+import { activateOnKey } from '../../core/utils/a11y';
+import { loadJsPDF } from '../../core/utils/lazyLibs';
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sale, SaleItem, Product, Order, OrderStatus, SaleType } from '../../core/types/types';
@@ -11,7 +13,6 @@ import { PageShell } from '../../core/components/layout/PageShell';
 import { FilterBar, SearchInput, ViewModeToggle, ItemsPerPageSelect, SelectFilter } from '../../core/components/filters';
 import { PeriodFilter, PeriodOption } from '../../core/components/forms/PeriodFilter';
 import { useMobile } from '../../core/hooks/useMobile';
-import jsPDF from 'jspdf';
 import { createWorkbook, addWorksheet, addJsonToSheetAt, writeWorkbookToFile, readWorkbookToCsv } from '../../core/services/excelService';
 import { addPDFHeader, addPDFFooter, getBrandColors, addExcelHeader, formatExcelTableHeaders, formatExcelDataCells, addExcelFooter } from '../../core/services/reportService';
 import { formatDateTime, formatDateOnly, formatDateWithOptions, getTodayDateString, toDateStringInTimezone } from '../../core/utils/dateUtils';
@@ -340,6 +341,7 @@ export const Sales: React.FC<SalesProps> = ({
  try {
  showToast('Gerando PDF...', 'info');
  
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('p', 'mm', 'a4');
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -1639,7 +1641,7 @@ export const Sales: React.FC<SalesProps> = ({
  };
  });
 
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Vendas');
 
  const headerRow = await addExcelHeader(ws, 'Gestão de Vendas', {
@@ -1690,6 +1692,7 @@ export const Sales: React.FC<SalesProps> = ({
  const startStr = toDateStringInTimezone(start);
  const endStr = toDateStringInTimezone(end);
 
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape para mais espaço
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -1879,7 +1882,7 @@ export const Sales: React.FC<SalesProps> = ({
  'Clientes': item.customers.map(c => c.name).join(', '),
  'Última Venda': formatDateOnly(item.lastSaleDate)
  }));
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Vendas por Produto');
  const headerRow = await addExcelHeader(ws, 'Vendas por Produto', { period: periodLabel, filters, startRow: 0 });
  const headers = ['Produto', 'Variação', 'Quantidade Total', 'Valor Total', 'Nº Vendas', 'Clientes', 'Última Venda'];
@@ -1911,6 +1914,7 @@ export const Sales: React.FC<SalesProps> = ({
  const startStr = toDateStringInTimezone(start);
  const endStr = toDateStringInTimezone(end);
  const periodLabel = `${formatDateOnly(start)} a ${formatDateOnly(end)}`;
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('p', 'mm', 'a4');
  const margin = 15;
  const colors = getBrandColors();
@@ -2124,7 +2128,7 @@ export const Sales: React.FC<SalesProps> = ({
  setFilterSaleType('ALL');
  setCurrentPage(1);
  }}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  title="Limpar filtros"
  >
  <X className="w-3 h-3" />
@@ -2162,9 +2166,9 @@ export const Sales: React.FC<SalesProps> = ({
  <div className="sticky top-[60px] z-20 bg-surface-raised rounded-xl shadow-lg border border-border-default p-4 mb-4">
  <div className="flex items-center justify-between mb-4">
  <h4 className="text-sm font-semibold text-content-primary">Filtros</h4>
- <button
+ <button aria-label="Fechar"
  onClick={() => setShowFilters(false)}
- className="p-1 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-1 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-4 h-4 text-content-muted" />
  </button>
@@ -2270,7 +2274,7 @@ export const Sales: React.FC<SalesProps> = ({
  const isSelected = selectedSaleIds.includes(sale.id);
  
  return (
- <div
+ <div tabIndex={0} onKeyDown={activateOnKey}
  key={sale.id}
  className={`bg-surface-raised rounded-lg p-4 shadow-sm border-2 transition-all cursor-pointer ${
  isSelected 
@@ -2298,7 +2302,7 @@ export const Sales: React.FC<SalesProps> = ({
  setViewingSale(sale);
  setIsViewModalOpen(true);
  }}
- className="p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+ className="tap-target p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
  title="Visualizar resumo"
  >
  <Eye className="w-4 h-4" />
@@ -2309,7 +2313,7 @@ export const Sales: React.FC<SalesProps> = ({
  e.stopPropagation();
  handleEditSale(sale);
  }}
- className="p-1 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded transition-colors"
+ className="tap-target p-1 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded transition-colors"
  title="Editar resumo"
  >
  <Edit2 className="w-4 h-4" />
@@ -2321,7 +2325,7 @@ export const Sales: React.FC<SalesProps> = ({
  e.stopPropagation();
  handleDeleteSale(sale.id);
  }}
- className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+ className="tap-target p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
  title="Apagar resumo"
  >
  <Trash2 className="w-4 h-4" />
@@ -2482,7 +2486,7 @@ export const Sales: React.FC<SalesProps> = ({
  const isSelected = selectedSaleIds.includes(sale.id);
  
  return (
- <tr
+ <tr tabIndex={0} onKeyDown={activateOnKey}
  key={sale.id}
  className={`hover:bg-surface-base/50 transition-colors cursor-pointer ${
  isSelected ? 'bg-brand-50 dark:bg-brand-600/20' : ''
@@ -2562,7 +2566,7 @@ export const Sales: React.FC<SalesProps> = ({
  setViewingSale(sale);
  setIsViewModalOpen(true);
  }}
- className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+ className="tap-target p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
  title="Visualizar resumo"
  >
  <Eye className="w-4 h-4" />
@@ -2570,7 +2574,7 @@ export const Sales: React.FC<SalesProps> = ({
  {onUpdateSale && (
  <button
  onClick={() => handleEditSale(sale)}
- className="p-1.5 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded transition-colors"
+ className="tap-target p-1.5 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded transition-colors"
  title="Editar resumo"
  >
  <Edit2 className="w-4 h-4" />
@@ -2579,7 +2583,7 @@ export const Sales: React.FC<SalesProps> = ({
  {onDeleteSale && (
  <button
  onClick={() => handleDeleteSale(sale.id)}
- className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+ className="tap-target p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
  title="Apagar resumo"
  >
  <Trash2 className="w-4 h-4" />
@@ -2707,20 +2711,20 @@ export const Sales: React.FC<SalesProps> = ({
  {/* Pagination */}
  {totalPages > 1 && (
  <div className="flex items-center justify-center gap-2">
- <button
+ <button aria-label="Página anterior"
  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
  disabled={currentPage === 1}
- className="p-2 border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
+ className="tap-target p-2 border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
  >
  <ChevronLeft className="w-4 h-4" />
  </button>
  <span className="px-4 py-2 text-sm text-content-secondary">
  Página {currentPage} de {totalPages}
  </span>
- <button
+ <button aria-label="Página seguinte"
  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
  disabled={currentPage === totalPages}
- className="p-2 border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
+ className="tap-target p-2 border border-border-default rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-base"
  >
  <ChevronRight className="w-4 h-4" />
  </button>
@@ -2875,7 +2879,7 @@ export const Sales: React.FC<SalesProps> = ({
  </div>
  </td>
  <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
- <button onClick={() => { setSelectedProductForHistory(item); setIsProductHistoryModalOpen(true); }} className="p-1.5 text-content-muted hover:text-brand-600 transition-colors" title="Ver histórico"><Eye className="w-4 h-4" /></button>
+ <button onClick={() => { setSelectedProductForHistory(item); setIsProductHistoryModalOpen(true); }} className="tap-target p-1.5 text-content-muted hover:text-brand-600 transition-colors" title="Ver histórico"><Eye className="w-4 h-4" /></button>
  </td>
  </tr>
  ))}
@@ -2937,11 +2941,11 @@ export const Sales: React.FC<SalesProps> = ({
 
  {productSalesTotalPages > 1 && (
  <div className="mt-4 flex justify-center gap-2">
- <button onClick={() => setProductCurrentPage(p => Math.max(1, p - 1))} disabled={productCurrentPage === 1} className="px-3 py-1.5 border border-border-default rounded-lg text-sm font-medium text-content-secondary hover:bg-surface-base disabled:opacity-50">
+ <button aria-label="Página anterior" onClick={() => setProductCurrentPage(p => Math.max(1, p - 1))} disabled={productCurrentPage === 1} className="tap-target px-3 py-1.5 border border-border-default rounded-lg text-sm font-medium text-content-secondary hover:bg-surface-base disabled:opacity-50">
  <ChevronLeft className="w-4 h-4 inline" />
  </button>
  <span className="px-3 py-1.5 text-sm text-content-secondary">Página {productCurrentPage} de {productSalesTotalPages}</span>
- <button onClick={() => setProductCurrentPage(p => Math.min(productSalesTotalPages, p + 1))} disabled={productCurrentPage === productSalesTotalPages} className="px-3 py-1.5 border border-border-default rounded-lg text-sm font-medium text-content-secondary hover:bg-surface-base disabled:opacity-50">
+ <button aria-label="Página seguinte" onClick={() => setProductCurrentPage(p => Math.min(productSalesTotalPages, p + 1))} disabled={productCurrentPage === productSalesTotalPages} className="tap-target px-3 py-1.5 border border-border-default rounded-lg text-sm font-medium text-content-secondary hover:bg-surface-base disabled:opacity-50">
  <ChevronRight className="w-4 h-4 inline" />
  </button>
  </div>
@@ -2958,9 +2962,9 @@ export const Sales: React.FC<SalesProps> = ({
  <h2 className="text-2xl font-bold text-content-primary">
  {isEditing ? 'Editar Resumo de Venda' : 'Novo Resumo de Venda'}
  </h2>
- <button
+ <button aria-label="Fechar"
  onClick={resetModal}
- className="p-2 text-content-muted hover:text-content-secondary dark:hover:text-content-muted rounded-lg transition-colors"
+ className="tap-target p-2 text-content-muted hover:text-content-secondary dark:hover:text-content-muted rounded-lg transition-colors"
  >
  <X className="w-5 h-5" />
  </button>
@@ -3146,9 +3150,9 @@ export const Sales: React.FC<SalesProps> = ({
  <div className="font-medium text-content-primary">{item.productName}</div>
  <div className="text-xs text-content-muted">{item.unit}</div>
  </div>
- <button
+ <button aria-label="Eliminar"
  onClick={() => handleRemoveItem(item.productId!)}
- className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+ className="tap-target p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
  >
  <Trash2 className="w-4 h-4" />
  </button>
@@ -3567,7 +3571,7 @@ export const Sales: React.FC<SalesProps> = ({
  onClick={() => {
  setSpreadsheetUrl('');
  }}
- className="px-3 py-2 text-content-muted hover:text-content-secondary dark:text-content-muted "
+ className="tap-target px-3 py-2 text-content-muted hover:text-content-secondary dark:text-content-muted "
  title="Limpar URL"
  >
  <X className="w-5 h-5" />
@@ -3876,9 +3880,9 @@ export const Sales: React.FC<SalesProps> = ({
  </button>
  </>
  )}
- <button
+ <button aria-label="Fechar"
  onClick={() => { setIsViewModalOpen(false); setViewingSale(null); }}
- className="text-content-muted hover:text-content-secondary dark:hover:text-content-muted"
+ className="tap-target text-content-muted hover:text-content-secondary dark:hover:text-content-muted"
  >
  <X className="w-6 h-6" />
  </button>
@@ -4079,7 +4083,7 @@ export const Sales: React.FC<SalesProps> = ({
  <div className="bg-surface-raised rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
  <div className="p-6 border-b border-border-default flex justify-between items-center flex-shrink-0">
  <h2 className="text-xl font-bold text-content-primary">Histórico de vendas: {selectedProductForHistory.productName}{selectedProductForHistory.variant ? ` (${selectedProductForHistory.variant})` : ''}</h2>
- <button onClick={() => { setIsProductHistoryModalOpen(false); setSelectedProductForHistory(null); }} className="p-2 text-content-muted hover:text-content-secondary dark:hover:text-content-muted rounded-lg transition-colors">
+ <button aria-label="Fechar" onClick={() => { setIsProductHistoryModalOpen(false); setSelectedProductForHistory(null); }} className="tap-target p-2 text-content-muted hover:text-content-secondary dark:hover:text-content-muted rounded-lg transition-colors">
  <X className="w-5 h-5" />
  </button>
  </div>

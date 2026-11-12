@@ -161,8 +161,8 @@ export function Subscriptions({ showToast }: Props) {
                       <p className="text-xs text-content-muted">{p.description}</p>
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => { setEditing(p); setPlanForm({ name: p.name, description: p.description||'', price: String(p.price), billing_cycle: p.billing_cycle, features: (p.features||[]).join('\n'), status: p.status }); setModal('plan'); }} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><Pencil className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => deletePlan(p.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                      <button aria-label="Editar" onClick={() => { setEditing(p); setPlanForm({ name: p.name, description: p.description||'', price: String(p.price), billing_cycle: p.billing_cycle, features: (p.features||[]).join('\n'), status: p.status }); setModal('plan'); }} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><Pencil className="w-3.5 h-3.5" /></button>
+                      <button aria-label="Eliminar" onClick={() => deletePlan(p.id)} className="tap-target p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
                   <p className="text-2xl font-bold text-content-primary">{fmt(p.price)}<span className="text-sm font-normal text-content-muted">/{CYCLE_LABELS[p.billing_cycle]?.toLowerCase()}</span></p>
@@ -219,7 +219,7 @@ export function Subscriptions({ showToast }: Props) {
           <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-md animate-modal-enter">
             <div className="flex items-center justify-between p-5 border-b border-border-default">
               <h3 className="font-semibold text-content-primary">Nova Assinatura</h3>
-              <button onClick={() => setModal(null)} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
+              <button aria-label="Fechar" onClick={() => setModal(null)} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
@@ -274,7 +274,7 @@ export function Subscriptions({ showToast }: Props) {
           <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-md animate-modal-enter">
             <div className="flex items-center justify-between p-5 border-b border-border-default">
               <h3 className="font-semibold text-content-primary">{editing ? 'Editar Plano' : 'Novo Plano'}</h3>
-              <button onClick={() => { setModal(null); setEditing(null); }} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
+              <button aria-label="Fechar" onClick={() => { setModal(null); setEditing(null); }} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>

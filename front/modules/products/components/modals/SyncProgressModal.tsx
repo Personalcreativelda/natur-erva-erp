@@ -35,10 +35,10 @@ export const SyncProgressModal: React.FC<SyncProgressModalProps> = ({
  <h3 className="text-xl font-bold text-content-primary">Sincronizando Stock</h3>
  </div>
  {isComplete && (
- <button
+ <button aria-label="Fechar"
  type="button"
  onClick={onClose}
- className="text-content-muted hover:text-content-secondary "
+ className="tap-target text-content-muted hover:text-content-secondary "
  >
  <X className="w-5 h-5" />
  </button>

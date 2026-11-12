@@ -83,7 +83,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
  <button
  type="button"
  onClick={handleClear}
- className={`absolute right-1.5 top-1/2 -translate-y-1/2 text-content-muted hover:text-content-primary ${
+ className={`tap-target absolute right-1.5 top-1/2 -translate-y-1/2 text-content-muted hover:text-content-primary ${
  isCompact ? 'p-1' : 'p-1'
  }`}
  aria-label="Limpar pesquisa"

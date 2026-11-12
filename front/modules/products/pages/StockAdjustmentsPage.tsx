@@ -362,7 +362,7 @@ export const StockAdjustmentsPage: React.FC<StockAdjustmentsPageProps> = ({ prod
  {hasActiveFilters && (
  <button
  onClick={clearFilters}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default dark:border-border-strong rounded text-content-secondary dark:text-content-secondary hover:bg-surface-base dark:hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default dark:border-border-strong rounded text-content-secondary dark:text-content-secondary hover:bg-surface-base dark:hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  title={t.common.clearFilters ?? 'Limpar filtros'}
  >
  <X className="w-3 h-3" />
@@ -528,7 +528,7 @@ export const StockAdjustmentsPage: React.FC<StockAdjustmentsPageProps> = ({ prod
  {isSuperAdmin && (
  <button
  onClick={() => { setEditingAdjustment(adj); setShowCreateModal(true); }}
- className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+ className="tap-target p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
  title={t.common.edit || 'Editar'}
  >
  <Edit className="w-4 h-4" />

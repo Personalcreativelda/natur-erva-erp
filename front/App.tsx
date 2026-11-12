@@ -25,6 +25,7 @@ const Users = lazy(() => import('./modules/admin/pages/Users').then(m => ({ defa
 const Roles = lazy(() => import('./modules/admin/pages/Roles').then(m => ({ default: m.Roles })));
 const UserProfile = lazy(() => import('./modules/core/pages/UserProfile').then(m => ({ default: m.UserProfile })));
 import { ProtectedRoute } from './modules/auth/components/ProtectedRoute';
+import { isClientUser } from './modules/core/hooks/useUserPermissions';
 import { TrackedPage } from './modules/auth/components/TrackedPage';
 const Media = lazy(() => import('./modules/media/pages/Media').then(m => ({ default: m.Media })));
 const Tracking = lazy(() => import('./modules/admin/pages/Tracking').then(m => ({ default: m.Tracking })));
@@ -150,6 +151,16 @@ const AboutUsWithLoginPrompt: React.FC<{
 // Auth / Layout - lazy
 const Login = lazy(() => import('./modules/auth/pages/Login').then(m => ({ default: m.Login })));
 import { CompatibilityRedirect } from './components/CompatibilityRedirect';
+import { MobileShell } from './modules/core/mobile/MobileShell';
+
+// Marca <html data-area="admin|shop"> para o CSS global (ex.: esconder o chat da loja no admin)
+const AreaMarker: React.FC = () => {
+  const { pathname } = useRouterLocation();
+  useEffect(() => {
+    document.documentElement.dataset.area = pathname.startsWith('/admin') ? 'admin' : 'shop';
+  }, [pathname]);
+  return null;
+};
 const PublicLayout = lazy(() => import('./components/layouts/PublicLayout').then(m => ({ default: m.PublicLayout })));
 const AdminLayout = lazy(() => import('./components/layouts/AdminLayout').then(m => ({ default: m.AdminLayout })));
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -327,7 +338,8 @@ const App = () => {
 
   useEffect(() => {
     if (currentUser) {
-      loadData();
+      // Clientes da loja não usam os dados de administração — não descarregar tudo
+      if (!isClientUser(currentUser)) loadData();
       // Re-apply theme after login: invalidate cache so we get fresh settings with auth
       invalidateLogoCache();
       getSystemSettings().then(settings => {
@@ -354,9 +366,6 @@ const App = () => {
     const id = w.requestIdleCallback ? w.requestIdleCallback(prefetch, { timeout: 4000 }) : setTimeout(prefetch, 2500);
     return () => (w.cancelIdleCallback ? w.cancelIdleCallback(id) : clearTimeout(id));
   }, [currentUser, hasLoadedOnce]);
-
-  // AppDataLoader: recarregamento por mudança de local desativado (sistema de uma única loja).
-  const AppDataLoader: React.FC<{ onLoadData: () => void }> = () => null;
 
   const handlers = useAppDataHandlers({
     orders,
@@ -478,8 +487,9 @@ const App = () => {
             onLogout={handleLogout}
           />
         )}
-        <AppDataLoader onLoadData={loadData} />
         <CompatibilityRedirect />
+        <AreaMarker />
+        <MobileShell />
         <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
           {currentUser ? (

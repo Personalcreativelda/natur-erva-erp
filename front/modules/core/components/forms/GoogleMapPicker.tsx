@@ -390,14 +390,14 @@ export const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
  className="w-full pl-10 pr-4 py-2 border-2 border-border-default rounded-lg bg-surface-raised text-content-primary placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
  />
  {searchQuery && (
- <button
+ <button aria-label="Limpar pesquisa"
  onClick={() => {
  setSearchQuery('');
  setSelectedLocation(null);
  setMarkerPosition(null);
  setInfoWindowOpen(false);
  }}
- className="absolute right-3 top-1/2 transform -translate-y-1/2 text-content-muted hover:text-content-secondary "
+ className="tap-target absolute right-3 top-1/2 transform -translate-y-1/2 text-content-muted hover:text-content-secondary "
  >
  <X className="h-4 w-4" />
  </button>

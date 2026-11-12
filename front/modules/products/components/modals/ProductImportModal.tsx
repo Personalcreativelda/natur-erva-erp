@@ -1,5 +1,6 @@
+import { activateOnKey } from '../../../core/utils/a11y';
+import { loadExcelJS } from '../../../core/utils/lazyLibs';
 ﻿import React, { useRef, useState } from 'react';
-import ExcelJS from 'exceljs';
 import { Upload, Download, X, CheckCircle, AlertCircle, FileSpreadsheet, ChevronRight } from 'lucide-react';
 import { getApiToken } from '../../../core/services/apiClient';
 
@@ -116,6 +117,7 @@ const EXAMPLE_ROWS: ImportRow[] = [
 // ── Gerar template Excel ──────────────────────────────────────────────────────
 
 async function downloadTemplate() {
+ const ExcelJS = await loadExcelJS();
  const wb = new ExcelJS.Workbook();
 
  // ── Folha principal ─────────────────────────────────────────────────────────
@@ -223,6 +225,7 @@ async function downloadTemplate() {
 
 async function parseExcelFile(file: File): Promise<ImportRow[]> {
  const buffer = await file.arrayBuffer();
+ const ExcelJS = await loadExcelJS();
  const wb = new ExcelJS.Workbook();
  await wb.xlsx.load(buffer);
 
@@ -370,7 +373,7 @@ export const ProductImportModal: React.FC<Props> = ({ open, onClose, onSuccess, 
  </p>
  </div>
  </div>
- <button onClick={handleClose} className="p-2 rounded-lg hover:bg-surface-base transition-colors">
+ <button aria-label="Fechar" onClick={handleClose} className="tap-target p-2 rounded-lg hover:bg-surface-base transition-colors">
  <X className="w-5 h-5 text-content-muted" />
  </button>
  </div>
@@ -411,7 +414,7 @@ export const ProductImportModal: React.FC<Props> = ({ open, onClose, onSuccess, 
  {/* Upload zone */}
  <div>
  <h3 className="font-semibold text-content-primary mb-3">2. Carregue a Planilha Preenchida</h3>
- <div
+ <div tabIndex={0} onKeyDown={activateOnKey}
  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
  onDragLeave={() => setDragOver(false)}
  onDrop={handleDrop}

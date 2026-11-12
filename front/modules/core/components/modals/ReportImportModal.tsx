@@ -191,7 +191,7 @@ export const ReportImportModal: React.FC<ReportImportModalProps> = ({
  <h3 className="text-xl font-bold text-content-primary">Importar Relatório de Clientes</h3>
  <p className="text-sm text-content-muted mt-1">Cole o relatório e o sistema identificará automaticamente os clientes</p>
  </div>
- <button onClick={onClose} className="text-content-muted hover:text-content-secondary ">
+ <button aria-label="Fechar" onClick={onClose} className="tap-target text-content-muted hover:text-content-secondary ">
  <X className="w-6 h-6" />
  </button>
  </div>

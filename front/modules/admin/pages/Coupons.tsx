@@ -187,7 +187,7 @@ export const Coupons: React.FC<{
  </td>
  <td className="px-4 py-3 text-right">
  <div className="flex items-center justify-end gap-2">
- <button onClick={() => openEdit(c)} className="p-1.5 rounded hover:bg-surface-raised text-content-secondary hover:text-content-primary transition-colors">
+ <button aria-label="Editar" onClick={() => openEdit(c)} className="tap-target p-1.5 rounded hover:bg-surface-raised text-content-secondary hover:text-content-primary transition-colors">
  <Edit className="w-4 h-4" />
  </button>
  <button
@@ -212,7 +212,7 @@ export const Coupons: React.FC<{
  <div className="bg-surface-overlay rounded-2xl w-full max-w-lg shadow-2xl border border-border-default max-h-[90vh] overflow-y-auto">
  <div className="flex items-center justify-between p-6 border-b border-border-default">
  <h2 className="text-lg font-semibold">{editing ? 'Editar Cupão' : 'Novo Cupão'}</h2>
- <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-surface-raised text-content-muted"><X className="w-5 h-5" /></button>
+ <button aria-label="Fechar" onClick={() => setShowModal(false)} className="tap-target p-2 rounded-lg hover:bg-surface-raised text-content-muted"><X className="w-5 h-5" /></button>
  </div>
  <form onSubmit={handleSave} className="p-6 space-y-4">
  <div className="grid grid-cols-2 gap-4">

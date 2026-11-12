@@ -87,16 +87,21 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
     setCurrent(Math.max(0, Math.min(index, slides.length - 1)));
   }, [slides.length]);
 
-  // Auto-advance
+  // Auto-advance — pausa com o rato/foco por cima (WCAG 2.2.2), pára de vez após
+  // navegação manual, e não arranca se o utilizador pediu movimento reduzido
+  const [paused, setPaused] = useState(false);
+  const [stopped, setStopped] = useState(
+    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  );
   useEffect(() => {
-    if (slides.length <= 1) return;
+    if (slides.length <= 1 || paused || stopped) return;
     autoRef.current = setInterval(() => {
       setCurrent(c => (c + 1) % slides.length);
     }, 5000);
     return () => { if (autoRef.current) clearInterval(autoRef.current); };
-  }, [slides.length]);
+  }, [slides.length, paused, stopped]);
 
-  const stopAuto = () => { if (autoRef.current) clearInterval(autoRef.current); };
+  const stopAuto = () => { if (autoRef.current) clearInterval(autoRef.current); setStopped(true); };
 
   const handleSlideClick = (slide: BannerConfig) => {
     if (slide.productSlug) {
@@ -220,6 +225,11 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
       {/* ── Slider ───────────────────────────────────────────────── */}
       <section
         className="banner-hero relative overflow-hidden"
+        aria-roledescription="carrossel"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onFocusCapture={() => setPaused(true)}
+        onBlurCapture={() => setPaused(false)}
         // Deslizar com o dedo (antes só havia setas, que no mobile tapavam o texto)
         onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
         onTouchEnd={e => {
@@ -294,15 +304,15 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
         {/* Setas */}
         {slides.length > 1 && (
           <>
-            <button
+            <button aria-label="Slide anterior"
               onClick={() => { stopAuto(); goTo(current - 1 < 0 ? slides.length - 1 : current - 1); }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full hidden md:flex items-center justify-center text-white transition-colors z-10"
+              className="tap-target absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full hidden md:flex items-center justify-center text-white transition-colors z-10"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <button
+            <button aria-label="Slide seguinte"
               onClick={() => { stopAuto(); goTo((current + 1) % slides.length); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full hidden md:flex items-center justify-center text-white transition-colors z-10"
+              className="tap-target absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full hidden md:flex items-center justify-center text-white transition-colors z-10"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -347,7 +357,7 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
                 <Settings className="w-5 h-5 text-green-600" />
                 Gerir Slides do Banner
               </h2>
-              <button onClick={() => setManaging(false)} className="p-2 text-content-muted hover:text-gray-600 hover:bg-surface-overlay rounded-lg">
+              <button aria-label="Fechar" onClick={() => setManaging(false)} className="tap-target p-2 text-content-muted hover:text-gray-600 hover:bg-surface-overlay rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -374,16 +384,16 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
                     </div>
 
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <button onClick={() => moveSlide(i, -1)} disabled={i === 0} className="p-1.5 text-content-muted hover:text-gray-600 disabled:opacity-30 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+                      <button aria-label="Mover para cima" onClick={() => moveSlide(i, -1)} disabled={i === 0} className="tap-target p-1.5 text-content-muted hover:text-gray-600 disabled:opacity-30 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
                         <GripVertical className="w-4 h-4 rotate-90" />
                       </button>
-                      <button onClick={() => moveSlide(i, 1)} disabled={i === slides.length - 1} className="p-1.5 text-content-muted hover:text-gray-600 disabled:opacity-30 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+                      <button aria-label="Mover para baixo" onClick={() => moveSlide(i, 1)} disabled={i === slides.length - 1} className="tap-target p-1.5 text-content-muted hover:text-gray-600 disabled:opacity-30 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
                         <GripVertical className="w-4 h-4 -rotate-90" />
                       </button>
-                      <button onClick={() => { openEdit(slide); setManaging(false); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg">
+                      <button aria-label="Editar slide" onClick={() => { openEdit(slide); setManaging(false); }} className="tap-target p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg">
                         <Pencil className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(slide.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
+                      <button aria-label="Eliminar slide" onClick={() => handleDelete(slide.id)} className="tap-target p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -417,7 +427,7 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
               <h2 className="text-lg font-bold text-content-primary">
                 {isNew ? 'Novo Slide' : 'Editar Slide'}
               </h2>
-              <button onClick={() => setEditing(null)} className="p-2 text-content-muted hover:text-gray-600 hover:bg-surface-overlay rounded-lg">
+              <button aria-label="Fechar" onClick={() => setEditing(null)} className="tap-target p-2 text-content-muted hover:text-gray-600 hover:bg-surface-overlay rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>

@@ -135,7 +135,7 @@ export const Blog: React.FC<{ showToast: (m: string, t: 'success' | 'error' | 'i
  <h2 className="text-lg font-semibold text-content-primary">
  {editing ? 'Editar Post' : 'Novo Post'}
  </h2>
- <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-surface-base text-content-muted">
+ <button aria-label="Fechar" onClick={() => setShowForm(false)} className="tap-target p-1.5 rounded-lg hover:bg-surface-base text-content-muted">
  <X className="w-5 h-5" />
  </button>
  </div>
@@ -148,8 +148,8 @@ export const Blog: React.FC<{ showToast: (m: string, t: 'success' | 'error' | 'i
  {coverPreview ? (
  <div className="relative w-32 h-20 rounded-xl overflow-hidden border border-border-default flex-shrink-0">
  <img src={coverPreview} alt="" className="w-full h-full object-cover" />
- <button type="button" onClick={() => { setCoverPreview(''); setForm(f => ({ ...f, coverImageData: '' })); }}
- className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5">
+ <button aria-label="Remover imagem" type="button" onClick={() => { setCoverPreview(''); setForm(f => ({ ...f, coverImageData: '' })); }}
+ className="tap-target absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5">
  <X className="w-3 h-3" />
  </button>
  </div>
@@ -285,7 +285,7 @@ export const Blog: React.FC<{ showToast: (m: string, t: 'success' | 'error' | 'i
  <Globe className="w-3.5 h-3.5" />
  </a>
  <button onClick={() => openEdit(post)}
- className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors" title="Editar">
+ className="tap-target p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors" title="Editar">
  <Edit2 className="w-3.5 h-3.5" />
  </button>
  <button onClick={() => handleDelete(post.id)} disabled={deletingId === post.id}

@@ -322,10 +322,10 @@ export const CreateMovementModal: React.FC<CreateMovementModalProps> = ({
  )}
  </div>
  <div className="flex items-center gap-2">
- <button
+ <button aria-label="Diminuir quantidade"
  type="button"
  onClick={() => handleUpdateItem(index, { quantity: item.quantity - 1 })}
- className="p-1 text-content-secondary hover:bg-surface-base rounded"
+ className="tap-target p-1 text-content-secondary hover:bg-surface-base rounded"
  >
  <Minus className="w-4 h-4" />
  </button>
@@ -339,20 +339,20 @@ export const CreateMovementModal: React.FC<CreateMovementModalProps> = ({
  }}
  className="w-20 px-2 py-1 text-sm border border-border-default rounded text-center"
  />
- <button
+ <button aria-label="Aumentar quantidade"
  type="button"
  onClick={() => handleUpdateItem(index, { quantity: item.quantity + 1 })}
- className="p-1 text-content-secondary hover:bg-surface-base rounded"
+ className="tap-target p-1 text-content-secondary hover:bg-surface-base rounded"
  >
  <Plus className="w-4 h-4" />
  </button>
  <span className="text-xs text-content-muted w-12 text-right">
  {item.unit ?? 'un'}
  </span>
- <button
+ <button aria-label="Remover"
  type="button"
  onClick={() => handleRemoveItem(index)}
- className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+ className="tap-target p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
  >
  <X className="w-4 h-4" />
  </button>

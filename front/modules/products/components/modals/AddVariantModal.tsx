@@ -291,13 +291,13 @@ export const AddVariantModal: React.FC<AddVariantModalProps> = ({
  alt="Preview"
  className="w-32 h-32 object-cover rounded-lg border border-border-default"
  />
- <button
+ <button aria-label="Remover imagem"
  type="button"
  onClick={() => {
  setImagePreview(null);
  setImageFile(null);
  }}
- className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+ className="tap-target absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
  >
  <X className="w-3 h-3" />
  </button>

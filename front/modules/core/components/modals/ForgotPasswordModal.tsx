@@ -39,9 +39,9 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ onClos
  return (
  <ModalPortal open onClose={onClose} zIndex={10001} className="p-4">
  <div className="bg-surface-raised rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8 relative animate-scaleIn">
- <button
+ <button aria-label="Fechar"
  onClick={onClose}
- className="absolute top-4 right-4 text-content-muted hover:text-content-secondary transition-colors"
+ className="tap-target absolute top-4 right-4 text-content-muted hover:text-content-secondary transition-colors"
  >
  <X className="w-5 h-5" />
  </button>

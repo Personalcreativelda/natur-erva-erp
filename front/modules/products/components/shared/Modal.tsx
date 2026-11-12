@@ -62,7 +62,7 @@ export const Modal: React.FC<ModalProps> = ({
  <button
  type="button"
  onClick={onClose}
- className="text-content-muted hover:text-content-primary transition-colors"
+ className="tap-target text-content-muted hover:text-content-primary transition-colors"
  aria-label="Fechar"
  >
  <X className="w-6 h-6" />

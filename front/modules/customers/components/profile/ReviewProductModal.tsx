@@ -123,9 +123,9 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  <h2 className="text-2xl font-bold text-content-primary">
  Avaliar Produto
  </h2>
- <button
+ <button aria-label="Fechar"
  onClick={onClose}
- className="p-2 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-2 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-5 h-5 text-content-muted" />
  </button>
@@ -177,11 +177,11 @@ export const ReviewProductModal: React.FC<ReviewProductModalProps> = ({
  </label>
  <div className="flex items-center space-x-2">
  {[1, 2, 3, 4, 5].map(star => (
- <button
+ <button aria-label={`${star} estrela${star === 1 ? '' : 's'}`}
  key={star}
  type="button"
  onClick={() => setRating(star)}
- className={`transition-transform hover:scale-110 ${star <= rating
+ className={`tap-target transition-transform hover:scale-110 ${star <= rating
  ? 'text-yellow-400'
  : 'text-content-muted'
  }`}

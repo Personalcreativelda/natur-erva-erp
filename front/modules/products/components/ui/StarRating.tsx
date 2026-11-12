@@ -27,7 +27,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
  key={star}
  type="button"
  onClick={() => onChange?.(star)}
- className="p-0 border-0 bg-transparent leading-none cursor-pointer hover:scale-110 transition-transform"
+ className="tap-target p-0 border-0 bg-transparent leading-none cursor-pointer hover:scale-110 transition-transform"
  aria-label={`${star} estrela${star > 1 ? 's' : ''}`}
  >
  <Star

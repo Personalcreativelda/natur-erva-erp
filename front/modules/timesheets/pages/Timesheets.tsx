@@ -96,7 +96,7 @@ export function Timesheets({ showToast }: Props) {
                   <td className="py-3 px-3 text-content-secondary max-w-xs truncate">{e.description || '—'}</td>
                   <td className="py-3 px-3">{e.billable ? <span className="text-green-600 text-xs font-medium">Sim</span> : <span className="text-content-muted text-xs">Não</span>}</td>
                   <td className="py-3 px-3">
-                    <button onClick={() => del(e.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                    <button aria-label="Eliminar" onClick={() => del(e.id)} className="tap-target p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
               ))}
@@ -111,7 +111,7 @@ export function Timesheets({ showToast }: Props) {
           <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-md animate-modal-enter">
             <div className="flex items-center justify-between p-5 border-b border-border-default">
               <h3 className="font-semibold text-content-primary">Novo Registo de Horas</h3>
-              <button onClick={() => setModal(false)} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
+              <button aria-label="Fechar" onClick={() => setModal(false)} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">

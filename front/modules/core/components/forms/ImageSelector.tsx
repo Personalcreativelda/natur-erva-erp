@@ -236,9 +236,9 @@ export const ImageSelector: React.FC<ImageSelectorProps> = ({
  <h3 className="text-lg font-semibold text-content-primary">
  Selecionar da Galeria
  </h3>
- <button
+ <button aria-label="Fechar"
  onClick={() => setShowGallery(false)}
- className="p-2 hover:bg-surface-base rounded-lg transition-colors"
+ className="tap-target p-2 hover:bg-surface-base rounded-lg transition-colors"
  >
  <X className="w-5 h-5 text-content-muted" />
  </button>

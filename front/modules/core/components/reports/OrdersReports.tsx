@@ -1,3 +1,4 @@
+import { loadJsPDF, loadHtml2Canvas } from '../../utils/lazyLibs';
 ﻿import React, { useState, useMemo, useRef } from 'react';
 import { Order, OrdersReport } from '../../../core/types/types';
 import { 
@@ -20,8 +21,6 @@ import {
  Legend, 
  ResponsiveContainer
 } from 'recharts';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { addPDFHeader, addPDFFooter } from '../../../core/services/reportService';
 import { toDateStringInTimezone } from '../../../core/utils/dateUtils';
 
@@ -190,6 +189,7 @@ export const OrdersReports: React.FC<OrdersReportsProps> = ({ orders, showToast 
  const filename = `relatorio_pedidos_${startStr}_${endStr}.pdf`;
 
  const element = reportRef.current;
+ const html2canvas = await loadHtml2Canvas();
  const canvas = await html2canvas(element, {
  scale: 2,
  useCORS: true,
@@ -199,6 +199,7 @@ export const OrdersReports: React.FC<OrdersReportsProps> = ({ orders, showToast 
  });
 
  const imgData = canvas.toDataURL('image/png');
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('p', 'mm', 'a4');
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();

@@ -1,3 +1,4 @@
+import { loadJsPDF, loadHtml2Canvas } from '../utils/lazyLibs';
 ﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
  ReportCategory,
@@ -31,8 +32,6 @@ import {
  ChevronDown
 } from 'lucide-react';
 import { PeriodFilter, PeriodOption } from '../../core/components/forms/PeriodFilter';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { addPDFHeader, addPDFFooter } from '../../core/services/reportService';
 import { PageShell } from '../components/layout/PageShell';
 import { toDateStringInTimezone } from '../../core/utils/dateUtils';
@@ -481,6 +480,7 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
 
  // Capturar o elemento do relatório
  const element = reportRef.current;
+ const html2canvas = await loadHtml2Canvas();
  const canvas = await html2canvas(element, {
  scale: 2,
  useCORS: true,
@@ -492,6 +492,7 @@ export const Reports: React.FC<ReportsProps> = ({ showToast }) => {
  });
 
  const imgData = canvas.toDataURL('image/png');
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('p', 'mm', 'a4');
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();

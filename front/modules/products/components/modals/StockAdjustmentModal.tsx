@@ -348,9 +348,9 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
  {isEditMode ? 'Editar ajuste' : 'Ajuste de Stock'}
  </h2>
  </div>
- <button
+ <button aria-label="Fechar"
  onClick={onClose}
- className="p-1 hover:bg-surface-base rounded-lg transition-colors"
+ className="tap-target p-1 hover:bg-surface-base rounded-lg transition-colors"
  >
  <X className="w-5 h-5 text-content-muted" />
  </button>
@@ -426,7 +426,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
  <button
  type="button"
  onClick={() => handleUpdateItemQuantity(index, (line.quantity || 1) - 1)}
- className="p-1 text-content-secondary hover:bg-surface-base rounded"
+ className="tap-target p-1 text-content-secondary hover:bg-surface-base rounded"
  aria-label="Diminuir quantidade"
  >
  <Minus className="w-4 h-4" />
@@ -442,7 +442,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
  <button
  type="button"
  onClick={() => handleUpdateItemQuantity(index, (line.quantity || 0) + 1)}
- className="p-1 text-content-secondary hover:bg-surface-base rounded"
+ className="tap-target p-1 text-content-secondary hover:bg-surface-base rounded"
  aria-label="Aumentar quantidade"
  >
  <Plus className="w-4 h-4" />
@@ -453,7 +453,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
  <button
  type="button"
  onClick={() => handleRemoveItem(index)}
- className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+ className="tap-target p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
  aria-label="Remover item"
  >
  <X className="w-4 h-4" />

@@ -2,6 +2,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { AdminBottomNavigation } from './AdminBottomNavigation';
+import { RouteTransition } from '../../mobile/RouteTransition';
 
 import { User, UserRole } from '../../../core/types/types';
 import { X, LogOut, ChevronDown, User as UserIcon, Globe, LayoutDashboard, ShoppingCart, TrendingUp, Truck, Users, Package, ShoppingBag, BarChart3, Activity, FileText, ArrowLeftRight, Wallet, Repeat, Share2, Megaphone, Image, Tag, Ruler, List, ClipboardCheck, AlertTriangle, Scale, Shield, Boxes, Store, MapPin, CreditCard, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, RefreshCw, FolderOpen, HeartPulse } from 'lucide-react';
@@ -397,7 +398,7 @@ export const Layout: React.FC<LayoutProps> = ({
  onClick={() => {
  navigate('/admin');
  }}
- className="flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation"
+ className="tap-target flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-70 transition-opacity touch-manipulation"
  aria-label="Ir para o painel"
  >
  <Logo variant="full" width={128} height={36} className="h-9 w-auto max-w-[128px] object-contain" isDarkMode={isDarkMode} />
@@ -540,14 +541,14 @@ export const Layout: React.FC<LayoutProps> = ({
  setMobileMenuOpen(false);
  navigate('/admin');
  }}
- className="cursor-pointer hover:opacity-80 transition-opacity"
+ className="tap-target cursor-pointer hover:opacity-80 transition-opacity"
  aria-label="Ir para o painel"
  >
  <Logo width={140} height={40} className="h-10 w-auto max-w-[140px] object-contain" isDarkMode={isDarkMode} />
  </button>
  <button
  onClick={() => setMobileMenuOpen(false)}
- className="w-11 h-11 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-overlay active:scale-95 transition-all"
+ className="tap-target w-11 h-11 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-overlay active:scale-95 transition-all"
  aria-label="Fechar menu"
  >
  <X className="w-5 h-5" />
@@ -725,7 +726,7 @@ export const Layout: React.FC<LayoutProps> = ({
  className={`flex-1 min-w-0 p-4 md:p-8 ${activePage === 'shop' ? 'pt-0 pb-24' : 'admin-main-mobile md:pt-4'} md:pb-8 overflow-x-hidden text-content-primary transition-all duration-300`}
  style={{ marginLeft: (!isMobile && activePage !== 'shop') ? `${sidebarWidth}px` : '0' }}
  >
- {children}
+ <RouteTransition variant="fade">{children}</RouteTransition>
  </main>
 
  </div>

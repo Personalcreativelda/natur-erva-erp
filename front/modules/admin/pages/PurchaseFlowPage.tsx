@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageShell } from '../../core/components/layout/PageShell';
 import api from '../../core/services/apiClient';
@@ -87,7 +88,7 @@ export function PurchaseFlowPage({ showToast }: Props) {
             {t.label}
           </button>
         ))}
-        <button onClick={load} disabled={loading} className="ml-auto flex items-center gap-1.5 px-3 py-2 text-sm text-content-muted hover:text-content-primary transition-colors disabled:opacity-50">
+        <button aria-label="Atualizar" onClick={load} disabled={loading} className="tap-target ml-auto flex items-center gap-1.5 px-3 py-2 text-sm text-content-muted hover:text-content-primary transition-colors disabled:opacity-50">
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
@@ -155,7 +156,7 @@ function RequestsTab({ requests, onRefresh, showToast }: { requests: any[]; onRe
         const cfg = REQ_STATUS_CFG[r.status] || REQ_STATUS_CFG.pending;
         return (
           <div key={r.id} className="bg-surface-raised border border-border-default rounded-xl overflow-hidden">
-            <div className="flex items-center gap-3 px-5 py-4 cursor-pointer" onClick={() => setExpanded(isOpen ? null : r.id)}>
+            <div role="button" tabIndex={0} onKeyDown={activateOnKey} className="flex items-center gap-3 px-5 py-4 cursor-pointer" onClick={() => setExpanded(isOpen ? null : r.id)}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-sm text-content-primary">{r.requestedByName || 'Utilizador'}</span>
@@ -320,8 +321,8 @@ function OrdersTab({ purchases, suppliers, onRefresh, showToast }: { purchases: 
                 <input type="number" min="0" step="0.01" value={item.unitCost} onChange={e => setNewPO(p => { const items = [...p.items]; items[idx] = { ...items[idx], unitCost: Number(e.target.value) }; return { ...p, items }; })}
                   placeholder="Custo unit."
                   className="px-3 py-2 border border-border-default rounded-lg text-sm bg-surface-base text-content-primary focus:ring-2 focus:ring-brand-500 focus:outline-none" />
-                <button onClick={() => setNewPO(p => ({ ...p, items: p.items.filter((_, i) => i !== idx) }))}
-                  className="p-2 text-content-muted hover:text-red-600 transition-colors"><XCircle className="w-4 h-4" /></button>
+                <button aria-label="Remover" onClick={() => setNewPO(p => ({ ...p, items: p.items.filter((_, i) => i !== idx) }))}
+                  className="tap-target p-2 text-content-muted hover:text-red-600 transition-colors"><XCircle className="w-4 h-4" /></button>
               </div>
             ))}
             <button onClick={() => setNewPO(p => ({ ...p, items: [...p.items, { description: '', quantity: 1, unitCost: 0 }] }))}
@@ -345,7 +346,7 @@ function OrdersTab({ purchases, suppliers, onRefresh, showToast }: { purchases: 
             const isOpen = expanded === po.id;
             return (
               <div key={po.id} className="bg-surface-raised border border-border-default rounded-xl overflow-hidden">
-                <div className="flex items-center gap-3 px-5 py-4 cursor-pointer" onClick={() => setExpanded(isOpen ? null : po.id)}>
+                <div role="button" tabIndex={0} onKeyDown={activateOnKey} className="flex items-center gap-3 px-5 py-4 cursor-pointer" onClick={() => setExpanded(isOpen ? null : po.id)}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       {po.poNumber && <span className="font-mono text-sm font-semibold text-brand-600 dark:text-brand-400">{po.poNumber}</span>}
@@ -515,7 +516,7 @@ function ReceiveTab({ purchases, onRefresh, showToast }: { purchases: any[]; onR
         <div className="space-y-3">
           <p className="text-sm text-content-muted">{receivable.length} encomenda{receivable.length !== 1 ? 's' : ''} aguarda{receivable.length === 1 ? '' : 'm'} recepção</p>
           {receivable.map(po => (
-            <div key={po.id} className="flex items-center gap-3 px-5 py-4 bg-surface-raised border border-border-default rounded-xl cursor-pointer hover:border-brand-400 transition-colors" onClick={() => selectPO(po)}>
+            <div role="button" tabIndex={0} onKeyDown={activateOnKey} key={po.id} className="flex items-center gap-3 px-5 py-4 bg-surface-raised border border-border-default rounded-xl cursor-pointer hover:border-brand-400 transition-colors" onClick={() => selectPO(po)}>
               <PackageCheck className="w-5 h-5 text-content-muted shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">

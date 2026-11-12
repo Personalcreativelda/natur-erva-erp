@@ -28,7 +28,7 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({
  const inactiveClassName = 'text-content-muted hover:text-content-primary';
 
  const getButtonClassName = (isActive: boolean) =>
- [buttonBaseClassName, buttonSizeClassName, isActive ? activeClassName : inactiveClassName].join(' ');
+ ['tap-target', buttonBaseClassName, buttonSizeClassName, isActive ? activeClassName : inactiveClassName].join(' ');
 
  return (
  <div

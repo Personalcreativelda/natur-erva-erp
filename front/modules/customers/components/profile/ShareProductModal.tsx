@@ -101,9 +101,9 @@ export const ShareProductModal: React.FC<ShareProductModalProps> = ({
  <h2 className="text-2xl font-bold text-content-primary">
  Partilhar Produto
  </h2>
- <button
+ <button aria-label="Fechar"
  onClick={onClose}
- className="p-2 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-2 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-5 h-5 text-content-muted" />
  </button>
@@ -193,9 +193,9 @@ export const ShareProductModal: React.FC<ShareProductModalProps> = ({
  )}
  </button>
  {selectedPlatform === 'whatsapp' && (
- <button
+ <button aria-label="Partilhar no WhatsApp"
  onClick={() => shareOnWhatsApp(selectedProduct)}
- className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+ className="tap-target p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
  >
  <FaWhatsapp className="w-5 h-5" />
  </button>
@@ -203,7 +203,7 @@ export const ShareProductModal: React.FC<ShareProductModalProps> = ({
  {selectedPlatform === 'facebook' && (
  <button
  onClick={() => shareOnFacebook(selectedProduct)}
- className="p-2 bg-[#1877F2] text-white rounded-lg hover:opacity-90 transition-opacity"
+ className="tap-target p-2 bg-[#1877F2] text-white rounded-lg hover:opacity-90 transition-opacity"
  aria-label="Partilhar no Facebook"
  >
  <FaFacebookF className="w-5 h-5" />

@@ -229,7 +229,7 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
  <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface-raised rounded-lg border border-border-default text-xs text-content-primary">
  <Paperclip className="w-3 h-3 text-content-muted flex-shrink-0" />
  <span className="max-w-[120px] truncate">{a.filename}</span>
- <button type="button" onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="text-content-muted hover:text-red-500 ml-0.5">
+ <button aria-label="Remover" type="button" onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="tap-target text-content-muted hover:text-red-500 ml-0.5">
  <XIcon className="w-3 h-3" />
  </button>
  </div>

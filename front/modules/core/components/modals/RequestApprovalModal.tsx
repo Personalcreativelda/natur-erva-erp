@@ -98,9 +98,9 @@ export const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
  <h2 className="text-xl font-semibold text-content-primary">
  Solicitar Aprovação
  </h2>
- <button
+ <button aria-label="Fechar"
  onClick={onClose}
- className="text-content-muted hover:text-content-secondary transition-colors"
+ className="tap-target text-content-muted hover:text-content-secondary transition-colors"
  >
  <X className="w-5 h-5" />
  </button>

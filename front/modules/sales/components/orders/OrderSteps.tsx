@@ -93,7 +93,7 @@ export const OrderSteps: React.FC<OrderStepsProps> = ({
  <button
  onClick={onPrevious}
  disabled={currentStep === 1}
- className={`p-1.5 rounded-md transition-colors ${
+ className={`tap-target p-1.5 rounded-md transition-colors ${
  currentStep === 1
  ? 'text-content-muted cursor-not-allowed'
  : 'text-content-secondary hover:bg-surface-base'
@@ -124,7 +124,7 @@ export const OrderSteps: React.FC<OrderStepsProps> = ({
  <button
  onClick={onNext}
  disabled={!canGoNext}
- className={`p-1.5 rounded-md transition-colors ${
+ className={`tap-target p-1.5 rounded-md transition-colors ${
  canGoNext
  ? 'text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20'
  : 'text-content-muted cursor-not-allowed'

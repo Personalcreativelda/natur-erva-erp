@@ -336,7 +336,7 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  <div className="px-5 py-4 border-b border-border-default flex items-center justify-between">
  <h3 className="text-sm font-semibold text-content-primary">Resumo do Caixa</h3>
  <button onClick={loadAll} title="Atualizar"
- className="text-content-muted hover:text-content-primary transition-colors p-1 rounded">
+ className="tap-target text-content-muted hover:text-content-primary transition-colors p-1 rounded">
  <RefreshCw className="w-3.5 h-3.5" />
  </button>
  </div>

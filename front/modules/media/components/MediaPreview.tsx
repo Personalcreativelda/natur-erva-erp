@@ -98,21 +98,21 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
  <div className="flex items-center gap-2 ml-4">
  <button
  onClick={handleDownload}
- className="p-2 hover:bg-surface-base rounded-lg transition-colors"
+ className="tap-target p-2 hover:bg-surface-base rounded-lg transition-colors"
  title="Download"
  >
  <Download className="w-5 h-5 text-content-secondary" />
  </button>
  <button
  onClick={handleOpenInNewTab}
- className="p-2 hover:bg-surface-base rounded-lg transition-colors"
+ className="tap-target p-2 hover:bg-surface-base rounded-lg transition-colors"
  title="Abrir em nova aba"
  >
  <ExternalLink className="w-5 h-5 text-content-secondary" />
  </button>
  <button
  onClick={onClose}
- className="p-2 hover:bg-surface-base rounded-lg transition-colors"
+ className="tap-target p-2 hover:bg-surface-base rounded-lg transition-colors"
  title="Fechar"
  >
  <X className="w-5 h-5 text-content-secondary" />

@@ -201,14 +201,14 @@ export const Roles: React.FC<{
  <>
  <button
  onClick={() => { setEditingRole(role); setShowRoleModal(true); }}
- className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+ className="tap-target text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
  title="Editar role"
  >
  <Edit className="h-4 w-4" />
  </button>
  <button
  onClick={() => handleDeleteRole(role.id)}
- className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+ className="tap-target text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
  title="Apagar role"
  >
  <Trash2 className="h-4 w-4" />

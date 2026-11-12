@@ -1,11 +1,10 @@
+import { loadJsPDF, loadXLSX } from '../../core/utils/lazyLibs';
 ﻿/**
  * Página dedicada para visualizar relatório de auditoria e aplicar ajustes
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, CheckCircle, AlertTriangle, Info, Search, Filter, Loader2, Download, RotateCcw } from 'lucide-react';
-import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
 import { StockAudit, StockAuditItem, StockAuditStatus, StockAdjustmentReason } from '../../core/types/types';
 import { stockAuditService } from '../services/stockAuditService';
 import { useToast } from '../../core/contexts/ToastContext';
@@ -173,6 +172,7 @@ export const AuditReportPage: React.FC = () => {
 
  setExporting(true);
  try {
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('p', 'mm', 'a4');
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const margin = 10;
@@ -290,6 +290,7 @@ export const AuditReportPage: React.FC = () => {
  Data: period
  }));
 
+ const XLSX = await loadXLSX();
  const worksheet = XLSX.utils.json_to_sheet(rows);
  const workbook = XLSX.utils.book_new();
  XLSX.utils.book_append_sheet(workbook, worksheet, 'Auditoria');
@@ -329,7 +330,7 @@ export const AuditReportPage: React.FC = () => {
  <div className="flex items-center gap-2">
  <button
  onClick={() => navigate('/admin/stock/auditoria')}
- className="p-2 rounded-lg hover:bg-surface-base transition-colors text-content-secondary border border-border-default"
+ className="tap-target p-2 rounded-lg hover:bg-surface-base transition-colors text-content-secondary border border-border-default"
  title={t.common.back}
  >
  <ArrowLeft className="w-4 h-4" />

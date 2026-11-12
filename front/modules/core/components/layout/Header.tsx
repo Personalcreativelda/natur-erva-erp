@@ -92,7 +92,7 @@ const ShopDrawer: React.FC<{
         {/* Topo: logo + fechar */}
         <div className="flex items-center justify-between pl-5 pr-2 h-16 shrink-0">
           <Logo width={110} height={38} className="w-auto" isDarkMode={isDarkMode} />
-          <button onClick={onClose} className="w-12 h-12 flex items-center justify-center rounded-full text-content-muted active:bg-surface-base" aria-label="Fechar menu">
+          <button onClick={onClose} className="tap-target w-12 h-12 flex items-center justify-center rounded-full text-content-muted active:bg-surface-base" aria-label="Fechar menu">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -296,7 +296,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
 
  {/* Admin link */}
  {!isMobile && currentUser && currentUser.role !== UserRole.CLIENTE && !(currentUser.roles?.length === 1 && currentUser.roles[0] === 'CLIENTE') && (
- <button onClick={() => navigate('/admin')} className="w-10 h-10 flex items-center justify-center rounded-xl text-content-muted hover:bg-surface-base transition-colors" title="Painel Admin" aria-label="Painel Admin">
+ <button onClick={() => navigate('/admin')} className="tap-target w-10 h-10 flex items-center justify-center rounded-xl text-content-muted hover:bg-surface-base transition-colors" title="Painel Admin" aria-label="Painel Admin">
  <Settings className="h-4 w-4" />
  </button>
  )}
@@ -315,7 +315,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
  {currentUser.name.split(' ')[0]}
  </span>
  </button>
- <button onClick={handleLogout} className="p-1.5 rounded-lg text-content-muted hover:bg-surface-base hover:text-red-500 transition-all" title="Sair">
+ <button onClick={handleLogout} className="tap-target p-1.5 rounded-lg text-content-muted hover:bg-surface-base hover:text-red-500 transition-all" title="Sair">
  <LogOut className="h-3.5 w-3.5" />
  </button>
  </div>
@@ -355,7 +355,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
  )}
 
  {/* Hamburger — mobile/tablet */}
- <button onClick={() => setSidebarOpen(true)} className="md:hidden w-11 h-11 -mr-1 flex items-center justify-center rounded-xl text-content-secondary hover:bg-surface-base transition-colors" aria-label="Abrir menu">
+ <button onClick={() => setSidebarOpen(true)} className="tap-target md:hidden w-11 h-11 -mr-1 flex items-center justify-center rounded-xl text-content-secondary hover:bg-surface-base transition-colors" aria-label="Abrir menu">
  <Menu className="h-[22px] w-[22px]" />
  </button>
  </div>

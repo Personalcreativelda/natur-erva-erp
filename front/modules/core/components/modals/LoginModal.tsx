@@ -88,7 +88,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
  <button
  type="button"
  onClick={onClose}
- className="absolute top-3 right-3 w-10 h-10 !min-h-0 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-base transition-colors"
+ className="tap-target absolute top-3 right-3 w-10 h-10 !min-h-0 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-base transition-colors"
  aria-label="Fechar"
  >
  <X className="w-5 h-5" />

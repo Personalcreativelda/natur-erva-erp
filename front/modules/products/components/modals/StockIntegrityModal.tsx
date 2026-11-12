@@ -195,14 +195,14 @@ export const StockIntegrityModal: React.FC<StockIntegrityModalProps> = ({
  <button
  onClick={loadReport}
  disabled={loading}
- className="p-2 hover:bg-surface-base rounded-lg transition-colors"
+ className="tap-target p-2 hover:bg-surface-base rounded-lg transition-colors"
  title="Actualizar"
  >
  <RefreshCw className={`w-5 h-5 text-content-muted ${loading ? 'animate-spin' : ''}`} />
  </button>
- <button
+ <button aria-label="Fechar"
  onClick={onClose}
- className="p-1 hover:bg-surface-base rounded-lg transition-colors"
+ className="tap-target p-1 hover:bg-surface-base rounded-lg transition-colors"
  >
  <X className="w-5 h-5 text-content-muted" />
  </button>

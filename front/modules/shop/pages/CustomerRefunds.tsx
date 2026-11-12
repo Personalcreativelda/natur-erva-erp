@@ -94,7 +94,7 @@ export const CustomerRefunds: React.FC = () => {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/minha-conta')} className="p-2 rounded-lg hover:bg-surface-overlay transition-colors text-content-muted">
+            <button aria-label="Voltar" onClick={() => navigate('/minha-conta')} className="tap-target p-2 rounded-lg hover:bg-surface-overlay transition-colors text-content-muted">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <h1 className="text-xl font-bold text-content-primary">Reembolsos</h1>
@@ -114,7 +114,7 @@ export const CustomerRefunds: React.FC = () => {
           <div className="bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-default">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-semibold text-content-primary">Novo Pedido de Reembolso</h2>
-              <button onClick={() => { setShowForm(false); setSubmitError(''); setPhotoFiles([]); }} className="p-1.5 rounded-lg hover:bg-surface-overlay text-gray-500">
+              <button aria-label="Fechar" onClick={() => { setShowForm(false); setSubmitError(''); setPhotoFiles([]); }} className="tap-target p-2.5 rounded-lg hover:bg-surface-overlay text-gray-500">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -162,10 +162,10 @@ export const CustomerRefunds: React.FC = () => {
                   {photoFiles.map((p, i) => (
                     <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-border-default flex-shrink-0">
                       <img src={p.preview} alt="" className="w-full h-full object-cover" />
-                      <button
+                      <button aria-label="Remover foto"
                         type="button"
                         onClick={() => removePhoto(i)}
-                        className="absolute top-0.5 right-0.5 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 transition-colors"
+                        className="tap-target absolute top-0.5 right-0.5 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors"
                       >
                         <X className="w-3 h-3" />
                       </button>

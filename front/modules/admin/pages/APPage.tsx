@@ -138,7 +138,7 @@ function CreateBillModal({ onClose, onCreated, showToast }: {
           <h2 className="font-bold text-content-primary flex items-center gap-2">
             <Building2 className="w-5 h-5 text-content-muted" />Nova Factura de Fornecedor
           </h2>
-          <button onClick={onClose} className="p-2 rounded-lg text-content-muted hover:bg-surface-base"><X className="w-5 h-5" /></button>
+          <button aria-label="Fechar" onClick={onClose} className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base"><X className="w-5 h-5" /></button>
         </div>
 
         <div className="p-6 space-y-5">
@@ -190,7 +190,7 @@ function CreateBillModal({ onClose, onCreated, showToast }: {
                     placeholder="Preço" className="col-span-3 px-3 py-2 rounded-lg border border-border-default bg-surface-base text-sm text-content-primary focus:ring-2 focus:ring-brand-500 focus:outline-none" />
                   <p className="col-span-1 text-xs font-mono text-content-muted text-right">{fmt(item.quantity * item.unitPrice)}</p>
                   {items.length > 1 && (
-                    <button onClick={() => removeItem(i)} className="col-span-1 p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
+                    <button aria-label="Remover" onClick={() => removeItem(i)} className="tap-target col-span-1 p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -259,7 +259,7 @@ function BillDetail({ bill, onClose, onAction, showToast }: {
             </div>
             <StatusBadge status={bill.status} />
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-content-muted hover:bg-surface-base"><X className="w-5 h-5" /></button>
+          <button aria-label="Fechar" onClick={onClose} className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base"><X className="w-5 h-5" /></button>
         </div>
 
         <div className="p-6 space-y-5">
@@ -424,7 +424,7 @@ export const APPage: React.FC<APPageProps> = ({ showToast }) => {
     <PageShell title="Contas a Pagar" description="Gestão de facturas de fornecedores"
       actions={
         <div className="flex items-center gap-2">
-          <button onClick={load} className="p-2 rounded-lg text-content-muted hover:bg-surface-base" title="Actualizar">
+          <button onClick={load} className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base" title="Actualizar">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg">

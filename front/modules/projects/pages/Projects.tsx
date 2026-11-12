@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../core/utils/a11y';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
@@ -44,7 +45,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       <div className="bg-surface-raised rounded-2xl shadow-xl w-full max-w-lg animate-modal-enter">
         <div className="flex items-center justify-between p-5 border-b border-border-default">
           <h3 className="font-semibold text-content-primary">{title}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
+          <button aria-label="Fechar" onClick={onClose} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><X className="w-4 h-4" /></button>
         </div>
         <div className="p-5 max-h-[70vh] overflow-y-auto">{children}</div>
       </div>
@@ -155,7 +156,7 @@ export function Projects({ showToast }: Props) {
         /* ── KANBAN VIEW ──────────────────────────────────────────────────── */
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <button onClick={() => setSelectedProject(null)} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted">
+            <button aria-label="Voltar" onClick={() => setSelectedProject(null)} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted">
               <ChevronRight className="w-4 h-4 rotate-180" />
             </button>
             <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: selectedProject.color }} />
@@ -187,8 +188,8 @@ export function Projects({ showToast }: Props) {
                       <div className="flex items-start justify-between gap-1">
                         <p className="text-sm font-medium text-content-primary leading-snug flex-1">{task.title}</p>
                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          <button onClick={() => { setEditingTask(task); setTaskForm({ title: task.title, description: task.description||'', status: task.status, priority: task.priority, due_date: task.due_date?.slice(0,10)||'' }); setModal('task'); }} className="p-1 rounded hover:bg-surface-overlay text-content-muted"><Pencil className="w-3 h-3" /></button>
-                          <button onClick={() => deleteTask(task.id)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
+                          <button aria-label="Editar" onClick={() => { setEditingTask(task); setTaskForm({ title: task.title, description: task.description||'', status: task.status, priority: task.priority, due_date: task.due_date?.slice(0,10)||'' }); setModal('task'); }} className="tap-target p-1 rounded hover:bg-surface-overlay text-content-muted"><Pencil className="w-3 h-3" /></button>
+                          <button aria-label="Eliminar" onClick={() => deleteTask(task.id)} className="tap-target p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
                         </div>
                       </div>
                       {task.description && <p className="text-xs text-content-muted mt-1 line-clamp-2">{task.description}</p>}
@@ -222,7 +223,7 @@ export function Projects({ showToast }: Props) {
             {projects.map(p => {
               const prog = p.task_count > 0 ? Math.round((p.done_count / p.task_count) * 100) : 0;
               return (
-                <div key={p.id} className="bg-surface-raised border border-border-default rounded-2xl p-5 hover:shadow-md transition-shadow cursor-pointer group"
+                <div tabIndex={0} onKeyDown={activateOnKey} key={p.id} className="bg-surface-raised border border-border-default rounded-2xl p-5 hover:shadow-md transition-shadow cursor-pointer group"
                   onClick={() => openProject(p)}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -230,8 +231,8 @@ export function Projects({ showToast }: Props) {
                       <h3 className="font-semibold text-content-primary truncate">{p.name}</h3>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                      <button onClick={() => { setEditingProject(p); setProjForm({ name: p.name, description: p.description||'', status: p.status, priority: p.priority, start_date: p.start_date?.slice(0,10)||'', end_date: p.end_date?.slice(0,10)||'', color: p.color||'#635BFF' }); setModal('project'); }} className="p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><Pencil className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => deleteProject(p.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                      <button aria-label="Editar" onClick={() => { setEditingProject(p); setProjForm({ name: p.name, description: p.description||'', status: p.status, priority: p.priority, start_date: p.start_date?.slice(0,10)||'', end_date: p.end_date?.slice(0,10)||'', color: p.color||'#635BFF' }); setModal('project'); }} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><Pencil className="w-3.5 h-3.5" /></button>
+                      <button aria-label="Eliminar" onClick={() => deleteProject(p.id)} className="tap-target p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
                   {p.description && <p className="text-xs text-content-muted mb-3 line-clamp-2">{p.description}</p>}

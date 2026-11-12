@@ -1,3 +1,4 @@
+import { activateOnKey } from '../../../core/utils/a11y';
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { X, Search, Printer, Plus, Minus, Trash2, Tag, ChevronRight, ChevronLeft, ChevronDown, AlertTriangle, CheckCircle2, Loader2, Zap } from 'lucide-react';
 import { Product } from '../../../core/types/product';
@@ -115,7 +116,7 @@ function buildPrintHtml(items: LabelItem[], format: string, sizeId: string): str
  const nm = esc(p.name.substring(0, 40));
  const price = fmt(Number(p.price));
  const barSvg = `<svg class="bc" data-value="${c}" data-fmt="${format}" style="width:100%;height:${cfg.barH}mm;display:block;"></svg>`;
- const qrImg = cfg.showQr ? `<img class="qr" data-text="${c}" style="width:18mm;height:18mm;flex-shrink:0;" />` : '';
+ const qrImg = cfg.showQr ? `<img class="qr" alt="Código QR" data-text="${c}" style="width:18mm;height:18mm;flex-shrink:0;" />` : '';
  const textCol = `<div style="flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:0.5mm;">
  <div style="font-size:${cfg.showQr ? 7 : 6}pt;font-weight:700;line-height:1.2;overflow:hidden;">${nm}</div>
  <div style="font-size:${cfg.showQr ? 7 : 6}pt;font-weight:700;">${price}</div>
@@ -295,7 +296,7 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ products, pres
  </h2>
  </div>
  {!embedded && (
- <button onClick={onClose} className="p-1.5 sm:p-2 rounded-xl text-content-muted hover:bg-surface-base transition-colors shrink-0">
+ <button aria-label="Fechar" onClick={onClose} className="tap-target p-1.5 sm:p-2 rounded-xl text-content-muted hover:bg-surface-base transition-colors shrink-0">
  <X className="w-5 h-5" />
  </button>
  )}
@@ -366,7 +367,7 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ products, pres
  const inQueue = queue.has(p.id);
  const img = p.image || (p as any).image_url || (p as any).imageUrl;
  return (
- <tr key={p.id} onClick={() => toggleProduct(p)}
+ <tr role="button" tabIndex={0} onKeyDown={activateOnKey} key={p.id} onClick={() => toggleProduct(p)}
  className={`cursor-pointer transition-colors ${inQueue ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-surface-base/50'}`}>
  <td className="px-2 sm:px-3 py-1.5 text-center">
  {inQueue && <span className="text-blue-600 font-bold text-sm">✓</span>}
@@ -417,11 +418,11 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ products, pres
  <span className="text-sm font-semibold text-content-primary">Lista de Impressão</span>
  <div className="flex items-center gap-2">
  {queueList.length > 0 && (
- <button onClick={() => setQueue(new Map())} className="text-content-muted hover:text-red-500 transition-colors" title="Limpar lista">
+ <button onClick={() => setQueue(new Map())} className="tap-target text-content-muted hover:text-red-500 transition-colors" title="Limpar lista">
  <Trash2 className="w-4 h-4" />
  </button>
  )}
- <button onClick={() => setMobileQueueOpen(false)} className="p-1 rounded text-content-muted hover:text-content-secondary ">
+ <button aria-label="Fechar" onClick={() => setMobileQueueOpen(false)} className="tap-target p-1 rounded text-content-muted hover:text-content-secondary ">
  <X className="w-4 h-4" />
  </button>
  </div>
@@ -441,18 +442,18 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ products, pres
  <p className="text-xs text-content-muted font-mono">{product.barcode || '—'}</p>
  </div>
  <div className="flex items-center gap-1">
- <button onClick={e => { e.stopPropagation(); setQty(product.id, -1); }}
- className="w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-surface-base transition-colors">
+ <button aria-label="Diminuir quantidade" onClick={e => { e.stopPropagation(); setQty(product.id, -1); }}
+ className="tap-target w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-surface-base transition-colors">
  <Minus className="w-3 h-3" />
  </button>
  <span className="w-6 text-center text-sm font-bold text-content-primary">{qty}</span>
- <button onClick={e => { e.stopPropagation(); setQty(product.id, +1); }}
- className="w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-surface-base transition-colors">
+ <button aria-label="Aumentar quantidade" onClick={e => { e.stopPropagation(); setQty(product.id, +1); }}
+ className="tap-target w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-surface-base transition-colors">
  <Plus className="w-3 h-3" />
  </button>
  </div>
- <button onClick={e => { e.stopPropagation(); removeFromQueue(product.id); }}
- className="text-content-muted hover:text-red-500 transition-colors ml-1">
+ <button aria-label="Eliminar" onClick={e => { e.stopPropagation(); removeFromQueue(product.id); }}
+ className="tap-target text-content-muted hover:text-red-500 transition-colors ml-1">
  <Trash2 className="w-3.5 h-3.5" />
  </button>
  </div>
@@ -493,7 +494,7 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ products, pres
  <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
  <span className="font-semibold text-content-primary text-sm">Lista de Impressão</span>
  {queueList.length > 0 && (
- <button onClick={() => setQueue(new Map())} className="text-content-muted hover:text-red-500 transition-colors" title="Limpar lista">
+ <button onClick={() => setQueue(new Map())} className="tap-target text-content-muted hover:text-red-500 transition-colors" title="Limpar lista">
  <Trash2 className="w-4 h-4" />
  </button>
  )}
@@ -514,15 +515,15 @@ export const LabelPrintModal: React.FC<LabelPrintModalProps> = ({ products, pres
  <p className="text-xs text-content-muted font-mono">{product.barcode || '—'}</p>
  </div>
  <div className="flex items-center gap-1">
- <button onClick={() => setQty(product.id, -1)} className="w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-surface-base transition-colors">
+ <button aria-label="Diminuir quantidade" onClick={() => setQty(product.id, -1)} className="tap-target w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-surface-base transition-colors">
  <Minus className="w-3 h-3" />
  </button>
  <span className="w-7 text-center text-sm font-bold text-content-primary">{qty}</span>
- <button onClick={() => setQty(product.id, +1)} className="w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-surface-base transition-colors">
+ <button aria-label="Aumentar quantidade" onClick={() => setQty(product.id, +1)} className="tap-target w-6 h-6 flex items-center justify-center rounded bg-surface-base hover:bg-surface-base transition-colors">
  <Plus className="w-3 h-3" />
  </button>
  </div>
- <button onClick={() => removeFromQueue(product.id)} className="text-content-muted hover:text-red-500 transition-colors ml-1">
+ <button aria-label="Eliminar" onClick={() => removeFromQueue(product.id)} className="tap-target text-content-muted hover:text-red-500 transition-colors ml-1">
  <Trash2 className="w-3.5 h-3.5" />
  </button>
  </div>

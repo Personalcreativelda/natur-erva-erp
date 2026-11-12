@@ -1,3 +1,4 @@
+import { loadJsPDF } from '../../core/utils/lazyLibs';
 ﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Product, Order, Purchase, StockMovement, StockItem, OrderStatus, Sale, ProductVariant, StockAdjustment, StockAdjustmentReason, UserRole } from '../../core/types/types';
 import { normalizeForSearch } from '../../core/services/serviceUtils';
@@ -46,7 +47,6 @@ import { PageShell } from '../../core/components/layout/PageShell';
 import { FilterBar, SearchInput, ItemsPerPageSelect, SelectFilter, Pagination } from '../../core/components/filters';
 import { useMobile } from '../../core/hooks/useMobile';
 import { createWorkbook, addWorksheet, addRowsFromJson, addJsonToSheetAt, writeWorkbookToFile, applyStockReportStyle } from '../../core/services/excelService';
-import jsPDF from 'jspdf';
 import { addPDFHeader, addPDFFooter, getBrandColors, calculateColumnWidths, addPDFTableHeader, addPDFTableRow, addPDFSummarySection } from '../../core/services/reportService';
 import { CreateMovementModal } from '../components/modals/CreateMovementModal';
 import { StockIntegrityModal } from '../components/modals/StockIntegrityModal';
@@ -671,7 +671,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  : `${item.balance.toFixed(2)} ${item.unit}`
  }));
 
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Movimentos de Stock');
 
  const periodLabelMeta = selectedPeriod === 'custom'
@@ -716,6 +716,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  const startStr = toDateStringInTimezone(start);
  const endStr = toDateStringInTimezone(end);
 
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape para mais espaço
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -870,7 +871,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  const startStr = toDateStringInTimezone(start);
  const endStr = toDateStringInTimezone(end);
 
- const wb = createWorkbook();
+ const wb = await createWorkbook();
  const ws = addWorksheet(wb, 'Produtos Stock');
 
  const periodLabelForMeta = selectedPeriod === 'custom'
@@ -967,6 +968,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  const startStr = toDateStringInTimezone(start);
  const endStr = toDateStringInTimezone(end);
 
+ const jsPDF = await loadJsPDF();
  const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape para mais espaço
  const pdfWidth = pdf.internal.pageSize.getWidth();
  const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -2328,7 +2330,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  <button
  type="button"
  onClick={() => setIsIntegrityModalOpen(true)}
- className="h-10 w-10 inline-flex items-center justify-center rounded-lg border border-orange-200 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+ className="tap-target h-10 w-10 inline-flex items-center justify-center rounded-lg border border-orange-200 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
  title="Validar integridade de stock"
  >
  <AlertTriangle className="w-5 h-5" />
@@ -2337,7 +2339,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  <button
  type="button"
  onClick={() => setShowSnapshotSection(true)}
- className="h-10 w-10 inline-flex items-center justify-center rounded-lg border border-border-default text-content-secondary hover:bg-surface-base/50 transition-colors"
+ className="tap-target h-10 w-10 inline-flex items-center justify-center rounded-lg border border-border-default text-content-secondary hover:bg-surface-base/50 transition-colors"
  title="Definir stock inicial"
  >
  <Calendar className="w-5 h-5" />
@@ -2670,7 +2672,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  setCustomEndDate('');
  setCurrentPage(1);
  }}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  title="Limpar filtros"
  >
  <X className="w-3 h-3" />
@@ -2702,9 +2704,9 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  <div className="sticky top-[60px] z-20 bg-surface-raised rounded-xl shadow-lg border border-border-default p-4 mb-4">
  <div className="flex items-center justify-between mb-4">
  <h4 className="text-sm font-semibold text-content-primary">Filtros</h4>
- <button
+ <button aria-label="Fechar"
  onClick={() => setShowFiltersProducts(false)}
- className="p-1 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-1 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-4 h-4 text-content-muted" />
  </button>
@@ -2983,7 +2985,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  const v = parseFloat(editingValue);
  if (!Number.isNaN(v) && v >= 0) handleSaveInlineFinalStock(item, v);
  }}
- className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded"
+ className="tap-target p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded"
  title="Guardar"
  >
  <CheckCircle2 className="w-4 h-4" />
@@ -2991,7 +2993,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  <button
  type="button"
  onClick={handleCancelInlineEdit}
- className="p-1 text-content-muted hover:bg-surface-base rounded"
+ className="tap-target p-1 text-content-muted hover:bg-surface-base rounded"
  title="Cancelar"
  >
  <XCircle className="w-4 h-4" />
@@ -3009,7 +3011,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  setEditingCell({ productId: item.productId, variantId: item.variantId, field: 'finalStock' });
  setEditingValue(String(item.finalStock));
  }}
- className="p-0.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded opacity-70 hover:opacity-100"
+ className="tap-target p-0.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded opacity-70 hover:opacity-100"
  title="Editar stock final (ajuste directo)"
  >
  <Edit2 className="w-3.5 h-3.5" />
@@ -3306,7 +3308,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  setCustomEndDate('');
  setMovementCurrentPage(1);
  }}
- className="hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
+ className="tap-target hidden sm:flex px-1.5 py-0.5 text-[10px] sm:text-xs border border-border-default rounded text-content-secondary hover:bg-surface-base transition-colors items-center gap-0.5 flex-shrink-0"
  title="Limpar filtros"
  >
  <X className="w-3 h-3" />
@@ -3338,9 +3340,9 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  <div className="sticky top-[60px] z-20 bg-surface-raised rounded-xl shadow-lg border border-border-default p-4 mb-4">
  <div className="flex items-center justify-between mb-4">
  <h4 className="text-sm font-semibold text-content-primary">Filtros</h4>
- <button
+ <button aria-label="Fechar"
  onClick={() => setShowFiltersMovements(false)}
- className="p-1 rounded-lg hover:bg-surface-base transition-colors"
+ className="tap-target p-1 rounded-lg hover:bg-surface-base transition-colors"
  >
  <X className="w-4 h-4 text-content-muted" />
  </button>
@@ -4182,7 +4184,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  {isExit && getLinkedOrder(movement) && (
  <button
  onClick={() => setDetailOrder(getLinkedOrder(movement)!)}
- className="p-1 text-content-secondary hover:bg-surface-base dark:text-content-muted rounded transition-colors"
+ className="tap-target p-1 text-content-secondary hover:bg-surface-base dark:text-content-muted rounded transition-colors"
  title="Ver detalhes do pedido"
  >
  <Eye className="w-4 h-4" />
@@ -4191,7 +4193,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  {isEntry && getLinkedPurchase(movement) && (
  <button
  onClick={() => setDetailPurchase(getLinkedPurchase(movement)!)}
- className="p-1 text-content-secondary hover:bg-surface-base dark:text-content-muted rounded transition-colors"
+ className="tap-target p-1 text-content-secondary hover:bg-surface-base dark:text-content-muted rounded transition-colors"
  title="Ver detalhes da compra"
  >
  <Eye className="w-4 h-4" />
@@ -4202,7 +4204,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  setEditingMovement(movement);
  setIsCreateMovementModalOpen(true);
  }}
- className="p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+ className="tap-target p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
  title="Editar movimento"
  >
  <Edit2 className="w-4 h-4" />
@@ -4224,7 +4226,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  }
  }
  }}
- className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+ className="tap-target p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
  title="Apagar movimento"
  >
  <X className="w-4 h-4" />
@@ -4338,7 +4340,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  <div className="bg-surface-raised rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
  <div className="bg-surface-base /50 p-4 border-b border-border-default flex justify-between items-center flex-shrink-0">
  <h3 className="font-bold text-content-primary text-lg">Detalhes do Pedido</h3>
- <button onClick={() => setDetailOrder(null)} className="text-content-muted hover:text-content-secondary dark:hover:text-content-muted p-2 rounded-full hover:bg-surface-base">
+ <button aria-label="Fechar" onClick={() => setDetailOrder(null)} className="tap-target text-content-muted hover:text-content-secondary dark:hover:text-content-muted p-2 rounded-full hover:bg-surface-base">
  <XCircle className="w-6 h-6" />
  </button>
  </div>
@@ -4431,7 +4433,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  <div className="bg-surface-raised rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
  <div className="p-6 border-b border-border-default flex justify-between items-center flex-shrink-0">
  <h2 className="text-xl font-bold text-content-primary">Detalhes da Compra</h2>
- <button onClick={() => setDetailPurchase(null)} className="text-content-muted hover:text-content-secondary dark:hover:text-content-muted p-2 rounded-full hover:bg-surface-base">
+ <button aria-label="Fechar" onClick={() => setDetailPurchase(null)} className="tap-target text-content-muted hover:text-content-secondary dark:hover:text-content-muted p-2 rounded-full hover:bg-surface-base">
  <XCircle className="w-6 h-6" />
  </button>
  </div>

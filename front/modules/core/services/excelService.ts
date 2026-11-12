@@ -3,7 +3,8 @@
  * Substitui a biblioteca xlsx (SheetJS) para evitar vulnerabilidades conhecidas.
  */
 
-import ExcelJS from 'exceljs';
+import type ExcelJS from 'exceljs';
+import { loadExcelJS } from '../utils/lazyLibs';
 
 export type Workbook = ExcelJS.Workbook;
 export type Worksheet = ExcelJS.Worksheet;
@@ -11,8 +12,9 @@ export type Worksheet = ExcelJS.Worksheet;
 /**
  * Cria um novo livro Excel.
  */
-export function createWorkbook(): Workbook {
-  return new ExcelJS.Workbook();
+export async function createWorkbook(): Promise<Workbook> {
+  const Excel = await loadExcelJS();
+  return new Excel.Workbook();
 }
 
 /**
@@ -214,7 +216,8 @@ export async function writeWorkbookToFile(workbook: Workbook, filename: string):
  * Usado para importação (ex.: Sales) que depois faz parse do CSV.
  */
 export async function readWorkbookToCsv(arrayBuffer: ArrayBuffer): Promise<string> {
-  const workbook = new ExcelJS.Workbook();
+  const Excel = await loadExcelJS();
+  const workbook = new Excel.Workbook();
   await workbook.xlsx.load(arrayBuffer);
   const worksheet = workbook.worksheets[0];
   if (!worksheet) return '';

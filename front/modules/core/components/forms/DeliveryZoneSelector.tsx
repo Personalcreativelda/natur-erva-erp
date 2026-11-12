@@ -132,7 +132,7 @@ export const DeliveryZoneSelector: React.FC<DeliveryZoneSelectorProps> = ({
  <button
  type="button"
  onClick={handleClear}
- className="p-2.5 border-2 border-border-default rounded-lg bg-surface-raised hover:bg-surface-base text-content-muted hover:text-content-secondary transition-colors"
+ className="tap-target p-2.5 border-2 border-border-default rounded-lg bg-surface-raised hover:bg-surface-base text-content-muted hover:text-content-secondary transition-colors"
  title="Limpar seleção"
  >
  <X className="h-4 w-4" />

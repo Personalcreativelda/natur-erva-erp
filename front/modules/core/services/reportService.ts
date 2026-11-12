@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import type jsPDF from 'jspdf';
 import type { Worksheet } from './excelService';
 import { getSystemSettings, type SystemSettings } from './systemSettingsService';
 import { formatDateTimeForReport } from '../utils/dateUtils';

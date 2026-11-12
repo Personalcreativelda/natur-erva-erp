@@ -107,7 +107,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  </div>
  <button
  onClick={onClose}
- className="p-2 rounded-lg text-content-muted hover:bg-surface-base transition-colors"
+ className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base transition-colors"
  aria-label="Fechar"
  >
  <X className="w-5 h-5" />

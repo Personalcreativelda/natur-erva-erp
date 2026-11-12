@@ -123,9 +123,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ onClose, onSuccess }) 
  return (
  <ModalPortal open onClose={onClose} zIndex={10001} className="p-4">
  <div className="bg-surface-raised rounded-2xl shadow-2xl max-w-md w-full mx-auto max-h-[92dvh] overflow-y-auto border border-border-default animate-scaleIn relative">
- <button
+ <button aria-label="Fechar"
  onClick={onClose}
- className="absolute top-4 right-4 text-content-muted hover:text-content-secondary transition-colors z-10"
+ className="tap-target absolute top-4 right-4 text-content-muted hover:text-content-secondary transition-colors z-10"
  >
  <X className="w-4 h-4" />
  </button>
