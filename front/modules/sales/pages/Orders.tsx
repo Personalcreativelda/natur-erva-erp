@@ -24,6 +24,7 @@ import { useTrackAction } from '../../auth/components/TrackedPage';
 import { appSystemConfig } from '../../../config/appConfig';
 import { downloadBlob } from '../../core/services/apiClient';
 import { useConfirm } from '../../core/contexts/ConfirmContext';
+import { realPhone } from '../../core/utils/phone';
 
 interface OrdersProps {
  orders: Order[];
@@ -2210,7 +2211,7 @@ thead th:last-child,thead th:nth-child(3){text-align:right}
  <div class="box-label">Cliente</div>
  <div class="box-val">
  <strong>${order.customerName}</strong><br>
- ${order.customerPhone ? `Tel: ${order.customerPhone}<br>` : ''}
+ ${realPhone(order.customerPhone) ? `Tel: ${realPhone(order.customerPhone)}<br>` : ''}
  ${order.isDelivery && order.deliveryLocation ? `📍 ${order.deliveryLocation}` : '🏪 Levantamento em loja'}
  ${order.deliveryZoneName ? `<br><span style="font-size:10px;color:#555">${order.deliveryZoneName}</span>` : ''}
  </div>
@@ -2334,7 +2335,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  'Pedido': order.orderNumber || order.externalId || order.id.substring(0, 8),
  'Data': formatDateOnly(orderDate),
  'Cliente': order.customerName,
- 'Telefone': order.customerPhone || '',
+ 'Telefone': realPhone(order.customerPhone) || '',
  'Status': getStatusLabel(normalizedStatus),
  'Vendedor': order.createdByName || 'Sistema',
  'Pagamento': getEffectivePaymentStatus(order) === 'paid' ? 'Pago' : getEffectivePaymentStatus(order) === 'partial' ? 'Parcial' : 'Não Pago',
@@ -2979,10 +2980,10 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <div className="flex-1">
  <div className="flex items-center gap-2 flex-wrap">
  <h3 className="font-bold text-content-primary group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">{order.customerName}</h3>
- {order.customerPhone && (
+ {realPhone(order.customerPhone) && (
  <span className="text-xs text-content-muted flex items-center gap-1">
  <Smartphone className="w-3 h-3" />
- {order.customerPhone}
+ {realPhone(order.customerPhone)}
  </span>
  )}
  </div>
@@ -3818,7 +3819,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <div>
  <p className="text-xs text-content-muted uppercase">Cliente</p>
  <p className="font-medium">{selectedOrder.customerName}</p>
- <p className="text-sm text-content-secondary">{selectedOrder.customerPhone}</p>
+ <p className="text-sm text-content-secondary">{realPhone(selectedOrder.customerPhone)}</p>
  </div>
  <div className="text-right">
  <p className="text-xs text-content-muted uppercase">Data</p>
@@ -5297,10 +5298,10 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <span>ðŸ“… {formatDateOnly(order.createdAt)}</span>
  <span className="mx-2">•</span>
  <span>ðŸ’° {formatMoney(order.totalAmount)}</span>
- {order.customerPhone && (
+ {realPhone(order.customerPhone) && (
  <>
  <span className="mx-2">•</span>
- <span>ðŸ“ž {order.customerPhone}</span>
+ <span>ðŸ“ž {realPhone(order.customerPhone)}</span>
  </>
  )}
  </div>
@@ -5451,10 +5452,10 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <span>ðŸ“… {formatDateOnly(order.createdAt)}</span>
  <span className="mx-2">•</span>
  <span>ðŸ’° {formatMoney(order.totalAmount)}</span>
- {order.customerPhone && (
+ {realPhone(order.customerPhone) && (
  <>
  <span className="mx-2">•</span>
- <span>ðŸ“ž {order.customerPhone}</span>
+ <span>ðŸ“ž {realPhone(order.customerPhone)}</span>
  </>
  )}
  </div>
@@ -5535,10 +5536,10 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  <span className="text-xs text-content-muted">Nome:</span>
  <p className="font-medium text-content-primary">{suggestedCustomer.name}</p>
  </div>
- {suggestedCustomer.phone && (
+ {realPhone(suggestedCustomer.phone) && (
  <div>
  <span className="text-xs text-content-muted">Telefone:</span>
- <p className="font-medium text-content-primary">{suggestedCustomer.phone}</p>
+ <p className="font-medium text-content-primary">{realPhone(suggestedCustomer.phone)}</p>
  </div>
  )}
  {suggestedCustomer.tier && (

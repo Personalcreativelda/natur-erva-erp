@@ -11,6 +11,7 @@ import { useConfirm } from '../../../core/contexts/ConfirmContext';
 import { formatDateTimeLong, formatDateOnly, formatDateWithOptions, extractLocalDate } from '../../../core/utils/dateUtils';
 import { orderService } from '../../../sales/services/orderService';
 import { useMobile } from '../../../core/hooks/useMobile';
+import { realPhone } from '../../utils/phone';
 
 interface CustomerDetailModalProps {
  customer: Customer;
@@ -192,7 +193,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  };
 
  const handleWhatsApp = () => {
- const formattedPhone = formatPhoneForWhatsApp(customer.phone);
+ const formattedPhone = formatPhoneForWhatsApp(realPhone(customer.phone));
  if (formattedPhone.length >= 9) {
  window.open(`https://wa.me/${formattedPhone}`, '_blank');
  } else {
@@ -201,7 +202,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  };
 
  const handleCall = () => {
- const formattedPhone = formatPhoneForWhatsApp(customer.phone);
+ const formattedPhone = formatPhoneForWhatsApp(realPhone(customer.phone));
  if (formattedPhone.length >= 9) {
  window.location.href = `tel:+${formattedPhone}`;
  } else {
@@ -485,7 +486,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  {editingCustomerField === 'phone' ? (
  <input
  type="tel"
- value={editingCustomerData.phone || customer.phone}
+ value={editingCustomerData.phone ?? realPhone(customer.phone)}
  onChange={(e) => setEditingCustomerData({ ...editingCustomerData, phone: e.target.value })}
  onBlur={async () => {
  if (editingCustomerData.phone && editingCustomerData.phone !== customer.phone) {
@@ -505,11 +506,11 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  />
  ) : (
  <>
- <span className="font-medium">{customer.phone}</span>
+ <span className="font-medium">{realPhone(customer.phone)}</span>
  <button
  onClick={() => {
  setEditingCustomerField('phone');
- setEditingCustomerData({ phone: customer.phone });
+ setEditingCustomerData({ phone: realPhone(customer.phone) });
  }}
  className="tap-target ml-2 p-1 text-content-muted hover:text-brand-600 dark:hover:text-brand-400"
  title="Editar telefone"
@@ -1344,8 +1345,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
  <div>
  <h4 className="font-semibold text-content-primary mb-2">Cliente</h4>
  <p className="text-content-secondary">{selectedOrder.customerName || customer.name}</p>
- {selectedOrder.customerPhone && (
- <p className="text-sm text-content-muted mt-1">{selectedOrder.customerPhone}</p>
+ {realPhone(selectedOrder.customerPhone) && (
+ <p className="text-sm text-content-muted mt-1">{realPhone(selectedOrder.customerPhone)}</p>
  )}
  </div>
 

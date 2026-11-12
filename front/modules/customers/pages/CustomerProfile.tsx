@@ -79,7 +79,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
  const customers = await dataService.getCustomers();
  let foundCustomer = customers.find(
  c => c.id === user.customerId ||
- c.phone === user.phone ||
+ (!!user.phone && c.phone === user.phone) ||
  (user.email && c.email === user.email)
  );
 

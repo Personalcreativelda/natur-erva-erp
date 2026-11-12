@@ -17,6 +17,7 @@ import { addPDFHeader, addPDFFooter, getBrandColors, calculateColumnWidths, addP
 import { normalizeForSearch, normalizeOrderStatus } from '../../core/services/serviceUtils';
 import { getTodayDateString, toDateStringInTimezone } from '../../core/utils/dateUtils';
 import { useTrackAction } from '../../auth/components/TrackedPage';
+import { realPhone } from '../../core/utils/phone';
 
 interface CustomersProps {
  customers: Customer[];
@@ -630,7 +631,7 @@ export const Customers: React.FC<CustomersProps> = ({
 
  const rowData = [
  customer.name.length > maxNameLength ? customer.name.substring(0, maxNameLength - 3) + '...' : customer.name,
- customer.phone.length > maxPhoneLength ? customer.phone.substring(0, maxPhoneLength - 3) + '...' : customer.phone,
+ realPhone(customer.phone).length > maxPhoneLength ? realPhone(customer.phone).substring(0, maxPhoneLength - 3) + '...' : realPhone(customer.phone),
  customer.tier,
  formatMoney(customer.totalSpent || 0),
  (customer.totalOrders || 0).toString(),
@@ -981,7 +982,7 @@ export const Customers: React.FC<CustomersProps> = ({
  // Componente CustomerDetail removido - agora usando CustomerDetailModal de ../components/CustomerDetailModal
 
  const EditModal = ({ customer }: { customer: Customer }) => {
- const [formData, setFormData] = useState<Customer>(customer);
+ const [formData, setFormData] = useState<Customer>(() => ({ ...customer, phone: realPhone(customer.phone) }));
  const [errors, setErrors] = useState<{ [key: string]: string }>({});
  const isNewCustomer = !customer.id;
 
@@ -1814,7 +1815,7 @@ export const Customers: React.FC<CustomersProps> = ({
  {customer.name}
  </h3>
  <p className="text-sm text-content-muted truncate">
- {customer.phone}
+ {realPhone(customer.phone)}
  </p>
  </div>
  </div>
@@ -2056,7 +2057,7 @@ export const Customers: React.FC<CustomersProps> = ({
  </div>
  <div>
  <p className="font-medium text-content-primary">{customer.name}</p>
- <p className="text-xs text-content-muted">{customer.phone}</p>
+ <p className="text-xs text-content-muted">{realPhone(customer.phone)}</p>
  </div>
  </div>
  </td>
@@ -2308,7 +2309,7 @@ export const Customers: React.FC<CustomersProps> = ({
  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
  <div>
  <p className="text-content-muted">Telefone</p>
- <p className="text-content-primary">{customer.phone}</p>
+ <p className="text-content-primary">{realPhone(customer.phone)}</p>
  </div>
  <div>
  <p className="text-content-muted">Pedidos</p>

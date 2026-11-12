@@ -8,6 +8,7 @@ import { Product, OrderItem, OrderStatus } from '../../core/types/types';
 import type { Toast } from '../../core/components/ui/Toast';
 import { BarcodeScanner } from '../components/BarcodeScanner';
 import { getEffectivePrice } from '../../core/utils/pricing';
+import { realPhone } from '../../core/utils/phone';
 
 interface POSProps {
  showToast?: (msg: string, type: Toast['type']) => void;
@@ -188,7 +189,7 @@ function printInvoice(r: SaleReceipt, tax: TaxConfig, invoiceNumber: string, log
  <div class="info-box">
  <h4>Cliente</h4>
  <p><strong>${r.customerName}</strong></p>
- ${r.customerPhone ? `<p>Tel: ${r.customerPhone}</p>` : ''}
+ ${realPhone(r.customerPhone) ? `<p>Tel: ${realPhone(r.customerPhone)}</p>` : ''}
  <p>NUIT: —</p>
  </div>
 </div>
@@ -285,7 +286,7 @@ function printVD(r: SaleReceipt, tax: TaxConfig, vdNumber: string, logoUrl = '')
  <div class="info-box">
  <h4>Cliente</h4>
  <p><strong>${r.customerName !== 'Cliente POS' ? r.customerName : 'Consumidor Final'}</strong></p>
- ${r.customerPhone ? `<p>Tel: ${r.customerPhone}</p>` : ''}
+ ${realPhone(r.customerPhone) ? `<p>Tel: ${realPhone(r.customerPhone)}</p>` : ''}
  <p style="font-size:10px;color:#999">NUIT: Não aplicável (consumidor final)</p>
  </div>
 </div>

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
+import { realPhone } from '../../core/utils/phone';
 
 interface LogisticsOrder {
  id: string;
@@ -148,7 +149,7 @@ const StatusDropdown: React.FC<{
  />
  <MessageCircle className="w-3.5 h-3.5" />
  <span className="font-medium">WhatsApp</span>
- {!order.customerPhone && <span className="text-[10px] text-content-muted ml-auto">sem nº</span>}
+ {!realPhone(order.customerPhone) && <span className="text-[10px] text-content-muted ml-auto">sem nº</span>}
  </label>
  </div>
  </div>
@@ -368,7 +369,7 @@ export const Logistics: React.FC<{
  )}
  </div>
  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-xs text-content-muted">
- {order.customerPhone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{order.customerPhone}</span>}
+ {realPhone(order.customerPhone) && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{realPhone(order.customerPhone)}</span>}
  {order.isDelivery && order.deliveryZoneName
  ? <span className="flex items-center gap-1 text-green-600 dark:text-green-400"><MapPin className="w-3 h-3" />{order.deliveryZoneName}</span>
  : <span>Levantamento</span>

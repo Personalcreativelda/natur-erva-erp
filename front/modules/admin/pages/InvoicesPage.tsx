@@ -7,6 +7,7 @@ import {
 import api, { downloadBlob } from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
 import type { Toast } from '../../core/components/ui/Toast';
+import { realPhone } from '../../core/utils/phone';
 
 interface InvoicesPageProps {
   showToast?: (msg: string, type: Toast['type']) => void;
@@ -472,7 +473,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ showToast }) => {
                     </td>
                     <td className="px-4 py-3">
                       <p className="text-sm font-medium text-content-primary">{inv.customerName || '—'}</p>
-                      {inv.customerPhone && <p className="text-xs text-content-muted">{inv.customerPhone}</p>}
+                      {realPhone(inv.customerPhone) && <p className="text-xs text-content-muted">{realPhone(inv.customerPhone)}</p>}
                     </td>
                     <td className="px-4 py-3 text-xs text-content-muted">{fmtDate(inv.issuedAt)}</td>
                     <td className="px-4 py-3 text-xs">

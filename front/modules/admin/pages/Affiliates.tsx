@@ -2,6 +2,7 @@
 import { Users, TrendingUp, Download, Check, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
+import { realPhone } from '../../core/utils/phone';
 
 type Tab = 'affiliates' | 'commissions' | 'withdrawals';
 
@@ -193,7 +194,7 @@ export const Affiliates: React.FC<{
  {aff.referral_code}
  </span>
  </div>
- <p className="text-xs text-content-muted mt-0.5">{aff.email}{aff.phone ? ` · ${aff.phone}` : ''}</p>
+ <p className="text-xs text-content-muted mt-0.5">{aff.email}{realPhone(aff.phone) ? ` · ${realPhone(aff.phone)}` : ''}</p>
  </div>
  <button
  onClick={() => toggleAffStatus(aff)}

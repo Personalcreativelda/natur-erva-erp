@@ -3,6 +3,7 @@ import { Send, Users, Mail, MessageCircle, Loader2, RefreshCw, ExternalLink, Pap
 import api from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
 import { getSystemSettings } from '../../core/services/systemSettingsService';
+import { realPhone } from '../../core/utils/phone';
 
 const DEFAULT_WA_MESSAGE = 'Olá {nome}! 🌿 Temos novidades especiais para si.';
 
@@ -190,7 +191,7 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
  <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={() => toggleCustomer(c.id)} className="accent-brand-600 flex-shrink-0" />
  <div className="flex-1 min-w-0">
  <p className="text-sm font-medium text-content-primary truncate">{c.name}</p>
- <p className="text-xs text-content-muted truncate">{tab === 'email' ? c.email : (c.phone || 'Sem telemóvel')}</p>
+ <p className="text-xs text-content-muted truncate">{tab === 'email' ? c.email : (realPhone(c.phone) || 'Sem telemóvel')}</p>
  </div>
  <span className="text-xs text-content-muted whitespace-nowrap">{c.order_count} pedidos</span>
  </label>
@@ -286,7 +287,7 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
  </div>
  <div className="flex-1 min-w-0">
  <p className="text-sm font-medium text-content-primary">{l.name}</p>
- <p className="text-xs text-content-muted">+{l.phone}</p>
+ <p className="text-xs text-content-muted">{realPhone(l.phone) ? '+' + realPhone(l.phone) : 'Sem telemóvel'}</p>
  </div>
  <ExternalLink className="w-4 h-4 text-content-muted group-hover:text-green-600 transition-colors" />
  </a>

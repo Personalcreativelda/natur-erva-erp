@@ -53,6 +53,7 @@ import { StockIntegrityModal } from '../components/modals/StockIntegrityModal';
 import { Modal } from '../components/shared/Modal';
 import { parseProductName } from '../../core/services/serviceUtils';
 import { useAppAuth } from '../../auth/hooks/useAppAuth';
+import { realPhone } from '../../core/utils/phone';
 
 type StockTabType = 'products' | 'movements' | 'settings';
 
@@ -4354,7 +4355,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  <div>
  <p className="text-xs text-content-muted uppercase">Cliente</p>
  <p className="font-medium text-content-primary">{detailOrder.customerName}</p>
- <p className="text-content-secondary">{detailOrder.customerPhone}</p>
+ <p className="text-content-secondary">{realPhone(detailOrder.customerPhone)}</p>
  </div>
  <div className="text-right">
  <p className="text-xs text-content-muted uppercase">Data</p>

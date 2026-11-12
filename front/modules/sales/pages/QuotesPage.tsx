@@ -6,6 +6,7 @@ import { Settings, Plus, Trash2, Edit2, X as XIcon, Eye, Download, Printer, File
 import { useAppAuth } from '../../auth/hooks/useAppAuth';
 import { PageShell } from '../../core/components/layout/PageShell';
 import { useConfirm } from '../../core/contexts/ConfirmContext';
+import { realPhone } from '../../core/utils/phone';
 
 function KpiCard({ label, value, sub, icon, accent }: { label: string; value: string | number; sub?: string; icon: React.ReactNode; accent: string }) {
  return (
@@ -201,7 +202,7 @@ ${toolbar}
 </div>
 <div class="info-grid">
  <div class="info-box"><h4>Emitida por</h4><p><strong>${tax.companyName}</strong></p><p>NUIT: ${tax.companyNuit || '—'}</p><p>${tax.companyPhone || ''}</p></div>
- <div class="info-box"><h4>Cliente</h4><p><strong>${q.customerName || '—'}</strong></p>${q.customerPhone ? `<p>${q.customerPhone}</p>` : ''}${q.customerNuit ? `<p>NUIT: ${q.customerNuit}</p>` : '<p style="font-size:10px;color:#999">NUIT: ______________</p>'}${q.customerEmail ? `<p>${q.customerEmail}</p>` : ''}</div>
+ <div class="info-box"><h4>Cliente</h4><p><strong>${q.customerName || '—'}</strong></p>${realPhone(q.customerPhone) ? `<p>${realPhone(q.customerPhone)}</p>` : ''}${q.customerNuit ? `<p>NUIT: ${q.customerNuit}</p>` : '<p style="font-size:10px;color:#999">NUIT: ______________</p>'}${q.customerEmail ? `<p>${q.customerEmail}</p>` : ''}</div>
 </div>
 ${q.notes ? `<div class="notes"><strong>Notas:</strong> ${q.notes}</div>` : ''}
 <table><thead><tr><th>Descrição</th><th class="r">Qtd</th><th class="r">Preço Unit.</th><th class="r">Total</th></tr></thead><tbody>${rows}</tbody></table>
@@ -310,7 +311,7 @@ export const QuotesPage: React.FC = () => {
  const openEdit = (q: Quote) => {
  setEditing(q);
  setForm({
- customerName: q.customerName, customerPhone: q.customerPhone,
+ customerName: q.customerName, customerPhone: realPhone(q.customerPhone),
  customerNuit: q.customerNuit, customerEmail: q.customerEmail,
  items: [...q.items], discount: q.discount, notes: q.notes,
  status: q.status, validUntil: q.validUntil, validityDays: q.validityDays,
@@ -496,7 +497,7 @@ export const QuotesPage: React.FC = () => {
  </td>
  <td className="px-4 py-3">
  <p className="text-sm font-medium text-content-primary">{q.customerName || <span className="text-content-muted italic text-xs">Sem nome</span>}</p>
- {q.customerPhone && <p className="text-xs text-content-muted">{q.customerPhone}</p>}
+ {realPhone(q.customerPhone) && <p className="text-xs text-content-muted">{realPhone(q.customerPhone)}</p>}
  </td>
  <td className="px-4 py-3 text-sm text-content-muted">
  {q.items.length} {q.items.length === 1 ? 'item' : 'itens'}
