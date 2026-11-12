@@ -27,6 +27,16 @@ Antes de cada nova versão, aumente `versionCode` (e `versionName`) em `android/
 (o Android exige a mesma assinatura) e não é possível publicar actualizações na Play Store.
 Estes ficheiros estão no `.gitignore` — não os envie para o GitHub.
 
+## Plugins nativos (desde a versão 1.2)
+`@capacitor/app` (botão Voltar), `@capacitor/keyboard` (teclado virtual) e `@capacitor/haptics`
+(vibração ao tocar). O site usa-os através de `window.Capacitor` — ver
+`front/modules/core/mobile/native.ts`. Se um utilizador ainda tiver um APK antigo sem estes plugins,
+o site detecta-o e mantém o comportamento anterior (nada parte).
+
+Comportamento do Voltar (`front/modules/core/mobile/MobileShell.tsx`): fecha o painel/modal aberto →
+volta à página anterior → vai para o início da área (loja `/` ou admin `/admin`) → no início, dois
+toques em 2 s saem da app.
+
 ## Configuração
 - `capacitor.config.json` — URL do site, cores, splash, barras do sistema.
 - `www/offline.html` — ecrã mostrado sem internet (volta ao site quando a ligação regressa).

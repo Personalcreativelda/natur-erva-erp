@@ -11,7 +11,7 @@
   "android": {
     "backgroundColor": "#ffffff",
     "allowMixedContent": false,
-    "appendUserAgent": "NaturErvaApp/1.0 (Android)"
+    "appendUserAgent": "NaturErvaApp/1.2 (Android)"
   },
   "plugins": {
     "SystemBars": {
