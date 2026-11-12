@@ -5,7 +5,7 @@ import { AdminBottomNavigation } from './AdminBottomNavigation';
 import { RouteTransition } from '../../mobile/RouteTransition';
 
 import { User, UserRole } from '../../../core/types/types';
-import { X, LogOut, ChevronDown, User as UserIcon, Globe, LayoutDashboard, ShoppingCart, TrendingUp, Truck, Users, Package, ShoppingBag, BarChart3, Activity, FileText, ArrowLeftRight, Wallet, Repeat, Share2, Megaphone, Image, Tag, Ruler, List, ClipboardCheck, AlertTriangle, Scale, Shield, Boxes, Store, MapPin, CreditCard, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, RefreshCw, FolderOpen, HeartPulse } from 'lucide-react';
+import { X, LogOut, ChevronDown, User as UserIcon, Globe, LayoutDashboard, ShoppingCart, TrendingUp, Truck, Users, Package, ShoppingBag, BarChart3, Activity, FileText, ArrowLeftRight, Wallet, Repeat, Share2, Megaphone, Image, Tag, Ruler, List, ClipboardCheck, AlertTriangle, Scale, Shield, Boxes, Store, MapPin, CreditCard, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, RefreshCw, FolderOpen, HeartPulse, Search } from 'lucide-react';
 import { useLanguage } from '../../../core/contexts/LanguageContext';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
@@ -34,6 +34,12 @@ interface LayoutProps {
  isDarkMode: boolean;
  toggleTheme: () => void;
 }
+
+// Itens que não aparecem no menu do telemóvel (as páginas continuam acessíveis)
+const MOBILE_MENU_HIDDEN = new Set(['tracking', 'subscriptions']);
+
+/** Texto comparável: sem acentos e em minúsculas ("Logística" ≈ "logistica"). */
+const normalizeMenuText = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 export const Layout: React.FC<LayoutProps> = ({
  children,
@@ -343,18 +349,47 @@ export const Layout: React.FC<LayoutProps> = ({
  });
  }, [hasPermission, t, enabledModules]);
 
+ // Menu do telemóvel: sem Estatísticas e Assinaturas (as páginas continuam acessíveis pelo URL)
+ const mobileMenuItems = useMemo(
+ () => filteredMenuItems.filter(item => !MOBILE_MENU_HIDDEN.has(item.id)),
+ [filteredMenuItems]
+ );
+
+ // Pesquisa no menu do telemóvel: itens e submenus, sem acentos nem maiúsculas
+ const [menuQuery, setMenuQuery] = useState('');
+ const menuSearchResults = useMemo(() => {
+ const q = normalizeMenuText(menuQuery.trim());
+ if (!q) return null;
+ const results: { key: string; label: string; parent?: string; icon: any; onSelect: () => void }[] = [];
+ for (const item of mobileMenuItems) {
+ if (item.children && item.children.length > 0) {
+ const parentMatches = normalizeMenuText(item.label).includes(q);
+ for (const child of item.children) {
+ if (parentMatches || normalizeMenuText(child.label).includes(q)) {
+ results.push({ key: child.id, label: child.label, parent: item.label, icon: child.icon || item.icon, onSelect: () => navigate(child.path) });
+ }
+ }
+ } else if (normalizeMenuText(item.label).includes(q)) {
+ results.push({ key: item.id, label: item.label, icon: item.icon, onSelect: () => handleNavigate(item.id) });
+ }
+ }
+ return results;
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [menuQuery, mobileMenuItems]);
+ useEffect(() => { if (!mobileMenuOpen) setMenuQuery(''); }, [mobileMenuOpen]);
+
  // IDs dos itens que iniciam uma nova secção (igual ao Sidebar)
  const groupStartIds = useMemo(() => {
  const seen = new Set<string>();
  const starts = new Set<string>();
- filteredMenuItems.forEach(item => {
+ mobileMenuItems.forEach(item => {
  if (item.group && !seen.has(item.group)) {
  seen.add(item.group);
  starts.add(item.id);
  }
  });
  return starts;
- }, [filteredMenuItems]);
+ }, [mobileMenuItems]);
 
  const handleNavigate = (page: string) => {
  onNavigate(page);
@@ -555,9 +590,59 @@ export const Layout: React.FC<LayoutProps> = ({
  </button>
  </div>
 
+ {/* Pesquisa no menu */}
+ <div className="px-3 pt-3">
+ <div className="relative">
+ <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-content-muted pointer-events-none" />
+ <input
+ type="search"
+ value={menuQuery}
+ onChange={e => setMenuQuery(e.target.value)}
+ placeholder="Pesquisar no menu…"
+ aria-label="Pesquisar no menu"
+ enterKeyHint="search"
+ className={`w-full h-11 pl-11 ${menuQuery ? 'pr-10' : 'pr-3'} rounded-xl bg-surface-base border border-border-default text-content-primary placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500`}
+ />
+ {menuQuery && (
+ <button
+ type="button"
+ onClick={() => setMenuQuery('')}
+ aria-label="Limpar pesquisa"
+ className="tap-target absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 !min-h-0 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-overlay"
+ >
+ <X className="w-4 h-4" />
+ </button>
+ )}
+ </div>
+ </div>
+
+ {/* Resultados da pesquisa */}
+ {menuSearchResults && (
+ <nav className="flex-1 py-3 px-2 space-y-1" aria-label="Resultados da pesquisa">
+ {menuSearchResults.length === 0 ? (
+ <p className="px-4 py-6 text-center text-[15px] text-content-muted">Nenhum menu encontrado</p>
+ ) : menuSearchResults.map(r => {
+ const RIcon = r.icon;
+ return (
+ <button
+ key={r.key}
+ onClick={() => { r.onSelect(); setMobileMenuOpen(false); }}
+ className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left text-base font-medium text-content-secondary active:bg-surface-raised hover:bg-surface-raised hover:text-content-primary touch-manipulation"
+ >
+ {RIcon && <RIcon className="w-5 h-5 flex-shrink-0 text-content-muted" />}
+ <span className="min-w-0 truncate">
+ {r.parent && <span className="text-content-muted font-normal">{r.parent} › </span>}
+ {r.label}
+ </span>
+ </button>
+ );
+ })}
+ </nav>
+ )}
+
  {/* Navigation Menu com Submenus Accordion */}
- <nav className="flex-1 py-3 sm:py-4 px-2 sm:px-3 space-y-1">
- {filteredMenuItems.map((item) => {
+ <nav className={`flex-1 py-3 sm:py-4 px-2 sm:px-3 space-y-1 ${menuSearchResults ? 'hidden' : ''}`}>
+ {mobileMenuItems.map((item) => {
  const Icon = item.icon;
  const hasChildren = item.children && item.children.length > 0;
  const isExpanded = mobileExpandedMenus[item.id];
@@ -569,9 +654,9 @@ export const Layout: React.FC<LayoutProps> = ({
  const isActive = activePage === item.id || activePage.startsWith(item.id + '-') || isSubmenuActive;
 
  const isGroupStart = !!item.group && groupStartIds.has(item.id);
- const groupSeparator = isGroupStart && item.id !== filteredMenuItems[0]?.id ? (
+ const groupSeparator = isGroupStart && item.id !== mobileMenuItems[0]?.id ? (
  <div className="px-4 pt-4 pb-1.5">
- <span className="text-[10px] font-semibold uppercase tracking-wider text-content-muted/70">
+ <span className="text-[11px] font-semibold uppercase tracking-wider text-content-muted/70">
  {GROUP_LABELS[item.group!] || item.group}
  </span>
  </div>
@@ -584,7 +669,7 @@ export const Layout: React.FC<LayoutProps> = ({
  {/* Menu principal com seta de expansão */}
  <button
  onClick={() => toggleMobileMenuExpansion(item.id)}
- className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-colors text-sm font-medium touch-manipulation ${isActive
+ className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-colors text-base font-medium touch-manipulation ${isActive
  ? 'bg-brand-600/10 dark:bg-brand-600/20 text-brand-700 dark:text-brand-300 '
  : 'text-content-secondary active:bg-surface-raised hover:bg-surface-raised hover:text-content-primary'
  }`}
@@ -618,7 +703,7 @@ export const Layout: React.FC<LayoutProps> = ({
  navigate(child.path);
  setMobileMenuOpen(false);
  }}
- className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors text-sm touch-manipulation ${isChildActive
+ className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors text-[15px] touch-manipulation ${isChildActive
  ? 'bg-brand-600/10 dark:bg-brand-600/20 text-brand-700 dark:text-brand-300 border-l-2 border-l-brand-600 dark:border-l-brand-400'
  : 'text-content-secondary active:bg-surface-raised hover:bg-surface-raised hover:text-content-primary'
  }`}
@@ -640,7 +725,7 @@ export const Layout: React.FC<LayoutProps> = ({
  {groupSeparator}
  <button
  onClick={() => handleNavigate(item.id)}
- className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors text-sm font-medium touch-manipulation ${isActive
+ className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors text-base font-medium touch-manipulation ${isActive
  ? 'bg-brand-600/10 dark:bg-brand-600/20 text-brand-700 dark:text-brand-300 '
  : 'text-content-secondary active:bg-surface-raised hover:bg-surface-raised hover:text-content-primary'
  }`}
