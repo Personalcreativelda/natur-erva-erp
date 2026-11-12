@@ -703,12 +703,12 @@ export const Layout: React.FC<LayoutProps> = ({
  navigate(child.path);
  setMobileMenuOpen(false);
  }}
- className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors text-[15px] touch-manipulation ${isChildActive
+ className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors text-base font-medium touch-manipulation ${isChildActive
  ? 'bg-brand-600/10 dark:bg-brand-600/20 text-brand-700 dark:text-brand-300 border-l-2 border-l-brand-600 dark:border-l-brand-400'
  : 'text-content-secondary active:bg-surface-raised hover:bg-surface-raised hover:text-content-primary'
  }`}
  >
- {ChildIcon && <ChildIcon className={`w-4 h-4 flex-shrink-0 ${isChildActive ? 'text-brand-600 dark:text-brand-400' : 'text-content-muted'}`} />}
+ {ChildIcon && <ChildIcon className={`w-[18px] h-[18px] flex-shrink-0 ${isChildActive ? 'text-brand-600 dark:text-brand-400' : 'text-content-muted'}`} />}
  <span className="truncate">{child.label}</span>
  </button>
  );
