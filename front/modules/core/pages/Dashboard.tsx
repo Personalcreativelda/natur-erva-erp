@@ -1044,7 +1044,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders, customers, sales, 
  <div className="flex-1 min-w-0">
  <div className="flex items-center justify-between mb-1">
  <p className="text-xs sm:text-sm font-medium text-content-muted truncate leading-9 sm:leading-[44px] pr-11 sm:pr-14">{t.dashboard.totalPurchases}</p>
- {onNavigate && <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 text-content-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />}
+ {onNavigate && <ExternalLink className="touch-visible w-3 h-3 sm:w-4 sm:h-4 text-content-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />}
  </div>
  <h3 className="text-lg sm:text-2xl lg:text-[1.75rem] leading-tight font-bold text-content-primary tabular-nums mt-0.5"><MoneyValue value={currentPeriodPurchasesTotal} /></h3>
  <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">

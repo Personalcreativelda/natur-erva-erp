@@ -171,6 +171,75 @@
       html.native-app img { -webkit-user-drag: none; }
       html.native-app .site-footer { display: none; } /* rodapé de website — na app a navegação é a barra inferior */
 
+      /* A app desenha por baixo da barra de estado (edge-to-edge): modais, painéis de ecrã
+         inteiro e o chat começam abaixo dela, para o título e o botão fechar não ficarem tapados */
+      html.native-app .fixed.inset-0:not(.pos-mobile-viewport) {
+        padding-top: calc(env(safe-area-inset-top) + 8px) !important;
+      }
+      @media (max-width: 640px) {
+        #lfw-window {
+          top: env(safe-area-inset-top) !important;
+          height: auto !important;
+          max-height: none !important;
+        }
+      }
+
+      /* Teclado aberto: rodapés de acção dos modais (ex.: "Total a pagar / Confirmar") saem do
+         caminho para os campos e listas ficarem visíveis; voltam ao fechar o teclado */
+      html.keyboard-open .kb-hide { display: none !important; }
+
+      /* Ecrãs tácteis não têm hover: acções que só apareciam ao passar o rato ficam sempre visíveis */
+      @media (hover: none) {
+        .touch-visible { opacity: 1 !important; visibility: visible !important; }
+        /* Cartões de imagem (galeria): em vez de escurecer a imagem toda, faixa com as acções em baixo */
+        .touch-visible-overlay {
+          opacity: 1 !important;
+          background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent 55%) !important;
+          align-items: flex-end !important;
+          padding-bottom: 8px;
+        }
+      }
+
+      /* Tabelas largas no telemóvel → cartões (classe aplicada por modules/core/mobile/responsiveTables.ts
+         só às tabelas que não cabem no ecrã) */
+      @media (max-width: 640px) {
+        table.table-cards { min-width: 0 !important; width: 100% !important; border-collapse: separate; }
+        table.table-cards thead { display: none; }
+        table.table-cards tbody, table.table-cards tfoot { display: block; }
+        table.table-cards tr {
+          display: block;
+          margin-bottom: 10px;
+          padding: 6px 14px;
+          border: 1px solid rgb(var(--border-default-rgb));
+          border-radius: 14px;
+          background: rgb(var(--surface-raised-rgb));
+        }
+        table.table-cards td {
+          display: flex !important;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          width: 100% !important;
+          padding: 7px 0 !important;
+          border: 0 !important;
+          text-align: right !important;
+          white-space: normal !important;
+          word-break: break-word;
+        }
+        table.table-cards td + td { border-top: 1px solid rgb(var(--border-default-rgb) / 0.5) !important; }
+        table.table-cards td::before {
+          content: attr(data-label);
+          flex-shrink: 0;
+          max-width: 45%;
+          text-align: left;
+          font-size: 12px;
+          color: var(--text-muted);
+        }
+        table.table-cards td[data-label=""]::before { content: none; }
+        table.table-cards td[data-label=""] { justify-content: flex-end; }
+        table.table-cards td:empty { display: none !important; }
+      }
+
       /* Focus ring */
       *:focus-visible {
         outline: 2px solid var(--brand-600, #059669);

@@ -1129,7 +1129,7 @@ const SheetModal: React.FC<{ title: string; onClose: () => void; children: React
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 sm:px-6 py-5">{children}</div>
         {footer && (
-          <div className="shrink-0 border-t border-border-default px-5 sm:px-6 pt-4" style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 0.75rem))' }}>
+          <div className="kb-hide shrink-0 border-t border-border-default px-5 sm:px-6 pt-4" style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 0.75rem))' }}>
             {footer}
           </div>
         )}

@@ -353,14 +353,14 @@ export const Logistics: React.FC<{
  </div>
  )}
 
- <div className="flex items-center gap-3 px-4 py-3">
+ <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-2 px-4 py-3">
  {/* Status badge */}
  <span className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${step.bg} ${step.color} whitespace-nowrap`}>
  {step.icon} {step.short}
  </span>
 
  {/* Info */}
- <div className="flex-1 min-w-0">
+ <div className="flex-1 min-w-[55%] sm:min-w-0">
  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
  <span className="font-semibold text-sm text-content-primary">{order.customerName}</span>
  {order.trackingCode && (
@@ -378,8 +378,8 @@ export const Logistics: React.FC<{
  </div>
  </div>
 
- {/* Dropdown + expand */}
- <div className="flex items-center gap-2 shrink-0">
+ {/* Dropdown + expand — no telemóvel desce para uma segunda linha */}
+ <div className="flex items-center gap-2 shrink-0 ml-auto">
  <StatusDropdown order={order} onUpdate={handleStatusUpdate} updating={updatingId === order.id} />
  <button aria-expanded={isExpanded} aria-label="Expandir detalhes"
  onClick={() => setExpandedId(isExpanded ? null : order.id)}

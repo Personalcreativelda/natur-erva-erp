@@ -123,7 +123,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
 
  {/* Overlay com ações */}
  {showActions && (
- <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+ <div className="touch-visible-overlay absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
  {onView && (
  <button
  onClick={handleView}

@@ -524,7 +524,7 @@ export const QuotesPage: React.FC = () => {
  </td>
  <td className="px-4 py-3 text-xs text-content-muted">{fmtDate(q.createdAt)}</td>
  <td className="px-4 py-3 text-right">
- <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+ <div className="touch-visible flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
  <button onClick={() => openQuote(q, 'preview')} title="Pré-visualizar"
  className="flex items-center gap-1 px-2 py-1 text-xs text-brand-700 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded font-medium transition-colors">
  <Eye className="w-3 h-3" /> Ver

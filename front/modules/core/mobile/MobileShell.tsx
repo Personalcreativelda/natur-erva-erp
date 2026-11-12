@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { exitApp, getLaunchUrl, isNativeApp, onAndroidBack, onAppUrlOpen, onKeyboardChange, setSystemBarsDark } from './native';
 import { installNativeFileBridge } from './nativeFiles';
+import { installResponsiveTables } from './responsiveTables';
 import { closeTopOverlay } from './overlays';
 
 /**
@@ -41,6 +42,9 @@ export const MobileShell: React.FC = () => {
     mo.observe(root, { attributes: true, attributeFilter: ['class'] });
     return () => mo.disconnect();
   }, []);
+
+  // ── tabelas largas → cartões no telemóvel ────────────────────────────────────
+  useEffect(() => installResponsiveTables(), []);
 
   // ── transferências (PDF/Excel) e impressão nativas ───────────────────────────
   useEffect(() => {

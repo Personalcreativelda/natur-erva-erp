@@ -192,7 +192,7 @@ export function Documents({ showToast }: Props) {
                 <p className="text-xs text-content-muted">{f.doc_count} ficheiros · {f.subfolder_count} subpastas</p>
               </div>
               <button aria-label="Eliminar" onClick={e => { e.stopPropagation(); deleteFolder(f.id); }}
-                className="tap-target opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600">
+                className="touch-visible tap-target opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-600">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -206,7 +206,7 @@ export function Documents({ showToast }: Props) {
                 <p className="font-medium text-content-primary truncate">{d.name}</p>
                 <p className="text-xs text-content-muted">{fmtSize(d.file_size)} · {d.created_by_name || '—'} {d.folder_name ? `· 📁 ${d.folder_name}` : ''}</p>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="touch-visible flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <a href={d.file_url} target="_blank" rel="noreferrer"
                   className="px-2.5 py-1.5 text-xs border border-border-default rounded-lg text-content-secondary hover:bg-surface-overlay">
                   Abrir

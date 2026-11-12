@@ -18,6 +18,9 @@ import {
   ProtocolItem, Protocol, CustomerLite, ProductLite,
 } from '../shared';
 
+/** Pacientes sem telefone guardados com um identificador interno "no_phone_…" — não mostrar. */
+const realPhone = (phone?: string | null) => (phone && !/^no_phone_/i.test(phone) ? phone : '');
+
 interface Props { showToast?: (msg: string, type: Toast['type']) => void; }
 
 export function ClinicPatients({ showToast }: Props) {
@@ -415,7 +418,7 @@ export function ClinicPatients({ showToast }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-content-primary truncate">{p.customerName}</p>
-                    <p className="text-xs text-content-muted">{p.customerPhone || p.customerEmail || '—'}</p>
+                    <p className="text-xs text-content-muted">{realPhone(p.customerPhone) || p.customerEmail || '—'}</p>
                   </div>
                   {p.allergies && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">Alergias</span>
@@ -522,10 +525,10 @@ export function ClinicPatients({ showToast }: Props) {
       {detailPatient && (
         <Modal title={detailPatient.customerName} onClose={() => setDetailPatientId(null)} wide>
           <div className="space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-content-muted flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-content-muted flex-1 min-w-0 [&>span]:min-w-0 [&>span]:break-words">
                 {detailPatient.fileNumber != null && <span><span className="text-content-secondary font-medium">Nº Ficha:</span> {String(detailPatient.fileNumber).padStart(4, '0')}</span>}
-                {detailPatient.customerPhone && <span><span className="text-content-secondary font-medium">Telefone:</span> {detailPatient.customerPhone}</span>}
+                <span><span className="text-content-secondary font-medium">Telefone:</span> {realPhone(detailPatient.customerPhone) || 'Sem telefone'}</span>
                 {detailPatient.customerEmail && <span className="truncate"><span className="text-content-secondary font-medium">Email:</span> {detailPatient.customerEmail}</span>}
                 {detailPatient.sex && <span><span className="text-content-secondary font-medium">Sexo:</span> {SEX_OPTIONS.find(s => s.value === detailPatient.sex)?.label || detailPatient.sex}</span>}
                 {detailPatient.birthDate && <span><span className="text-content-secondary font-medium">Nascimento:</span> {new Date(detailPatient.birthDate).toLocaleDateString('pt-PT')}</span>}
@@ -536,7 +539,7 @@ export function ClinicPatients({ showToast }: Props) {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 [&>button]:flex-1 sm:[&>button]:flex-none [&>button]:justify-center">
                 <button onClick={openEditPatient} title="Editar dados do paciente"
                   className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-border-default rounded-lg text-content-secondary hover:bg-surface-overlay">
                   <Pencil className="w-3.5 h-3.5" /> Editar

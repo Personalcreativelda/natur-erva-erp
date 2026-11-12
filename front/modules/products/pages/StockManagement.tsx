@@ -2352,7 +2352,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  <Download className="w-5 h-5" />
  <span className="hidden sm:inline">Exportar</span>
  </button>
- <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-1 bg-surface-raised border border-border-default rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] min-w-[180px]">
+ <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-1 bg-surface-raised border border-border-default rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all z-[100] min-w-[180px]">
  {activeTab === 'products' ? (
  <>
  <button
@@ -2572,7 +2572,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  onChange={(val) => setSearchQuery(val)}
  placeholder="Buscar produtos..."
  size="compact"
- className="flex-1 min-w-0 sm:min-w-[120px] sm:max-w-[300px] flex-shrink-0"
+ className="flex-1 min-w-[170px] sm:min-w-[120px] sm:max-w-[300px] flex-shrink-0"
  />
 
 
@@ -3200,7 +3200,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
  onChange={(val) => setSearchQuery(val)}
  placeholder="Buscar movimentos..."
  size="compact"
- className="flex-1 min-w-0 sm:min-w-[120px] sm:max-w-[300px] flex-shrink-0"
+ className="flex-1 min-w-[170px] sm:min-w-[120px] sm:max-w-[300px] flex-shrink-0"
  />
 
  {/* Controles de Visualização */}

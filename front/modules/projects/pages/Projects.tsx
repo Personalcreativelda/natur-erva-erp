@@ -187,7 +187,7 @@ export function Projects({ showToast }: Props) {
                     <div key={task.id} className="bg-surface-raised rounded-lg p-3 shadow-sm border border-border-default/50 group">
                       <div className="flex items-start justify-between gap-1">
                         <p className="text-sm font-medium text-content-primary leading-snug flex-1">{task.title}</p>
-                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        <div className="touch-visible flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                           <button aria-label="Editar" onClick={() => { setEditingTask(task); setTaskForm({ title: task.title, description: task.description||'', status: task.status, priority: task.priority, due_date: task.due_date?.slice(0,10)||'' }); setModal('task'); }} className="tap-target p-1 rounded hover:bg-surface-overlay text-content-muted"><Pencil className="w-3 h-3" /></button>
                           <button aria-label="Eliminar" onClick={() => deleteTask(task.id)} className="tap-target p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
                         </div>
@@ -230,7 +230,7 @@ export function Projects({ showToast }: Props) {
                       <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
                       <h3 className="font-semibold text-content-primary truncate">{p.name}</h3>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                    <div className="touch-visible flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                       <button aria-label="Editar" onClick={() => { setEditingProject(p); setProjForm({ name: p.name, description: p.description||'', status: p.status, priority: p.priority, start_date: p.start_date?.slice(0,10)||'', end_date: p.end_date?.slice(0,10)||'', color: p.color||'#635BFF' }); setModal('project'); }} className="tap-target p-1.5 rounded-lg hover:bg-surface-overlay text-content-muted"><Pencil className="w-3.5 h-3.5" /></button>
                       <button aria-label="Eliminar" onClick={() => deleteProject(p.id)} className="tap-target p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-content-muted hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
