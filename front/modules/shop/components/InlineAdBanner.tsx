@@ -284,7 +284,7 @@ export const InlineAdBanner: React.FC<InlineAdBannerProps> = ({ slot, isAdmin = 
         {isAdmin && (
           <button
             onClick={e => { e.stopPropagation(); openEdit(); }}
-            className="absolute top-2 right-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg px-2.5 py-1 flex items-center gap-1 text-xs font-medium transition-colors md:opacity-0 md:group-hover:opacity-100 z-20"
+            className="touch-visible absolute top-2 right-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg px-2.5 py-1 flex items-center gap-1 text-xs font-medium transition-colors md:opacity-0 md:group-hover:opacity-100 z-20"
           >
             <Settings className="w-3 h-3" />
             Editar Anúncio

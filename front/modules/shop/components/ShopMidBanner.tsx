@@ -348,7 +348,7 @@ export const ShopMidBanner: React.FC<ShopMidBannerProps> = ({ isAdmin = false, p
         {isAdmin && (
           <button
             onClick={e => { e.stopPropagation(); openEdit(); }}
-            className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors md:opacity-0 md:group-hover:opacity-100 z-20"
+            className="touch-visible absolute top-3 right-3 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors md:opacity-0 md:group-hover:opacity-100 z-20"
           >
             <Settings className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Editar Banner</span>

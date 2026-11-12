@@ -157,7 +157,7 @@ export function Modal({ title, onClose, children, wide }: { title: string; onClo
 }
 
 export function AreaBadge({ area }: { area: string }) {
-  return <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 whitespace-nowrap">{AREA_LABELS[area] || area}</span>;
+  return <span className="inline-block max-w-full truncate align-middle px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 whitespace-nowrap">{AREA_LABELS[area] || area}</span>;
 }
 
 export function KpiCard({ label, value, sub, icon, accent }: { label: string; value: string | number; sub?: string; icon: React.ReactNode; accent: string }) {

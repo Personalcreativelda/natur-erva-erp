@@ -340,7 +340,7 @@ export const ShopBanner: React.FC<ShopBannerProps> = ({ isAdmin = false, product
         {isAdmin && (
           <button
             onClick={() => setManaging(true)}
-            className="absolute top-3 right-3 z-10 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors"
+            className="absolute bottom-3 sm:bottom-auto sm:top-3 right-3 z-10 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-xl px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors"
           >
             <Settings className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Gerir Slides</span>

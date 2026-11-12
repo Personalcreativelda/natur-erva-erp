@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import type { Toast } from '../../core/components/ui/Toast';
 import { Modal, KpiCard, inputCls, labelCls, Patient } from '../shared';
+import { realPhone } from '../../core/utils/phone';
 
 interface Props { showToast?: (msg: string, type: Toast['type']) => void; }
 
@@ -256,7 +257,7 @@ export function ClinicBilling({ showToast }: Props) {
                           <span className="font-medium text-content-primary">{inv.invoiceNumber}</span>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[inv.status]}`}>{STATUS_LABELS[inv.status]}</span>
                         </div>
-                        <p className="text-xs text-content-muted mt-1">{inv.customerName}{inv.customerPhone ? ` · ${inv.customerPhone}` : ''}</p>
+                        <p className="text-xs text-content-muted mt-1">{inv.customerName}{realPhone(inv.customerPhone) ? ` · ${realPhone(inv.customerPhone)}` : ''}</p>
                         <p className="text-xs text-content-muted mt-0.5">{inv.items.map(it => `${it.quantity}× ${it.name}`).join(', ')}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">

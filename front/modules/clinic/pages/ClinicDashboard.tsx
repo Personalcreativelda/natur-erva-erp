@@ -6,6 +6,7 @@ import api from '../../core/services/apiClient';
 import { Users, Calendar, Pill, FileHeart, ChevronRight, CalendarClock, Loader2 } from 'lucide-react';
 import type { Toast } from '../../core/components/ui/Toast';
 import { AREAS, AREA_ICONS, AREA_ACCENTS, KpiCard, AreaBadge, Patient, Appointment, Stats } from '../shared';
+import { realPhone } from '../../core/utils/phone';
 
 interface Props { showToast?: (msg: string, type: Toast['type']) => void; }
 
@@ -102,7 +103,7 @@ export function ClinicDashboard({ showToast }: Props) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-content-primary truncate">{p.customerName}</p>
-                        <p className="text-xs text-content-muted truncate">{p.customerPhone || p.customerEmail || '—'}</p>
+                        <p className="text-xs text-content-muted truncate">{realPhone(p.customerPhone) || p.customerEmail || '—'}</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-content-muted shrink-0" />
                     </div>

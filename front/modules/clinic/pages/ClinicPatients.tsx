@@ -18,8 +18,7 @@ import {
   ProtocolItem, Protocol, CustomerLite, ProductLite,
 } from '../shared';
 
-/** Pacientes sem telefone guardados com um identificador interno "no_phone_…" — não mostrar. */
-const realPhone = (phone?: string | null) => (phone && !/^no_phone_/i.test(phone) ? phone : '');
+import { realPhone } from '../../core/utils/phone';
 
 interface Props { showToast?: (msg: string, type: Toast['type']) => void; }
 
@@ -412,16 +411,16 @@ export function ClinicPatients({ showToast }: Props) {
             <div className="space-y-2">
               {filteredPatients.map(p => (
                 <div tabIndex={0} onKeyDown={activateOnKey} key={p.id} onClick={() => { setDetailPatientId(p.id); setDetailTab('ficha'); }}
-                  className="flex items-center gap-4 border border-border-default rounded-xl p-4 hover:bg-surface-overlay/30 transition-colors cursor-pointer">
+                  className="flex items-center gap-3 sm:gap-4 border border-border-default rounded-xl p-3 sm:p-4 hover:bg-surface-overlay/30 transition-colors cursor-pointer">
                   <div className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 text-xs font-bold shrink-0">
                     {p.customerName?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-content-primary truncate">{p.customerName}</p>
-                    <p className="text-xs text-content-muted">{realPhone(p.customerPhone) || p.customerEmail || '—'}</p>
+                    <p className="text-xs text-content-muted flex items-center gap-2 min-w-0"><span className="truncate">{realPhone(p.customerPhone) || p.customerEmail || '—'}</span>{p.allergies && <span className="sm:hidden shrink-0 px-1.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Alergias</span>}</p>
                   </div>
                   {p.allergies && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">Alergias</span>
+                    <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">Alergias</span>
                   )}
                   <button onClick={(e) => deletePatient(p, e)} title="Apagar paciente"
                     className="tap-target shrink-0 p-1.5 rounded-lg text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
@@ -465,7 +464,7 @@ export function ClinicPatients({ showToast }: Props) {
                   {availableCustomers.slice(0, 50).map(c => (
                     <button key={c.id} onClick={() => setNewPatientCustomerId(c.id)}
                       className={`w-full text-left px-3 py-2 text-sm hover:bg-surface-overlay ${newPatientCustomerId === c.id ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400' : 'text-content-primary'}`}>
-                      {c.name} <span className="text-content-muted text-xs">{c.phone}</span>
+                      {c.name} <span className="text-content-muted text-xs">{realPhone(c.phone)}</span>
                     </button>
                   ))}
                   {availableCustomers.length === 0 && <p className="px-3 py-4 text-xs text-content-muted text-center">Nenhum cliente disponível</p>}

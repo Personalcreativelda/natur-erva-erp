@@ -75,9 +75,9 @@ export function ClinicAgenda({ showToast }: Props) {
         ) : (
           <div className="space-y-2">
             {appointments.map(a => (
-              <div key={a.id} className="flex items-center gap-4 border border-border-default rounded-xl p-4">
+              <div key={a.id} className="flex items-center gap-3 sm:gap-4 border border-border-default rounded-xl p-3 sm:p-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
                     <span className="font-medium text-content-primary">{a.patientName}</span>
                     <AreaBadge area={a.area} />
                   </div>
