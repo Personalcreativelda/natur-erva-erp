@@ -5,7 +5,8 @@ import { User } from '../../../core/types/types';
 import { authService } from '../../../auth/services/authService';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { SignUpModal } from './SignUpModal';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
+import { useGoogleClientId } from '../../../auth/hooks/useGoogleClientId';
 import { canOpenSystemBrowser, isNativeApp, openInSystemBrowser } from '../../mobile/native';
 
 interface LoginModalProps {
@@ -82,6 +83,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
  };
 
  const inNativeApp = isNativeApp();
+ const googleClientId = useGoogleClientId();
 
  return (
  <>
@@ -188,7 +190,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
  </button>
 
  {/* Google — só aparece se estiver configurado (antes mostrava um botão desactivado) */}
- {import.meta.env.VITE_GOOGLE_CLIENT_ID && (!inNativeApp || canOpenSystemBrowser()) && (
+ {googleClientId && (!inNativeApp || canOpenSystemBrowser()) && (
  <>
  <div className="flex items-center gap-3 text-xs text-content-muted">
  <span className="h-px flex-1 bg-border-default" />
@@ -210,7 +212,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
  Continuar com Google
  </button>
  )
- : <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Erro ao autenticar com Google.')} useOneTap={false} text="continue_with" shape="pill" width="300" />
+ : <GoogleOAuthProvider clientId={googleClientId}><GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Erro ao autenticar com Google.')} useOneTap={false} text="continue_with" shape="pill" width="300" /></GoogleOAuthProvider>
  }
  </div>
  </>

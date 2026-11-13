@@ -41,6 +41,9 @@ pool.query(`ALTER TABLE tax_config ADD COLUMN IF NOT EXISTS bank_accounts JSONB 
 pool.query(`ALTER TABLE tax_config ADD COLUMN IF NOT EXISTS theme_primary_color VARCHAR(20) DEFAULT ''`).catch(() => {});
 pool.query(`ALTER TABLE tax_config ADD COLUMN IF NOT EXISTS theme_font VARCHAR(100) DEFAULT ''`).catch(() => {});
 pool.query(`ALTER TABLE tax_config ADD COLUMN IF NOT EXISTS theme_radius VARCHAR(20) DEFAULT ''`).catch(() => {});
+// Pagamento M-Pesa ao comerciante (checkout da loja). Vazio = pagamento M-Pesa desactivado.
+pool.query(`ALTER TABLE tax_config ADD COLUMN IF NOT EXISTS mpesa_merchant_code VARCHAR(30) NOT NULL DEFAULT ''`).catch(() => {});
+pool.query(`ALTER TABLE tax_config ADD COLUMN IF NOT EXISTS mpesa_merchant_name VARCHAR(200) NOT NULL DEFAULT ''`).catch(() => {});
 
 const mapConfig = (r) => ({
   companyName:        r.company_name,
@@ -66,6 +69,8 @@ const mapConfig = (r) => ({
   themePrimaryColor:  r.theme_primary_color || '',
   themeFont:          r.theme_font || '',
   themeRadius:        r.theme_radius || '',
+  mpesaMerchantCode:  r.mpesa_merchant_code || '',
+  mpesaMerchantName:  r.mpesa_merchant_name || '',
 });
 
 // GET /api/tax/config
@@ -112,6 +117,8 @@ router.put('/config', authMiddleware, async (req, res) => {
         theme_primary_color  = COALESCE($16, theme_primary_color),
         theme_font           = COALESCE($17, theme_font),
         theme_radius         = COALESCE($18, theme_radius),
+        mpesa_merchant_code  = COALESCE($19, mpesa_merchant_code),
+        mpesa_merchant_name  = COALESCE($20, mpesa_merchant_name),
         updated_at           = NOW()
        WHERE id = 1`,
       [c.companyName, c.companyNuit, c.companyAddress, c.companyPhone,
@@ -120,7 +127,9 @@ router.put('/config', authMiddleware, async (req, res) => {
        c.bankAccountHolder ?? null, c.bankSwift ?? null,
        c.logoUrl || null, c.logoIconUrl || null,
        c.bankAccounts !== undefined ? JSON.stringify(c.bankAccounts) : null,
-       c.themePrimaryColor || null, c.themeFont || null, c.themeRadius || null]
+       c.themePrimaryColor || null, c.themeFont || null, c.themeRadius || null,
+       c.mpesaMerchantCode !== undefined ? String(c.mpesaMerchantCode).replace(/\s+/g, '') : null,
+       c.mpesaMerchantName ?? null]
     );
     const { rows } = await pool.query('SELECT * FROM tax_config WHERE id = 1');
     res.json(mapConfig(rows[0]));

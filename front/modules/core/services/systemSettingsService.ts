@@ -16,6 +16,8 @@ export interface SystemSettings {
   company_phone?: string;
   company_address?: string;
   company_website?: string;
+  mpesa_merchant_code?: string;
+  mpesa_merchant_name?: string;
   [key: string]: unknown;
 }
 
@@ -49,6 +51,9 @@ export const getSystemSettings = async (): Promise<SystemSettings> => {
       ...(config.companyEmail ? { company_email: config.companyEmail } : {}),
       ...(config.companyPhone ? { company_phone: config.companyPhone } : {}),
       ...(config.companyAddress ? { company_address: config.companyAddress } : {}),
+      // Pagamento M-Pesa ao comerciante (vazio = checkout sem pagamento M-Pesa)
+      mpesa_merchant_code: config.mpesaMerchantCode || '',
+      mpesa_merchant_name: config.mpesaMerchantName || '',
     };
 
     localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: settings }));

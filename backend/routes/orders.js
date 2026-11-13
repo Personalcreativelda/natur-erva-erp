@@ -3,6 +3,7 @@ import pool from '../db.js';
 import { authMiddleware, optionalAuth } from '../middleware/auth.js';
 import { sendOrderConfirmationEmail, sendOrderStatusEmail, sendWhatsAppMessage } from '../services/emailService.js';
 import { awardOrderPoints } from '../services/loyaltyService.js';
+import { submitPaymentProof, confirmOrderPayment, rejectOrderPayment } from '../services/paymentService.js';
 
 const router = express.Router();
 
@@ -155,6 +156,11 @@ const mapOrder = (row) => ({
   amountPaid: Number(row.amount_paid) || 0,
   paymentProof: row.payment_proof,
   paymentProofText: row.payment_proof_text,
+  mpesaTransactionId: row.mpesa_transaction_id || null,
+  paymentSubmittedAt: row.payment_submitted_at || null,
+  paymentConfirmedAt: row.payment_confirmed_at || null,
+  paymentConfirmedBy: row.payment_confirmed_by || null,
+  paymentRejectedReason: row.payment_rejected_reason || null,
   notes: row.notes,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -277,6 +283,45 @@ router.get('/my-orders/:id', authMiddleware, async (req, res) => {
 });
 
 // PUT /api/orders/my-orders/:id/confirm — cliente confirma receção
+// ─── Pagamento M-Pesa ao comerciante (ver services/paymentService.js) ─────────────────────────
+// Cliente envia o código da transação (ou a SMS colada); confirma sozinho se a SMS do comerciante já chegou.
+router.post('/:id/payment-proof', authMiddleware, async (req, res) => {
+  try {
+    const { transactionId, proofText } = req.body || {};
+    const result = await submitPaymentProof({ orderId: req.params.id, user: req.user, transactionId, proofText });
+    if (!result.ok) return res.status(result.status || 400).json({ error: result.error });
+    res.json({ paid: !!result.paid || !!result.alreadyPaid, order: result.order ? mapOrder(result.order) : undefined });
+  } catch (err) {
+    console.error('[POST /orders/:id/payment-proof]', err);
+    res.status(500).json({ error: 'Erro ao registar o pagamento' });
+  }
+});
+
+// Equipa confirma o pagamento (painel). O WhatsApp usa a mesma função.
+router.post('/:id/confirm-payment', authMiddleware, async (req, res) => {
+  try {
+    if (!isStaffRequest(req.user)) return res.status(403).json({ error: 'Sem permissão' });
+    const result = await confirmOrderPayment({ orderId: req.params.id, confirmedBy: req.user.id, transactionId: req.body?.transactionId });
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ alreadyPaid: !!result.alreadyPaid, order: mapOrder(result.order) });
+  } catch (err) {
+    console.error('[POST /orders/:id/confirm-payment]', err);
+    res.status(500).json({ error: 'Erro ao confirmar o pagamento' });
+  }
+});
+
+router.post('/:id/reject-payment', authMiddleware, async (req, res) => {
+  try {
+    if (!isStaffRequest(req.user)) return res.status(403).json({ error: 'Sem permissão' });
+    const result = await rejectOrderPayment({ orderId: req.params.id, reason: req.body?.reason, rejectedBy: req.user.id });
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ order: mapOrder(result.order) });
+  } catch (err) {
+    console.error('[POST /orders/:id/reject-payment]', err);
+    res.status(500).json({ error: 'Erro ao rejeitar o pagamento' });
+  }
+});
+
 router.put('/my-orders/:id/confirm', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;

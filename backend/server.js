@@ -55,6 +55,7 @@ import clinicRoutes      from './routes/clinic.js';
 import clinicBillingRoutes from './routes/clinicBilling.js';
 import incentivesRoutes  from './routes/incentives.js';
 import assistantRoutes   from './routes/assistant.js';
+import paymentRoutes     from './routes/payments.js';
 
 const app = express();
 const PORT = process.env.PORT || 3060;
@@ -172,6 +173,7 @@ app.use('/api/clinic',        clinicRoutes);
 app.use('/api/clinic',        clinicBillingRoutes);
 app.use('/api/incentives',    incentivesRoutes);
 app.use('/api/assistant',     assistantRoutes);
+app.use('/api/payments',      paymentRoutes);
 
 // ── 404 ────────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

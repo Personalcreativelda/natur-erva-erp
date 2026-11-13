@@ -24,6 +24,7 @@ import { useShopProducts, useShopCategories, useShopBlog, useShopSettings, useCa
 import { uploadProductImage } from '../../../services/uploadService';
 import { FAQSection } from '../components/FAQSection';
 import { ProductCarousel } from '../components/ProductCarousel';
+import { MpesaPaymentPanel } from '../components/MpesaPaymentPanel';
 import { TestimonialsSection } from '../components/TestimonialsSection';
 import { ShopInstagram } from '../components/ShopInstagram';
 import { ShopMidBanner } from '../components/ShopMidBanner';
@@ -47,6 +48,7 @@ interface DeliveryInfo {
 }
 
 interface OrderConfirmation {
+  orderId?: string;
   orderNumber: string;
   trackingCode?: string | null;
   total: number;
@@ -563,6 +565,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
       setAppliedCoupon(null);
       setShowCheckout(false);
       setOrderConfirmation({
+        orderId: result.order.id,
         orderNumber: result.order.orderNumber || '',
         trackingCode: (result.order as any).trackingCode,
         // O servidor recalcula preços/entrega/cupão — mostrar o total que ficou registado
@@ -1539,6 +1542,13 @@ const OrderConfirmationModal: React.FC<{
           Vamos contactá-lo por telefone/WhatsApp para confirmar o pedido
           {confirmation.isDelivery ? ' e combinar a entrega.' : ' e o levantamento.'}
         </p>
+
+        {/* Pagamento M-Pesa ao comerciante (só aparece se houver código configurado) */}
+        {confirmation.orderId && (
+          <div className="mb-5">
+            <MpesaPaymentPanel orderId={confirmation.orderId} orderNumber={confirmation.orderNumber} total={confirmation.total} paymentStatus="unpaid" />
+          </div>
+        )}
 
         <dl className="text-left rounded-2xl bg-surface-base border border-border-default divide-y divide-border-default">
           {confirmation.orderNumber && (

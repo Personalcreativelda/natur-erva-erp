@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
+import { useGoogleClientId } from '../hooks/useGoogleClientId';
 import { CheckCircle2, Loader2, Smartphone } from 'lucide-react';
 import { authService } from '../services/authService';
 
@@ -12,6 +13,7 @@ export const AppGoogleLogin: React.FC = () => {
   const [state, setState] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
   const [error, setError] = useState('');
   const [returnLink, setReturnLink] = useState('');
+  const googleClientId = useGoogleClientId();
 
   const finish = async () => {
     const { code, error: handoffError } = await authService.requestAppHandoffCode();
@@ -47,7 +49,9 @@ export const AppGoogleLogin: React.FC = () => {
           <>
             <h1 className="text-xl font-bold text-content-primary">Entrar com Google</h1>
             <p className="text-sm text-content-muted mt-1 mb-6">Depois de entrar voltamos automaticamente à app.</p>
-            {!import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
+            {googleClientId === undefined ? (
+              <div className="flex justify-center min-h-[44px] items-center"><Loader2 className="w-5 h-5 animate-spin text-content-muted" /></div>
+            ) : !googleClientId ? (
               <p className="text-sm text-red-600">O login com Google ainda não está configurado.</p>
             ) : state === 'working' ? (
               <div className="flex items-center justify-center gap-2 text-content-muted text-sm min-h-[44px]">
@@ -55,11 +59,13 @@ export const AppGoogleLogin: React.FC = () => {
               </div>
             ) : (
               <div className="flex justify-center min-h-[44px]">
+                <GoogleOAuthProvider clientId={googleClientId}>
                 <GoogleLogin
                   onSuccess={r => onGoogle(r.credential)}
                   onError={() => { setError('Erro ao autenticar com Google.'); setState('error'); }}
                   text="continue_with" shape="pill" width="280"
                 />
+                </GoogleOAuthProvider>
               </div>
             )}
             {error && (

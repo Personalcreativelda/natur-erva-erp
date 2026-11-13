@@ -2,6 +2,7 @@ import express from 'express';
 import pool from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendEvolutionMessage, handleIncomingMessage } from '../services/assistantService.js';
+import { handleStaffPaymentMessage } from '../services/paymentService.js';
 
 const router = express.Router();
 
@@ -144,7 +145,10 @@ router.post('/webhook/:secret/:event?', async (req, res) => {
       return; // número não autorizado — ignora silenciosamente
     }
 
-    handleIncomingMessage(config, phone, text).catch(err => console.error('[assistant webhook]', err));
+    // Pagamentos (CONFIRMAR/REJEITAR NE-… ou SMS do M-Pesa reencaminhada) antes da assistente de IA
+    handleStaffPaymentMessage(config, phone, text)
+      .then(handled => { if (!handled) return handleIncomingMessage(config, phone, text); })
+      .catch(err => console.error('[assistant webhook]', err));
   } catch (err) {
     console.error('[POST /assistant/webhook]', err);
     if (!res.headersSent) res.status(200).json({ ok: true });

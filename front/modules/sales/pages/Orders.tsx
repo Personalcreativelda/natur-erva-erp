@@ -25,6 +25,7 @@ import { appSystemConfig } from '../../../config/appConfig';
 import { downloadBlob } from '../../core/services/apiClient';
 import { useConfirm } from '../../core/contexts/ConfirmContext';
 import { realPhone } from '../../core/utils/phone';
+import { OrderPaymentReview } from '../components/orders/OrderPaymentReview';
 
 interface OrdersProps {
  orders: Order[];
@@ -3963,6 +3964,11 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  )}
  </div>
  )}
+ {/* Pagamento M-Pesa ao comerciante: confirmar / rejeitar */}
+ <OrderPaymentReview
+ order={selectedOrder}
+ onUpdated={(updated) => { setSelectedOrder(updated); onImportComplete?.(); }}
+ />
  {(selectedOrder.paymentProof || selectedOrder.paymentProofText) && (
  <div className="mb-4">
  <p className="text-xs text-content-muted uppercase mb-2">Comprovativo de Pagamento</p>

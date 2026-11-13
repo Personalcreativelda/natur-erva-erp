@@ -235,6 +235,16 @@ router.get('/me', async (req, res) => {
   }
 });
 
+// ─── GET /api/auth/google-config ─────────────────────────────────────────────
+// Client ID público do Google (o mesmo que valida os tokens acima). O frontend lê-o daqui em vez de
+// depender de VITE_GOOGLE_CLIENT_ID no build — assim o botão Google funciona sem configurar o Vercel.
+router.get('/google-config', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  // Só IDs reais (ex.: "1234-abc.apps.googleusercontent.com"); valores de exemplo do .env = desactivado
+  const id = (process.env.GOOGLE_CLIENT_ID || '').trim();
+  res.json({ clientId: /\.apps\.googleusercontent\.com$/.test(id) ? id : null });
+});
+
 // ─── Login Google na app Android ─────────────────────────────────────────────
 // O Google não permite OAuth dentro de WebViews (erro disallowed_useragent). A app abre o
 // login no browser do sistema; depois de entrar, o site pede aqui um código de uso único

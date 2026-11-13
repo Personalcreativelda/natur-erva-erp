@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Loader2, Package, Truck, CheckCircle, Clock, XCircle, MapPin, Tag, Copy, Check, Scan, CreditCard, ThumbsUp, CalendarClock, ShieldCheck, ShieldOff, AlertTriangle } from 'lucide-react';
 import api from '../../core/services/apiClient';
 import { Order, OrderStatus } from '../../core/types/order';
+import { MpesaPaymentPanel } from '../components/MpesaPaymentPanel';
 
 interface TimelineStep {
   label: string;
@@ -226,6 +227,20 @@ export const CustomerOrderDetail: React.FC = () => {
             </div>
           );
         })()}
+
+        {/* Pagamento M-Pesa (pedidos por pagar e não cancelados; o painel só aparece com código configurado) */}
+        {order.status !== 'cancelled' && order.status !== OrderStatus.CANCELLED && (order.paymentStatus === 'paid' ? !!order.mpesaTransactionId : true) && (
+          <MpesaPaymentPanel
+            orderId={order.id}
+            orderNumber={order.orderNumber}
+            total={order.totalAmount}
+            paymentStatus={order.paymentStatus}
+            mpesaTransactionId={order.mpesaTransactionId}
+            paymentSubmittedAt={order.paymentSubmittedAt}
+            paymentRejectedReason={order.paymentRejectedReason}
+            onChange={st => setOrder(prev => prev ? { ...prev, ...st } as Order : prev)}
+          />
+        )}
 
         {/* Timeline */}
         <div className="bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-default">

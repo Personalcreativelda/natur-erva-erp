@@ -40,6 +40,12 @@ export interface Order {
   paymentProof?: string;
   paymentProofText?: string;
   paymentMethod?: string;
+  /** Pagamento M-Pesa ao comerciante (backend/services/paymentService.js) */
+  mpesaTransactionId?: string | null;
+  paymentSubmittedAt?: string | null;
+  paymentConfirmedAt?: string | null;
+  paymentConfirmedBy?: string | null;
+  paymentRejectedReason?: string | null;
   deliveryAddress?: string;
   deliveryFee?: number;
   isDelivery?: boolean;
