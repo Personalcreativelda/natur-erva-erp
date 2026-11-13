@@ -20,7 +20,11 @@ export const AppLoginCallback: React.FC = () => {
     let cancelled = false;
     authService.redeemAppHandoffCode(code).then(({ user, error: redeemError }) => {
       if (cancelled) return;
-      if (!user) { setError(redeemError || 'Não foi possível concluir o login.'); return; }
+      if (!user) {
+        // O código pode já ter sido usado pela própria app (polling): com sessão activa, segue em frente
+        if (localStorage.getItem('auth_token')) { closeSystemBrowser(); window.location.replace('/'); return; }
+        setError(redeemError || 'Não foi possível concluir o login.'); return;
+      }
       closeSystemBrowser();
       // Recarregar: a verificação de sessão do App lê o token novo
       window.location.replace(isClientUser(user) ? '/' : '/admin');

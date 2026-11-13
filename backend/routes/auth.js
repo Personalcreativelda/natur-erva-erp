@@ -251,11 +251,31 @@ router.get('/google-config', (req, res) => {
 // (2 min) e devolve-o à app pelo link verificado https://www.natur-erva.co.mz/app-login.
 // A app troca o código pela sessão — o token nunca aparece no link nem no histórico.
 const APP_HANDOFF_TTL_MS = 2 * 60 * 1000;
-const appHandoffCodes = new Map(); // code -> { token, expiresAt }
+const appHandoffCodes = new Map(); // code -> { token, expiresAt, nonce }
+// A app gera um "nonce" aleatório ao abrir o browser e pergunta aqui pelo resultado (polling).
+// Assim o login conclui mesmo que o Android não devolva o link à app.
+const appHandoffNonces = new Map(); // nonce -> code
+const NONCE_RE = /^[a-f0-9]{32,64}$/i;
 
 function purgeExpiredHandoffs() {
   const now = Date.now();
   for (const [code, entry] of appHandoffCodes) if (entry.expiresAt < now) appHandoffCodes.delete(code);
+  for (const [nonce, code] of appHandoffNonces) if (!appHandoffCodes.has(code)) appHandoffNonces.delete(nonce);
+}
+
+/** Troca um código de uso único pela sessão (link /app-login ou polling da app). */
+async function redeemHandoff(code, res) {
+  const entry = code && appHandoffCodes.get(code);
+  if (!entry)
+    return res.status(400).json({ error: 'Link de login inválido ou expirado. Tente entrar novamente.' });
+  appHandoffCodes.delete(code);
+  if (entry.nonce) appHandoffNonces.delete(entry.nonce);
+
+  const decoded = jwt.verify(entry.token, JWT_SECRET);
+  const { rows } = await pool.query('SELECT * FROM profiles WHERE id = $1 AND is_active = true', [decoded.id]);
+  if (!rows.length) return res.status(404).json({ error: 'Utilizador não encontrado' });
+  const roles = await getRoles(rows[0].id, rows[0].role);
+  res.json({ token: entry.token, user: buildUserResponse(rows[0], roles) });
 }
 
 // POST /api/auth/app-handoff  (autenticado) → { code }
@@ -269,7 +289,9 @@ router.post('/app-handoff', (req, res) => {
 
     purgeExpiredHandoffs();
     const code = randomBytes(24).toString('hex');
-    appHandoffCodes.set(code, { token, expiresAt: Date.now() + APP_HANDOFF_TTL_MS });
+    const nonce = typeof req.body?.nonce === 'string' && NONCE_RE.test(req.body.nonce) ? req.body.nonce : null;
+    appHandoffCodes.set(code, { token, expiresAt: Date.now() + APP_HANDOFF_TTL_MS, nonce });
+    if (nonce) appHandoffNonces.set(nonce, code);
     res.json({ code });
   } catch (err) {
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError')
@@ -282,21 +304,28 @@ router.post('/app-handoff', (req, res) => {
 router.post('/app-handoff/redeem', async (req, res) => {
   try {
     purgeExpiredHandoffs();
-    const { code } = req.body || {};
-    const entry = code && appHandoffCodes.get(code);
-    if (!entry)
-      return res.status(400).json({ error: 'Link de login inválido ou expirado. Tente entrar novamente.' });
-    appHandoffCodes.delete(code);
-
-    const decoded = jwt.verify(entry.token, JWT_SECRET);
-    const { rows } = await pool.query('SELECT * FROM profiles WHERE id = $1 AND is_active = true', [decoded.id]);
-    if (!rows.length) return res.status(404).json({ error: 'Utilizador não encontrado' });
-    const roles = await getRoles(rows[0].id, rows[0].role);
-    res.json({ token: entry.token, user: buildUserResponse(rows[0], roles) });
+    await redeemHandoff((req.body || {}).code, res);
   } catch (err) {
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError')
       return res.status(400).json({ error: 'Sessão expirada. Tente entrar novamente.' });
     console.error('[Auth AppHandoff]', err);
+    res.status(500).json({ error: 'Erro interno' });
+  }
+});
+
+// POST /api/auth/app-handoff/poll  { nonce } → { pending: true } | { token, user }  (uso único)
+router.post('/app-handoff/poll', async (req, res) => {
+  try {
+    purgeExpiredHandoffs();
+    const nonce = (req.body || {}).nonce;
+    if (typeof nonce !== 'string' || !NONCE_RE.test(nonce)) return res.status(400).json({ error: 'Pedido inválido' });
+    const code = appHandoffNonces.get(nonce);
+    if (!code) return res.json({ pending: true });
+    await redeemHandoff(code, res);
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError')
+      return res.status(400).json({ error: 'Sessão expirada. Tente entrar novamente.' });
+    console.error('[Auth AppHandoff poll]', err);
     res.status(500).json({ error: 'Erro interno' });
   }
 });

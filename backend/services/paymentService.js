@@ -284,7 +284,10 @@ export async function handleStaffPaymentMessage(config, phone, text) {
   const reply = (msg) => sendEvolutionMessage(config, phone, msg).catch(() => {});
   const t = String(text || '').trim();
 
-  let m = t.match(/^(?:confirmar|pago)\s+#?([A-Z0-9][A-Z0-9-]{3,})\s*$/i);
+  // Aceita "CONFIRMAR 60", "Confirmar #60", "confirma o pedido 60", "pago 60", "CONFIRMAR NE-…"
+  // (antes exigia 4+ caracteres e "60" ia parar à IA, que só descrevia o pedido)
+  const ORDER_REF = String.raw`(?:o\s+)?(?:pagamento\s+)?(?:d[oa]\s+)?(?:pedido|encomenda)?\s*(?:n[º°o.]+\s*)?#?([A-Z0-9][A-Z0-9-]*)`;
+  let m = t.match(new RegExp(String.raw`^(?:confirm(?:ar|a|o|e)|pago|paga)\s+${ORDER_REF}[\s.!]*$`, 'i'));
   if (m) {
     const order = await findOrderByNumber(m[1]);
     if (!order) { await reply(`Não encontrei o pedido ${m[1]}.`); return true; }
@@ -295,7 +298,7 @@ export async function handleStaffPaymentMessage(config, phone, text) {
     return true;
   }
 
-  m = t.match(/^rejeitar\s+#?([A-Z0-9][A-Z0-9-]{3,})\s*(.*)$/is);
+  m = t.match(new RegExp(String.raw`^(?:rejeit(?:ar|a|o|e)|recusar?)\s+${ORDER_REF}(?:\s+(.*))?$`, 'is'));
   if (m) {
     const order = await findOrderByNumber(m[1]);
     if (!order) { await reply(`Não encontrei o pedido ${m[1]}.`); return true; }

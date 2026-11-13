@@ -3,6 +3,7 @@ import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { useGoogleClientId } from '../hooks/useGoogleClientId';
 import { CheckCircle2, Loader2, Smartphone } from 'lucide-react';
 import { authService } from '../services/authService';
+import { appReturnLink } from '../appGoogleLogin';
 
 /**
  * /entrar-google — aberta pela app Android no browser do sistema (o Google bloqueia o login
@@ -16,9 +17,11 @@ export const AppGoogleLogin: React.FC = () => {
   const googleClientId = useGoogleClientId();
 
   const finish = async () => {
-    const { code, error: handoffError } = await authService.requestAppHandoffCode();
+    // n = nonce da app: permite que a app conclua o login por polling, mesmo sem o link de regresso
+    const nonce = new URLSearchParams(window.location.search).get('n');
+    const { code, error: handoffError } = await authService.requestAppHandoffCode(nonce);
     if (!code) { setError(handoffError || 'Não foi possível concluir o login.'); setState('error'); return; }
-    const link = `${window.location.origin}/app-login?code=${encodeURIComponent(code)}`;
+    const link = appReturnLink(code);
     setReturnLink(link);
     setState('done');
     // Tenta voltar à app automaticamente; o botão abaixo fica como alternativa garantida
@@ -40,7 +43,7 @@ export const AppGoogleLogin: React.FC = () => {
           <>
             <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-3" />
             <h1 className="text-xl font-bold text-content-primary">Sessão iniciada</h1>
-            <p className="text-sm text-content-muted mt-1 mb-5">Volte à app Natur Erva para continuar.</p>
+            <p className="text-sm text-content-muted mt-1 mb-5">A app Natur Erva já deve ter aberto. Se não abriu, toque no botão.</p>
             <a href={returnLink} className="w-full h-12 inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold">
               <Smartphone className="w-5 h-5" /> Voltar à app
             </a>

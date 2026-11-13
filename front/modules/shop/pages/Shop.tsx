@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Product, ProductVariant, OrderItem, OrderStatus } from '../../core/types/types';
 import { authService } from '../../auth/services/authService';
-import { applyDarkModeVars, removeDarkModeVars } from '../../core/utils/theme';
+import { applyDarkModeVars, removeDarkModeVars, isDarkSaved, themeKeyFor } from '../../core/utils/theme';
 import { productService } from '../../products/services/productService';
 import api from '../../core/services/apiClient';
 import { orderService } from '../../sales/services/orderService';
@@ -192,7 +192,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
 
   // ── Tema ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const isDark = localStorage.getItem('theme') === 'dark'; // loja: claro por defeito
+    const isDark = isDarkSaved('/'); // loja: preferência própria, claro por defeito
     setDarkMode(isDark);
     shopContext.setDarkMode(isDark);
     if (isDark) applyDarkModeVars(); else removeDarkModeVars();
@@ -202,7 +202,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
   const toggleTheme = useCallback(() => {
     setDarkMode(prev => {
       const next = !prev;
-      localStorage.setItem('theme', next ? 'dark' : 'light');
+      try { localStorage.setItem(themeKeyFor('/'), next ? 'dark' : 'light'); } catch { /* sem armazenamento */ }
       if (next) applyDarkModeVars(); else removeDarkModeVars();
       shopContext.setDarkMode(next);
       return next;

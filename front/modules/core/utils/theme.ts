@@ -314,6 +314,16 @@ export const applyThemePreset = (presetId: string, overrideBrandColor?: string):
   applyBorderRadius(preset.radius);
 };
 
+// ── Preferência de modo escuro por área ─────────────────────────────────────
+// O painel (/admin) e a loja (resto do site) têm preferências independentes: a equipa pode usar
+// o painel em modo escuro sem mudar a loja, e cada cliente escolhe o tema da loja.
+export const themeKeyFor = (pathname: string): 'theme' | 'shop_theme' =>
+  pathname.startsWith('/admin') ? 'theme' : 'shop_theme';
+
+export const isDarkSaved = (pathname: string): boolean => {
+  try { return localStorage.getItem(themeKeyFor(pathname)) === 'dark'; } catch { return false; }
+};
+
 // ── Dark mode CSS vars ──────────────────────────────────────────────────────
 // Must be set as inline styles to override light-mode inline styles from applyThemePreset.
 // Mirrors the .dark block in front/index.html exactly.

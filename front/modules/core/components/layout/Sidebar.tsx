@@ -410,6 +410,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [menuQuery, filteredMenuItems]);
 
+ // A pesquisa fica logo abaixo do Dashboard (ou no topo, se o Dashboard não estiver visível)
+ const searchAnchorId = filteredMenuItems.some(i => i.id === 'dashboard') ? 'dashboard' : null;
+ const menuSearch = isOpen ? (
+ <div className="pt-1 pb-1">
+ <div className="relative px-1">
+ <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted pointer-events-none" />
+ <input
+ type="search"
+ value={menuQuery}
+ onChange={e => setMenuQuery(e.target.value)}
+ onKeyDown={e => { if (e.key === 'Escape') setMenuQuery(''); if (e.key === 'Enter' && menuSearchResults?.[0]) { menuSearchResults[0].onSelect(); setMenuQuery(''); } }}
+ placeholder="Pesquisar no menu…"
+ aria-label="Pesquisar no menu"
+ className="w-full h-9 pl-9 pr-3 rounded-lg bg-surface-base border border-border-default text-sm text-content-primary placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500"
+ />
+ </div>
+ {menuSearchResults && (
+ <div className="pt-2 space-y-0.5" role="list" aria-label="Resultados da pesquisa">
+ {menuSearchResults.length === 0 ? (
+ <p className="px-3 py-6 text-center text-sm text-content-muted">Nenhum menu encontrado</p>
+ ) : menuSearchResults.map(r => {
+ const RIcon = r.icon;
+ return (
+ <button key={r.key} role="listitem" onClick={() => { r.onSelect(); setMenuQuery(''); }}
+ className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm font-medium text-content-secondary hover:bg-black/[0.04] dark:hover:bg-surface-raised/[0.05] hover:text-content-primary">
+ {RIcon && <RIcon className="w-5 h-5 flex-shrink-0 text-content-muted" />}
+ <span className="min-w-0 truncate">{r.parent && <span className="text-content-muted font-normal">{r.parent} › </span>}{r.label}</span>
+ </button>
+ );
+ })}
+ </div>
+ )}
+ </div>
+ ) : null;
+
  // IDs dos itens que iniciam uma nova secção (para desenhar o cabeçalho de grupo antes deles)
  const groupStartIds = useMemo(() => {
  const seen = new Set<string>();
@@ -461,43 +496,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
  </div>
  </div>
 
- {/* Pesquisa no menu (só com a barra aberta) */}
- {isOpen && (
- <div className="px-3 pt-3">
- <div className="relative">
- <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted pointer-events-none" />
- <input
- type="search"
- value={menuQuery}
- onChange={e => setMenuQuery(e.target.value)}
- onKeyDown={e => { if (e.key === 'Escape') setMenuQuery(''); if (e.key === 'Enter' && menuSearchResults?.[0]) { menuSearchResults[0].onSelect(); setMenuQuery(''); } }}
- placeholder="Pesquisar no menu…"
- aria-label="Pesquisar no menu"
- className="w-full h-9 pl-9 pr-3 rounded-lg bg-surface-base border border-border-default text-sm text-content-primary placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500"
- />
- </div>
- </div>
- )}
-
- {isOpen && menuSearchResults && (
- <nav className="flex-1 overflow-y-auto py-3 space-y-0.5 px-2" aria-label="Resultados da pesquisa">
- {menuSearchResults.length === 0 ? (
- <p className="px-3 py-6 text-center text-sm text-content-muted">Nenhum menu encontrado</p>
- ) : menuSearchResults.map(r => {
- const RIcon = r.icon;
- return (
- <button key={r.key} onClick={() => { r.onSelect(); setMenuQuery(''); }}
- className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm font-medium text-content-secondary hover:bg-black/[0.04] dark:hover:bg-surface-raised/[0.05] hover:text-content-primary">
- {RIcon && <RIcon className="w-5 h-5 flex-shrink-0 text-content-muted" />}
- <span className="min-w-0 truncate">{r.parent && <span className="text-content-muted font-normal">{r.parent} › </span>}{r.label}</span>
- </button>
- );
- })}
- </nav>
- )}
-
- <nav className={`flex-1 overflow-y-auto py-4 space-y-1 px-2 ${isOpen && menuSearchResults ? 'hidden' : ''}`}>
+ <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-2">
+ {!searchAnchorId && menuSearch}
  {filteredMenuItems.map((item) => {
+ // Com pesquisa activa só fica o Dashboard (a pesquisa e os resultados aparecem logo abaixo)
+ if (isOpen && menuSearchResults && item.id !== searchAnchorId) return null;
+ const node = (() => {
  const isGroupStart = !!item.group && groupStartIds.has(item.id);
  const groupSeparator = isGroupStart ? (
  isOpen ? (
@@ -679,6 +683,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
  </button>
  </React.Fragment>
  );
+ })();
+ return item.id === searchAnchorId
+ ? <React.Fragment key={item.id + '-search'}>{node}{menuSearch}</React.Fragment>
+ : node;
  })}
  </nav>
 

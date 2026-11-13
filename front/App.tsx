@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import { dataService } from './modules/core/services/dataService';
-import { applyTheme, applyFontFamily, applyBorderRadius, applyThemePreset, applyDarkModeVars, removeDarkModeVars } from './modules/core/utils/theme';
+import { applyTheme, applyFontFamily, applyBorderRadius, applyThemePreset, applyDarkModeVars, removeDarkModeVars, isDarkSaved, themeKeyFor } from './modules/core/utils/theme';
 import { type User, Order, OrderStatus, Product, Customer, Sale, Purchase, PurchaseRequest, Supplier, UserRole, ProductVariant } from './modules/core/types/types';
 
 // Core Imports
@@ -202,7 +202,8 @@ const App = () => {
     setIsShopMode,
     sessionCheckError
   } = useAppAuth();
-  const [darkMode, setDarkMode] = useState(true); // Default to Dark Mode
+  // Modo escuro independente: o painel e a loja guardam cada um a sua preferência (ver themeKeyFor)
+  const [darkMode, setDarkMode] = useState(() => isDarkSaved(window.location.pathname));
   const location = useRouterLocation();
 
   // Version Check
@@ -235,23 +236,12 @@ const App = () => {
     }
   }, [sessionCheckError, showToast]);
 
-  // Initialize dark mode state from localStorage on mount
+  // Ao mudar de área (loja ↔ painel) aplica a preferência dessa área. Aplica já aqui (e não só via
+  // estado) para não piscar o tema da outra área durante um render.
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const isDark = savedTheme === 'dark';
-    setDarkMode(isDark);
-  }, []);
-
-  // Sync darkMode state with localStorage on every route change.
-  // This picks up changes made by the shop's own dark mode toggle.
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme !== null) {
-      const isDark = savedTheme === 'dark';
-      if (isDark !== darkMode) setDarkMode(isDark);
-    }
-  // Only re-sync when the route changes — not on every darkMode change (that would loop)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const isDark = isDarkSaved(location.pathname);
+    if (isDark) applyDarkModeVars(); else removeDarkModeVars();
+    setDarkMode(prev => (prev === isDark ? prev : isDark));
   }, [location.pathname]);
 
   // Apply dark class + CSS vars globally based on darkMode state.
@@ -263,7 +253,7 @@ const App = () => {
     } else {
       removeDarkModeVars();
     }
-  }, [location.pathname, darkMode]);
+  }, [darkMode]);
 
   // Load system settings on mount - executar o mais cedo possível
   useEffect(() => {
@@ -285,7 +275,7 @@ const App = () => {
         if (settings.theme_radius) applyBorderRadius(settings.theme_radius);
         // applyThemePreset sets light vars as inline styles. If dark mode is already
         // active those dark vars must be re-applied on top to win the cascade.
-        if (localStorage.getItem('theme') === 'dark') applyDarkModeVars();
+        if (isDarkSaved(window.location.pathname)) applyDarkModeVars();
       } catch (error) {
         console.warn('Erro ao carregar configurações do sistema:', error);
       }
@@ -300,7 +290,7 @@ const App = () => {
   const toggleTheme = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
-    localStorage.setItem('theme', newMode ? 'dark' : 'light');
+    try { localStorage.setItem(themeKeyFor(window.location.pathname), newMode ? 'dark' : 'light'); } catch { /* sem armazenamento */ }
     // Apply immediately everywhere — don't wait for the effect to prevent flash
     if (newMode) applyDarkModeVars();
     else removeDarkModeVars();

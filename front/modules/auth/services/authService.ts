@@ -200,9 +200,9 @@ export const authService = {
    * Login Google na app Android (o Google bloqueia OAuth em WebViews): no browser do sistema,
    * depois de entrar, pede um código de uso único para devolver a sessão à app.
    */
-  async requestAppHandoffCode(): Promise<{ code?: string; error?: string }> {
+  async requestAppHandoffCode(nonce?: string | null): Promise<{ code?: string; error?: string }> {
     try {
-      const { code } = await api.post<{ code: string }>('/auth/app-handoff', {});
+      const { code } = await api.post<{ code: string }>('/auth/app-handoff', nonce ? { nonce } : {});
       return { code };
     } catch (err: any) {
       return { error: err.message || 'Não foi possível concluir o login.' };
@@ -213,6 +213,23 @@ export const authService = {
   async redeemAppHandoffCode(code: string): Promise<LoginResult> {
     try {
       const result = await api.post<{ token: string; user: any }>('/auth/app-handoff/redeem', { code }, { noAuth: true });
+      if (!result?.token || !result?.user) return { user: null, error: 'Resposta inválida do servidor' };
+      setApiToken(result.token);
+      currentUser = mapUser(result.user);
+      return { user: currentUser };
+    } catch (err: any) {
+      return { user: null, error: err.message || 'Não foi possível concluir o login.' };
+    }
+  },
+
+  /**
+   * Na app: pergunta se o login Google aberto no browser do sistema já terminou.
+   * `pending` enquanto não terminar; depois devolve a sessão (uso único).
+   */
+  async pollAppHandoff(nonce: string): Promise<LoginResult & { pending?: boolean }> {
+    try {
+      const result = await api.post<{ pending?: boolean; token?: string; user?: any }>('/auth/app-handoff/poll', { nonce }, { noAuth: true });
+      if (result?.pending) return { user: null, pending: true };
       if (!result?.token || !result?.user) return { user: null, error: 'Resposta inválida do servidor' };
       setApiToken(result.token);
       currentUser = mapUser(result.user);
