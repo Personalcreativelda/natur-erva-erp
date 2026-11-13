@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import pool from '../db.js';
 
 // Lazy — evita crash no arranque ESM antes do dotenv carregar
 let _resend = null;
@@ -10,9 +11,33 @@ function getResend() {
   return _resend;
 }
 
-const FROM = process.env.RESEND_FROM_EMAIL || 'NaturErva <noreply@natur-erva.co.mz>';
+const FROM = process.env.RESEND_FROM_EMAIL || 'Natur Erva <noreply@natur-erva.co.mz>';
 const APP_URL = (process.env.APP_URL || 'https://www.natur-erva.co.mz').replace(/\/$/, '');
-const APP_NAME = 'NaturErva';
+const APP_NAME = 'Natur Erva';
+
+// ─── Logótipo ─────────────────────────────────────────────────────────────────
+// O mesmo do painel (Finanças → logótipo da empresa); sem logótipo, o logo.png do site.
+const LOGO_PLACEHOLDER = '{{LOGO_URL}}';
+let logoCache = { url: null, at: 0 };
+async function getLogoUrl() {
+  if (logoCache.url && Date.now() - logoCache.at < 10 * 60 * 1000) return logoCache.url;
+  let url = `${APP_URL}/logo.png`;
+  try {
+    const { rows } = await pool.query('SELECT logo_url FROM tax_config WHERE id = 1');
+    if (rows[0]?.logo_url && /^https?:\/\//.test(rows[0].logo_url)) url = rows[0].logo_url;
+  } catch { /* usa o logo do site */ }
+  logoCache = { url, at: Date.now() };
+  return url;
+}
+
+// ─── Linhas de dados (tabela: funciona no Gmail/Outlook, onde o flex é ignorado) ─
+const row = (label, value, valueStyle = '') =>
+  `<tr><td class="label" style="padding:9px 0;border-bottom:1px solid #dcfce7;color:#6b7280;font-size:14px;vertical-align:top">${label}</td>` +
+  `<td class="value" style="padding:9px 0 9px 16px;border-bottom:1px solid #dcfce7;text-align:right;font-weight:600;color:#111;font-size:14px;vertical-align:top;${valueStyle}">${value}</td></tr>`;
+const box = (rows) =>
+  `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="box" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin:16px 0;padding:6px 18px;border-collapse:separate">${rows}</table>`;
+
+const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 // ─── base HTML wrapper ────────────────────────────────────────────────────────
 function baseTemplate(content) {
@@ -23,9 +48,9 @@ function baseTemplate(content) {
 <style>
   body{margin:0;padding:0;background:#f4f7f4;font-family:'Segoe UI',Arial,sans-serif;color:#222}
   .wrap{max-width:580px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)}
-  .header{background:linear-gradient(135deg,#16a34a,#15803d);padding:32px 24px;text-align:center}
-  .header h1{margin:0;color:#fff;font-size:26px;font-weight:700;letter-spacing:-0.5px}
-  .header p{margin:4px 0 0;color:#bbf7d0;font-size:14px}
+  .header{background:#ffffff;padding:24px 24px 18px;text-align:center;border-bottom:4px solid #16a34a}
+  .header img{display:inline-block;height:56px;width:auto;border:0}
+  .header p{margin:8px 0 0;color:#15803d;font-size:13px}
   .body{padding:32px 28px}
   .body h2{font-size:20px;font-weight:700;color:#15803d;margin:0 0 12px}
   .body p{margin:0 0 12px;font-size:15px;line-height:1.6;color:#444}
@@ -44,8 +69,8 @@ function baseTemplate(content) {
 <body>
 <div class="wrap">
   <div class="header">
-    <h1>🌿 ${APP_NAME}</h1>
-    <p>Saúde natural, entregue em sua porta</p>
+    <a href="${APP_URL}"><img src="${LOGO_PLACEHOLDER}" alt="${APP_NAME}" height="56"></a>
+    <p>Saúde natural, entregue à sua porta</p>
   </div>
   <div class="body">${content}</div>
   <div class="footer">
@@ -82,6 +107,7 @@ async function send(to, subject, html) {
     return;
   }
   try {
+    html = html.split(LOGO_PLACEHOLDER).join(await getLogoUrl());
     await client.emails.send({ from: FROM, to, subject, html });
     console.log(`[Email] Enviado: "${subject}" → ${to}`);
   } catch (err) {
@@ -99,29 +125,30 @@ export async function sendWelcomeEmail({ name, email }) {
     <div style="text-align:center">
       <a class="btn" href="${APP_URL}/loja">Ver Produtos</a>
     </div>
-    <div class="box">
-      <div class="box-item"><span class="label">Email</span><span class="value">${email}</span></div>
-      <div class="box-item"><span class="label">Programa de Fidelidade</span><span class="value">1 ponto por cada 10 MT gasto</span></div>
-    </div>
+    ${box(row('Email', esc(email)) + row('Programa de Fidelidade', '1 ponto por cada 10 MT gasto'))}
     <p style="font-size:13px;color:#6b7280">Se não criou esta conta, pode ignorar este email.</p>
   `);
   await send(email, `Bem-vindo(a) ao ${APP_NAME}!`, html);
 }
 
 export async function sendOrderConfirmationEmail({ to, name, orderNumber, items, totalAmount, isDelivery, deliveryLocation }) {
-  const itemsHtml = (items || []).map(i =>
-    `<div class="box-item"><span class="label">${i.name} × ${i.quantity}</span><span class="value">${Number(i.price * i.quantity).toFixed(2)} MT</span></div>`
-  ).join('');
+  // Os itens do pedido guardam o nome em productName (não "name") e o preço em price/priceAtTime
+  const itemsHtml = (items || []).map(i => {
+    const itemName = i.productName || i.name || i.product_name || 'Produto';
+    const qty = Number(i.quantity) || 1;
+    const unit = Number(i.price ?? i.priceAtTime ?? i.unit_price ?? 0);
+    return row(`${esc(itemName)} × ${qty}`, mt(unit * qty));
+  }).join('');
 
   const html = baseTemplate(`
     <h2>Pedido Confirmado! ✅</h2>
-    <p>Olá <strong>${name}</strong>, recebemos o seu pedido e estamos a processá-lo.</p>
-    <div class="box">
-      <div class="box-item"><span class="label">Nº Pedido</span><span class="value">#${orderNumber}</span></div>
-      ${itemsHtml}
-      <div class="box-item"><span class="label">Entrega</span><span class="value">${isDelivery ? (deliveryLocation || 'Com entrega') : 'Levantamento'}</span></div>
-      <div class="box-item"><span class="label"><strong>Total</strong></span><span class="value" style="color:#16a34a;font-size:16px"><strong>${Number(totalAmount).toFixed(2)} MT</strong></span></div>
-    </div>
+    <p>Olá <strong>${esc(name)}</strong>, recebemos o seu pedido e estamos a processá-lo.</p>
+    ${box(
+      row('Nº Pedido', `#${esc(orderNumber)}`) +
+      itemsHtml +
+      row('Entrega', isDelivery ? esc(deliveryLocation || 'Com entrega') : 'Levantamento') +
+      row('<strong style="color:#111">Total</strong>', mt(totalAmount), 'color:#16a34a;font-size:16px')
+    )}
     <div style="text-align:center">
       <a class="btn" href="${APP_URL}/minha-conta/encomendas">Acompanhar Pedido</a>
     </div>
@@ -137,11 +164,11 @@ export async function sendPaymentConfirmedEmail({ to, name, orderNumber, totalAm
   const html = baseTemplate(`
     <h2>Pagamento confirmado ✅</h2>
     <p>Olá <strong>${name || 'cliente'}</strong>, confirmámos o pagamento do seu pedido. Já estamos a prepará-lo.</p>
-    <div class="box">
-      <div class="box-item"><span class="label">Nº Pedido</span><span class="value">#${orderNumber}</span></div>
-      <div class="box-item"><span class="label">Valor pago</span><span class="value" style="color:#16a34a"><strong>${mt(totalAmount)}</strong></span></div>
-      ${transactionId ? `<div class="box-item"><span class="label">Transação ${methodLabel}</span><span class="value">${transactionId}</span></div>` : ''}
-    </div>
+    ${box(
+      row('Nº Pedido', `#${esc(orderNumber)}`) +
+      row('Valor pago', mt(totalAmount), 'color:#16a34a') +
+      (transactionId ? row(`Transação ${esc(methodLabel)}`, esc(transactionId)) : '')
+    )}
     <div style="text-align:center">
       <a class="btn" href="${APP_URL}/minha-conta/encomendas">Acompanhar pedido</a>
     </div>
@@ -155,7 +182,7 @@ export async function sendPaymentRejectedEmail({ to, name, orderNumber, reason }
   const html = baseTemplate(`
     <h2>Não conseguimos confirmar o pagamento</h2>
     <p>Olá <strong>${name || 'cliente'}</strong>, não foi possível confirmar o pagamento do pedido <strong>#${orderNumber}</strong>.</p>
-    ${reason ? `<div class="box"><div class="box-item"><span class="label">Motivo</span><span class="value">${reason}</span></div></div>` : ''}
+    ${reason ? box(row('Motivo', esc(reason))) : ''}
     <p>Verifique o código da transação na SMS de confirmação e envie-o novamente na página do pedido, ou contacte-nos.</p>
     <div style="text-align:center">
       <a class="btn" href="${APP_URL}/minha-conta/encomendas">Ver pedido</a>
