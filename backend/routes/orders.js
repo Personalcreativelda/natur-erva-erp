@@ -1,7 +1,9 @@
 import express from 'express';
 import pool from '../db.js';
 import { authMiddleware, optionalAuth } from '../middleware/auth.js';
-import { sendOrderConfirmationEmail, sendOrderStatusEmail, sendWhatsAppMessage } from '../services/emailService.js';
+import { sendOrderConfirmationEmail, sendOrderStatusEmail } from '../services/emailService.js';
+import { notifyOrderCustomer } from '../services/notificationService.js';
+import { buildOrderCreatedWhatsApp, buildStatusWhatsApp } from '../services/customerMessages.js';
 import { awardOrderPoints } from '../services/loyaltyService.js';
 import { submitPaymentProof, confirmOrderPayment, rejectOrderPayment } from '../services/paymentService.js';
 
@@ -632,24 +634,21 @@ router.post('/', optionalAuth, async (req, res) => {
       console.warn('[Orders] affiliate commission error:', affErr.message);
     }
 
-    // Email de confirmação de pedido (best-effort)
-    try {
-      const buyerId = order.createdBy || req.user?.id;
-      if (buyerId) {
-        const { rows: pRows } = await pool.query('SELECT email, name FROM profiles WHERE id = $1', [buyerId]);
-        if (pRows.length && pRows[0].email) {
-          sendOrderConfirmationEmail({
-            to: pRows[0].email,
-            name: pRows[0].name,
-            orderNumber: orderRows[0].order_number,
-            items: order.items || [],
-            totalAmount: order.totalAmount,
-            isDelivery: order.isDelivery,
-            deliveryLocation: order.deliveryLocation
-          }).catch(() => {});
-        }
-      }
-    } catch {}
+    // Confirmação do pedido ao cliente: WhatsApp (Evolution API) e/ou email, conforme o modo configurado.
+    // O contacto é o do CLIENTE do pedido (antes, num pedido criado pela equipa, o email ia para o funcionário).
+    notifyOrderCustomer(orderRows[0], {
+      event: 'order_created',
+      whatsapp: (c) => buildOrderCreatedWhatsApp(orderRows[0], c.name),
+      sendEmail: (c) => sendOrderConfirmationEmail({
+        to: c.email,
+        name: c.name,
+        orderNumber: orderRows[0].order_number,
+        items: orderRows[0].items || order.items || [],
+        totalAmount: orderRows[0].total_amount ?? order.totalAmount,
+        isDelivery: order.isDelivery,
+        deliveryLocation: order.deliveryLocation
+      }),
+    });
 
     res.status(201).json({
       order: mapOrder(orderRows[0]),
@@ -698,6 +697,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     if (fields.length === 0) return res.json({ success: true });
 
+    // Estado anterior — só se notifica o cliente quando o estado muda de facto
+    const previousStatus = updates.status
+      ? (await pool.query('SELECT status FROM orders WHERE id = $1', [req.params.id]).catch(() => ({ rows: [] }))).rows[0]?.status
+      : undefined;
+
     // Ao marcar como entregue: registar delivered_at e calcular dispute_deadline (15 dias)
     if (updates.status === 'delivered') {
       fields.push(`delivered_at = NOW()`);
@@ -734,65 +738,20 @@ router.put('/:id', authMiddleware, async (req, res) => {
       }
     }
 
-    // Notificações de atualização de status (best-effort)
-    const notifyEmail   = updates.notifyEmail   !== false; // default: true
-    const notifyWhatsApp = updates.notifyWhatsApp === true; // default: false
-    if (updates.status && (notifyEmail || notifyWhatsApp)) {
-      try {
-        const { rows: oRows } = await pool.query(
-          `SELECT o.order_number, o.created_by, o.customer_id,
-                  o.customer_phone,
-                  p.email, p.name, p.phone AS profile_phone
-           FROM orders o
-           LEFT JOIN profiles p ON p.id = o.created_by
-           WHERE o.id = $1`, [req.params.id]
-        );
-        if (oRows.length) {
-          const row = oRows[0];
-          let email = row.email;
-          let name = row.name;
-          let phone = row.profile_phone || row.customer_phone;
-
-          // Fallback via customer_id se created_by for nulo
-          if ((!email || !phone) && row.customer_id) {
-            const { rows: cRows } = await pool.query(
-              'SELECT p.email, p.name, p.phone FROM profiles p WHERE p.customer_id = $1 LIMIT 1',
-              [row.customer_id]
-            );
-            if (cRows.length) {
-              if (!email) { email = cRows[0].email; name = cRows[0].name; }
-              if (!phone) phone = cRows[0].phone;
-            }
-          }
-
-          if (notifyEmail && email) {
-            sendOrderStatusEmail({ to: email, name, orderNumber: row.order_number, status: updates.status }).catch(() => {});
-          }
-
-          if (notifyWhatsApp && phone) {
-            const appUrl = process.env.APP_URL || 'https://www.natur-erva.co.mz';
-            const n = name || 'cliente';
-            const order_num = row.order_number;
-            const waMessages = {
-              confirmed:
-                `Olá *${n}*! 🎉\n\nO pagamento do seu pedido *#${order_num}* foi confirmado e validado com sucesso.\n\nEstamos já a preparar os seus produtos. Obrigado pela confiança!\n\n🌿 *NaturErva*`,
-              processing:
-                `Olá *${n}*! 📦\n\nO seu pedido *#${order_num}* está em processamento — estamos a embalar os seus produtos com todo o cuidado.\n\nEm breve sairá para entrega!\n\n🌿 *NaturErva*`,
-              out_for_delivery:
-                `Olá *${n}*! 🚚\n\nBoa notícia! O seu pedido *#${order_num}* saiu para entrega e está a caminho.\n\nEsteja disponível para o receber. Caso tenha alguma dúvida, contacte-nos.\n\nAcompanhe aqui: ${appUrl}/minha-conta/encomendas\n\n🌿 *NaturErva*`,
-              delivered:
-                `Olá *${n}*! 🎉\n\nO seu pedido *#${order_num}* foi entregue!\n\nEsperamos que goste dos produtos. Confirme a receção na sua conta:\n👉 ${appUrl}/minha-conta/encomendas\n\nObrigado por escolher NaturErva! 🌿`,
-              completed:
-                `Olá *${n}*! ✅\n\nO seu pedido *#${order_num}* foi concluído com sucesso.\n\nAgradeçemos a sua preferência! Volte sempre à NaturErva para mais produtos naturais e saudáveis 🌿\n\n👉 ${appUrl}/loja`,
-              cancelled:
-                `Olá *${n}*. ℹ️\n\nO seu pedido *#${order_num}* foi cancelado.\n\nSe tiver alguma dúvida ou quiser fazer um novo pedido, estamos sempre disponíveis para ajudar.\n\n🌿 *NaturErva* — ${appUrl}`,
-            };
-            const msg = waMessages[updates.status]
-              || `Olá *${n}*! O seu pedido *#${order_num}* foi atualizado. Acompanhe em: ${appUrl}/minha-conta/encomendas\n\n🌿 *NaturErva*`;
-            sendWhatsAppMessage({ phone, message: msg }).catch(() => {});
-          }
-        }
-      } catch {}
+    // Aviso ao cliente da mudança de estado: WhatsApp (Evolution API) com email de reserva, conforme o
+    // modo configurado. Se a equipa escolheu os canais (Logística), respeita essa escolha.
+    const statusChanged = updates.status && updates.status !== previousStatus;
+    const explicitChannels = updates.notifyEmail !== undefined || updates.notifyWhatsApp !== undefined
+      ? { email: updates.notifyEmail !== false, whatsapp: updates.notifyWhatsApp === true }
+      : undefined;
+    const silenced = updates.notifyCustomer === false || (explicitChannels && !explicitChannels.email && !explicitChannels.whatsapp);
+    if (statusChanged && !silenced) {
+      notifyOrderCustomer(req.params.id, {
+        event: `status_${updates.status}`,
+        channels: explicitChannels,
+        whatsapp: (c) => buildStatusWhatsApp(c.order, c.name, updates.status),
+        sendEmail: (c) => sendOrderStatusEmail({ to: c.email, name: c.name, orderNumber: c.order.order_number, status: updates.status }),
+      });
     }
 
     // Atribuir pontos de fidelidade quando pedido é entregue/concluído (best-effort)

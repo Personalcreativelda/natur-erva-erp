@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageShell } from '../../core/components/layout/PageShell';
 import api from '../../core/services/apiClient';
-import { Bot, Loader2, Plus, X, Send, Copy, Check } from 'lucide-react';
+import { Bot, Loader2, Plus, X, Send, Copy, Check, BellRing, Mail, MessageCircle, RefreshCw } from 'lucide-react';
 import type { Toast } from '../../core/components/ui/Toast';
 
 interface Props { showToast?: (msg: string, type: Toast['type']) => void; }
@@ -20,6 +20,47 @@ type Config = {
   hasLlmApiKey: boolean;
   llmModel: string | null;
   authorizedNumbers: string[];
+  customerNotifyEnabled?: boolean;
+  customerNotifyMode?: NotifyMode;
+};
+
+type NotifyMode = 'whatsapp_first' | 'both' | 'email_only';
+
+type NotificationLog = {
+  id: number;
+  order_id: string | null;
+  order_number: string | null;
+  event: string;
+  channel: 'whatsapp' | 'email';
+  recipient: string | null;
+  status: string;
+  error: string | null;
+  created_at: string;
+};
+
+const NOTIFY_MODES: { id: NotifyMode; label: string; hint: string }[] = [
+  { id: 'whatsapp_first', label: 'WhatsApp, com email se falhar', hint: 'Recomendado. Se o número não tiver WhatsApp ou o envio falhar, segue por email.' },
+  { id: 'both', label: 'WhatsApp e email', hint: 'O cliente recebe nos dois canais.' },
+  { id: 'email_only', label: 'Só email', hint: 'Não envia WhatsApp aos clientes.' },
+];
+
+const EVENT_LABELS: Record<string, string> = {
+  order_created: 'Pedido recebido',
+  payment_confirmed: 'Pagamento confirmado',
+  payment_rejected: 'Pagamento rejeitado',
+  status_confirmed: 'Confirmado',
+  status_processing: 'Em preparação',
+  status_out_for_delivery: 'Saiu para entrega',
+  status_delivered: 'Entregue',
+  status_completed: 'Concluído',
+  status_cancelled: 'Cancelado',
+  test: 'Teste',
+};
+
+const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
+  sent: { label: 'Enviado', cls: 'text-green-700 bg-green-50 dark:text-green-300 dark:bg-green-900/30' },
+  sent_fallback: { label: 'Enviado (alternativa)', cls: 'text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30' },
+  failed: { label: 'Falhou', cls: 'text-red-700 bg-red-50 dark:text-red-300 dark:bg-red-900/30' },
 };
 
 const inputCls = 'w-full px-3 py-2 text-sm rounded-lg border border-border-default bg-surface-base text-content-primary focus:outline-none focus:ring-2 focus:ring-brand-500';
@@ -41,6 +82,16 @@ export function AssistantSettings({ showToast }: Props) {
   const [llmModel, setLlmModel] = useState('');
   const [authorizedNumbers, setAuthorizedNumbers] = useState<string[]>([]);
   const [newNumber, setNewNumber] = useState('');
+  const [customerNotifyEnabled, setCustomerNotifyEnabled] = useState(true);
+  const [customerNotifyMode, setCustomerNotifyMode] = useState<NotifyMode>('whatsapp_first');
+  const [testPhone, setTestPhone] = useState('');
+  const [testingCustomer, setTestingCustomer] = useState(false);
+  const [logs, setLogs] = useState<NotificationLog[] | null>(null);
+
+  const loadLogs = useCallback(async () => {
+    try { setLogs(await api.get<NotificationLog[]>('/assistant/customer-notifications?limit=30')); }
+    catch { setLogs([]); }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,11 +106,13 @@ export function AssistantSettings({ showToast }: Props) {
       setLlmApiKey(c.llmApiKey || '');
       setLlmModel(c.llmModel || '');
       setAuthorizedNumbers(c.authorizedNumbers || []);
+      setCustomerNotifyEnabled(c.customerNotifyEnabled !== false);
+      setCustomerNotifyMode(c.customerNotifyMode || 'whatsapp_first');
     } catch (e: any) { showToast?.(e.message || 'Erro ao carregar configuração', 'error'); }
     finally { setLoading(false); }
   }, [showToast]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); loadLogs(); }, [load, loadLogs]);
 
   const save = async () => {
     setSaving(true);
@@ -68,6 +121,7 @@ export function AssistantSettings({ showToast }: Props) {
         isEnabled, evolutionBaseUrl, evolutionInstance, evolutionApiKey,
         llmProvider, llmApiKey, llmModel: llmModel || undefined,
         authorizedNumbers,
+        customerNotifyEnabled, customerNotifyMode,
       });
       showToast?.('Configuração guardada', 'success');
       load();
@@ -82,6 +136,16 @@ export function AssistantSettings({ showToast }: Props) {
       showToast?.('Mensagem de teste enviada — confirme no WhatsApp', 'success');
     } catch (e: any) { showToast?.(e.message || 'Erro ao testar ligação', 'error'); }
     finally { setTesting(false); }
+  };
+
+  const testCustomerNotify = async () => {
+    setTestingCustomer(true);
+    try {
+      await api.post('/assistant/customer-notify/test', { phone: testPhone });
+      showToast?.('Mensagem de teste enviada — confirme no WhatsApp', 'success');
+      loadLogs();
+    } catch (e: any) { showToast?.(e.message || 'Não foi possível enviar o teste', 'error'); }
+    finally { setTestingCustomer(false); }
   };
 
   const addNumber = () => {
@@ -127,6 +191,91 @@ export function AssistantSettings({ showToast }: Props) {
                 <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isEnabled ? 'translate-x-5' : ''}`} />
               </div>
             </label>
+          </div>
+        </div>
+
+        {/* ── Notificações aos clientes ───────────────────────────────────────── */}
+        <div className="bg-surface-raised border border-border-default rounded-xl p-5 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-content-primary flex items-center gap-2"><BellRing className="w-4 h-4" /> Notificações aos clientes</h3>
+              <p className="text-xs text-content-muted mt-1 max-w-2xl">
+                Confirmação do pedido, mudanças de estado (em preparação, a caminho, entregue…) e pagamento confirmado ou rejeitado,
+                enviados pela mesma Evolution API. Funciona mesmo com o assistente desligado. As respostas dos clientes
+                <strong> não</strong> chegam ao assistente — ele só conversa com os números autorizados.
+              </p>
+            </div>
+            <label className="inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" checked={customerNotifyEnabled} onChange={e => setCustomerNotifyEnabled(e.target.checked)} className="sr-only peer" aria-label="Activar notificações aos clientes" />
+              <div className="w-11 h-6 bg-surface-overlay rounded-full peer peer-checked:bg-brand-600 transition-colors relative">
+                <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${customerNotifyEnabled ? 'translate-x-5' : ''}`} />
+              </div>
+            </label>
+          </div>
+
+          <fieldset className={`grid grid-cols-1 md:grid-cols-3 gap-2 ${customerNotifyEnabled ? '' : 'opacity-50 pointer-events-none'}`}>
+            <legend className="sr-only">Como enviar</legend>
+            {NOTIFY_MODES.map(m => (
+              <label key={m.id}
+                className={`flex gap-2.5 rounded-lg border p-3 cursor-pointer transition-colors ${customerNotifyMode === m.id ? 'border-brand-600 bg-brand-50/60 dark:bg-brand-900/20' : 'border-border-default hover:bg-surface-overlay'}`}>
+                <input type="radio" name="customer-notify-mode" value={m.id} checked={customerNotifyMode === m.id}
+                  onChange={() => setCustomerNotifyMode(m.id)} className="mt-0.5 accent-brand-600" />
+                <span>
+                  <span className="block text-sm font-medium text-content-primary">{m.label}</span>
+                  <span className="block text-xs text-content-muted mt-0.5">{m.hint}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+            <div className="flex-1 max-w-sm">
+              <label className={labelCls} htmlFor="customer-test-phone">Enviar mensagem de teste para</label>
+              <input id="customer-test-phone" value={testPhone} onChange={e => setTestPhone(e.target.value)} placeholder="84 123 4567" inputMode="tel" className={inputCls} />
+            </div>
+            <button onClick={testCustomerNotify} disabled={testingCustomer || !testPhone.trim()}
+              className="flex items-center justify-center gap-2 px-3 py-2 border border-border-default rounded-lg text-sm font-medium text-content-secondary hover:bg-surface-overlay disabled:opacity-50">
+              {testingCustomer ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Enviar teste
+            </button>
+          </div>
+          <p className="text-xs text-content-muted -mt-2">Guarde primeiro a configuração da Evolution API. Números de Moçambique com ou sem 258.</p>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-content-muted uppercase tracking-wide">Últimos envios</p>
+              <button onClick={loadLogs} className="inline-flex items-center gap-1 text-xs text-content-muted hover:text-content-primary">
+                <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> Actualizar
+              </button>
+            </div>
+            {logs === null ? (
+              <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-content-muted" /></div>
+            ) : logs.length === 0 ? (
+              <p className="text-xs text-content-muted text-center py-6 border border-dashed border-border-default rounded-lg">Ainda não foram enviadas notificações.</p>
+            ) : (
+              <ul className="divide-y divide-border-default border border-border-default rounded-lg max-h-80 overflow-y-auto">
+                {logs.map(l => {
+                  const st = STATUS_LABELS[l.status] || { label: l.status, cls: 'text-content-muted bg-surface-overlay' };
+                  return (
+                    <li key={l.id} className="flex items-start gap-3 px-3 py-2 text-sm">
+                      {l.channel === 'whatsapp'
+                        ? <MessageCircle className="w-4 h-4 mt-0.5 shrink-0 text-green-600" aria-label="WhatsApp" />
+                        : <Mail className="w-4 h-4 mt-0.5 shrink-0 text-blue-600" aria-label="Email" />}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-content-primary">
+                          {EVENT_LABELS[l.event] || l.event}
+                          {l.order_number && <span className="text-content-muted"> · #{l.order_number}</span>}
+                        </p>
+                        <p className="text-xs text-content-muted truncate">
+                          {l.recipient} · {new Date(l.created_at).toLocaleString('pt-MZ', { dateStyle: 'short', timeStyle: 'short' })}
+                        </p>
+                        {l.error && <p className="text-xs text-red-600 dark:text-red-400 truncate" title={l.error}>{l.error}</p>}
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${st.cls}`}>{st.label}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </div>
 

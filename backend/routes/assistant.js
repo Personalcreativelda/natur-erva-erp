@@ -3,6 +3,7 @@ import pool from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendEvolutionMessage, handleIncomingMessage } from '../services/assistantService.js';
 import { handleStaffPaymentMessage } from '../services/paymentService.js';
+import { NOTIFY_MODES, ensureNotificationSchema, listRecentNotifications, sendTestWhatsApp } from '../services/notificationService.js';
 
 const router = express.Router();
 
@@ -34,12 +35,16 @@ const mapConfig = (row) => ({
   hasLlmApiKey: !!row.llm_api_key,
   llmModel: row.llm_model,
   authorizedNumbers: row.authorized_numbers || [],
+  // Notificações aos clientes (WhatsApp + email) — independentes da assistente
+  customerNotifyEnabled: row.customer_notify_enabled !== false,
+  customerNotifyMode: NOTIFY_MODES.includes(row.customer_notify_mode) ? row.customer_notify_mode : 'whatsapp_first',
   updatedAt: row.updated_at,
 });
 
 // GET /api/assistant/config
 router.get('/config', authMiddleware, requireSuperAdmin, async (req, res) => {
   try {
+    await ensureNotificationSchema();
     const { rows } = await pool.query('SELECT * FROM assistant_config WHERE id = 1');
     if (!rows.length) return res.status(404).json({ error: 'Configuração não encontrada' });
     res.json(mapConfig(rows[0]));
@@ -67,6 +72,10 @@ router.put('/config', authMiddleware, requireSuperAdmin, async (req, res) => {
     if (c.llmProvider !== undefined) { fields.push(`llm_provider = $${i++}`); values.push(c.llmProvider || null); }
     if (c.llmApiKey !== undefined && isRealValue(c.llmApiKey)) { fields.push(`llm_api_key = $${i++}`); values.push(c.llmApiKey || null); }
     if (c.llmModel !== undefined) { fields.push(`llm_model = $${i++}`); values.push(c.llmModel || null); }
+    if (c.customerNotifyEnabled !== undefined) { fields.push(`customer_notify_enabled = $${i++}`); values.push(!!c.customerNotifyEnabled); }
+    if (c.customerNotifyMode !== undefined && NOTIFY_MODES.includes(c.customerNotifyMode)) {
+      fields.push(`customer_notify_mode = $${i++}`); values.push(c.customerNotifyMode);
+    }
     if (c.authorizedNumbers !== undefined) {
       const nums = Array.isArray(c.authorizedNumbers) ? c.authorizedNumbers.map(n => String(n).replace(/\D/g, '')).filter(Boolean) : null;
       fields.push(`authorized_numbers = $${i++}`); values.push(nums);
@@ -75,6 +84,7 @@ router.put('/config', authMiddleware, requireSuperAdmin, async (req, res) => {
 
     if (!fields.length) return res.json({ success: true });
 
+    await ensureNotificationSchema();
     const { rows } = await pool.query(`UPDATE assistant_config SET ${fields.join(', ')} WHERE id = 1 RETURNING *`, values);
     res.json(mapConfig(rows[0]));
   } catch (err) {
@@ -97,6 +107,28 @@ router.post('/test-connection', authMiddleware, requireSuperAdmin, async (req, r
   } catch (err) {
     console.error('[POST /assistant/test-connection]', err);
     res.status(500).json({ error: err.message || 'Erro ao enviar mensagem de teste' });
+  }
+});
+
+// POST /api/assistant/customer-notify/test — mensagem de teste das notificações para um número qualquer
+router.post('/customer-notify/test', authMiddleware, requireSuperAdmin, async (req, res) => {
+  try {
+    const result = await sendTestWhatsApp(req.body?.phone);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ success: true, phone: result.phone });
+  } catch (err) {
+    console.error('[POST /assistant/customer-notify/test]', err);
+    res.status(500).json({ error: 'Erro ao enviar mensagem de teste' });
+  }
+});
+
+// GET /api/assistant/customer-notifications — últimos envios aos clientes (WhatsApp/email)
+router.get('/customer-notifications', authMiddleware, requireSuperAdmin, async (req, res) => {
+  try {
+    res.json(await listRecentNotifications(req.query.limit));
+  } catch (err) {
+    console.error('[GET /assistant/customer-notifications]', err);
+    res.status(500).json({ error: 'Erro ao carregar o histórico' });
   }
 });
 

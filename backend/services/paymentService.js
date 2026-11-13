@@ -13,8 +13,10 @@
  * Tudo passa por confirmOrderPayment(): uma só função, transaccional e idempotente.
  */
 import pool from '../db.js';
-import { sendPaymentConfirmedEmail, sendPaymentRejectedEmail, sendWhatsAppMessage } from './emailService.js';
+import { sendPaymentConfirmedEmail, sendPaymentRejectedEmail } from './emailService.js';
 import { sendEvolutionMessage } from './assistantService.js';
+import { notifyOrderCustomer } from './notificationService.js';
+import { buildPaymentConfirmedWhatsApp, buildPaymentRejectedWhatsApp } from './customerMessages.js';
 
 // ── Esquema (aditivo; aplicado no arranque, como nas restantes rotas) ────────────────────────────
 const schemaReady = (async () => {
@@ -118,24 +120,7 @@ async function getMerchantCode(method) {
 /** Normaliza um ID de transação escrito pelo cliente (maiúsculas, sem espaços/pontos). */
 export const normalizeTxId = (s) => (s ? String(s).replace(/[\s.]/g, '').toUpperCase() : null);
 
-// ── Contactos ───────────────────────────────────────────────────────────────────────────────────
-const realPhone = (p) => (p && !/^(no_phone_|np_)/i.test(p) ? p : null);
-
-async function getCustomerContact(order) {
-  let email = null, name = order.customer_name, phone = realPhone(order.customer_phone);
-  const lookups = [];
-  if (order.created_by) lookups.push(['SELECT email, name, phone FROM profiles WHERE id = $1', order.created_by]);
-  if (order.customer_id) lookups.push(['SELECT email, name, phone FROM profiles WHERE customer_id = $1 LIMIT 1', order.customer_id]);
-  for (const [sql, arg] of lookups) {
-    const { rows } = await pool.query(sql, [arg]).catch(() => ({ rows: [] }));
-    if (rows[0]) {
-      email = email || rows[0].email;
-      name = name || rows[0].name;
-      phone = phone || realPhone(rows[0].phone);
-    }
-  }
-  return { email, name, phone };
-}
+// Contacto do cliente e envio (WhatsApp/email): ver services/notificationService.js
 
 /** Aviso à equipa pelo WhatsApp do assistente (números autorizados). Best-effort. */
 export async function notifyStaff(text) {
@@ -195,14 +180,12 @@ export async function confirmOrderPayment({ orderId, confirmedBy, transactionId 
     client.release();
   }
 
-  // Notificações (fora da transacção; não bloqueiam a confirmação)
-  const contact = await getCustomerContact(order);
-  if (contact.email) {
-    sendPaymentConfirmedEmail({ to: contact.email, name: contact.name, orderNumber: order.order_number, totalAmount: order.total_amount, transactionId: order.mpesa_transaction_id, methodLabel: methodLabel(order.payment_method) }).catch(() => {});
-  }
-  if (contact.phone) {
-    sendWhatsAppMessage({ phone: contact.phone, message: `✅ Natur Erva: o pagamento do pedido #${order.order_number} (${fmtMT(order.total_amount)}) foi confirmado. Já estamos a preparar a sua encomenda.` }).catch(() => {});
-  }
+  // Aviso ao cliente (fora da transacção; não bloqueia a confirmação): WhatsApp e/ou email
+  notifyOrderCustomer(order, {
+    event: 'payment_confirmed',
+    whatsapp: (c) => buildPaymentConfirmedWhatsApp(order, c.name, methodLabel(order.payment_method)),
+    sendEmail: (c) => sendPaymentConfirmedEmail({ to: c.email, name: c.name, orderNumber: order.order_number, totalAmount: order.total_amount, transactionId: order.mpesa_transaction_id, methodLabel: methodLabel(order.payment_method) }),
+  });
   return { ok: true, order };
 }
 
@@ -216,8 +199,11 @@ export async function rejectOrderPayment({ orderId, reason, rejectedBy }) {
   if (!rows.length) return { ok: false, error: 'Pedido não encontrado ou já pago' };
   const order = rows[0];
   console.log(`[payments] pagamento rejeitado #${order.order_number} por ${rejectedBy}: ${reason || ''}`);
-  const contact = await getCustomerContact(order);
-  if (contact.email) sendPaymentRejectedEmail({ to: contact.email, name: contact.name, orderNumber: order.order_number, reason: order.payment_rejected_reason }).catch(() => {});
+  notifyOrderCustomer(order, {
+    event: 'payment_rejected',
+    whatsapp: (c) => buildPaymentRejectedWhatsApp(order, c.name, order.payment_rejected_reason),
+    sendEmail: (c) => sendPaymentRejectedEmail({ to: c.email, name: c.name, orderNumber: order.order_number, reason: order.payment_rejected_reason }),
+  });
   return { ok: true, order };
 }
 
