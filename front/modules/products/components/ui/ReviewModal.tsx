@@ -1,14 +1,13 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Send, User, Star, MessageSquare } from 'lucide-react';
+import { X, Send, User, Star, MessageSquare, ImagePlus, Trash2 } from 'lucide-react';
 import { StarRating } from './StarRating';
 import {
  getProductReviews,
  getProductRating,
  submitReview,
- ProductReview,
- RatingStats,
 } from '../../services/reviewService';
+import type { ProductReview, RatingStats } from '../../services/reviewService';
 
 interface ReviewModalProps {
  productId: string;
@@ -17,6 +16,13 @@ interface ReviewModalProps {
  onClose: () => void;
  onStatsChange?: (stats: RatingStats) => void;
 }
+
+const fileToDataUrl = (file: File): Promise<string> => new Promise((resolve, reject) => {
+ const reader = new FileReader();
+ reader.onload = () => resolve(String(reader.result));
+ reader.onerror = () => reject(reader.error);
+ reader.readAsDataURL(file);
+});
 
 export const ReviewModal: React.FC<ReviewModalProps> = ({
  productId,
@@ -32,6 +38,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  const [newRating, setNewRating] = useState(5);
  const [newComment, setNewComment] = useState('');
  const [newName, setNewName] = useState(currentUserName || '');
+ const [newPhotos, setNewPhotos] = useState<string[]>([]);
  const [submitting, setSubmitting] = useState(false);
  const [successMsg, setSuccessMsg] = useState(false);
  const [submitError, setSubmitError] = useState<string | null>(null);
@@ -65,16 +72,39 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  setSubmitting(true);
  setSubmitError(null);
  try {
- await submitReview(productId, newName.trim(), newRating, newComment.trim());
+ await submitReview(productId, newName.trim(), newRating, newComment.trim(), newPhotos);
  setSuccessMsg(true);
  setNewComment('');
  setNewRating(5);
+ setNewPhotos([]);
  await load();
  setTimeout(() => setSuccessMsg(false), 3000);
  } catch {
  setSubmitError('Não foi possível enviar a avaliação. Verifica a tua ligação e tenta novamente.');
  } finally {
  setSubmitting(false);
+ }
+ }
+
+ async function handlePhotoInput(e: React.ChangeEvent<HTMLInputElement>) {
+ const selected = Array.from(e.target.files || []);
+ e.target.value = '';
+ if (!selected.length) return;
+ if (newPhotos.length + selected.length > 3) {
+ setSubmitError('Pode adicionar no máximo 3 fotografias.');
+ return;
+ }
+ const invalid = selected.find(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024);
+ if (invalid) {
+ setSubmitError('Use imagens JPG, PNG ou WebP com no máximo 5 MB cada.');
+ return;
+ }
+ try {
+ const dataUrls = await Promise.all(selected.map(fileToDataUrl));
+ setNewPhotos(current => [...current, ...dataUrls].slice(0, 3));
+ setSubmitError(null);
+ } catch {
+ setSubmitError('Não foi possível ler uma das fotografias.');
  }
  }
 
@@ -95,11 +125,14 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  <div
  className="relative w-full max-w-lg max-h-[90vh] flex flex-col bg-surface-raised rounded-2xl shadow-2xl overflow-hidden"
  onClick={(e) => e.stopPropagation()}
+ role="dialog"
+ aria-modal="true"
+ aria-labelledby="review-modal-title"
  >
  {/* Header */}
  <div className="flex items-center justify-between px-6 py-4 border-b border-border-default">
  <div>
- <h2 className="text-lg font-semibold text-content-primary flex items-center gap-2">
+ <h2 id="review-modal-title" className="text-lg font-semibold text-content-primary flex items-center gap-2">
  <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
  Avaliações
  </h2>
@@ -195,6 +228,47 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  className="w-full px-3 py-2.5 text-sm border border-border-default rounded-lg bg-surface-raised text-content-primary placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
  />
 
+ {/* Optional review photos */}
+ <div>
+ <p className="mb-2 text-sm font-medium text-content-primary">Fotografias da sua experiência</p>
+ <p className="mb-3 text-xs text-content-muted">Opcional — pode carregar até 3 fotografias.</p>
+ <div className="mb-2">
+ {newPhotos.length < 3 && (
+ <label className="flex min-h-24 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border-strong bg-surface-base px-4 py-4 text-center transition-colors hover:border-green-500 hover:bg-green-50/60 dark:hover:bg-green-900/10">
+ <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+ <ImagePlus className="w-5 h-5" aria-hidden="true" />
+ </span>
+ <span className="text-sm font-semibold text-green-700 dark:text-green-400">Carregar fotografias</span>
+ <span className="text-xs text-content-muted">JPG, PNG ou WebP · máximo 5 MB por foto</span>
+ <input
+ type="file"
+ accept="image/jpeg,image/png,image/webp"
+ multiple
+ className="sr-only"
+ onChange={handlePhotoInput}
+ />
+ </label>
+ )}
+ </div>
+ {newPhotos.length > 0 && (
+ <div className="grid grid-cols-3 gap-2">
+ {newPhotos.map((photo, index) => (
+ <div key={photo.slice(-24)} className="relative aspect-square overflow-hidden rounded-lg border border-border-default">
+ <img src={photo} alt={`Fotografia ${index + 1} da avaliação`} className="h-full w-full object-cover" />
+ <button
+ type="button"
+ onClick={() => setNewPhotos(current => current.filter((_, i) => i !== index))}
+ aria-label={`Remover fotografia ${index + 1}`}
+ className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white"
+ >
+ <Trash2 className="h-4 w-4" aria-hidden="true" />
+ </button>
+ </div>
+ ))}
+ </div>
+ )}
+ </div>
+
  <button
  type="submit"
  disabled={submitting || !newName.trim() || !newComment.trim()}
@@ -227,11 +301,19 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  <div key={r.id} className="pb-4 border-b border-border-default last:border-0">
  <div className="flex items-start justify-between gap-2">
  <div className="flex items-center gap-2">
+ {r.avatar_url ? (
+ <img
+ src={r.avatar_url}
+ alt={`Fotografia de ${r.user_name}`}
+ className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+ />
+ ) : (
  <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0">
  <span className="text-green-700 dark:text-green-400 text-sm font-semibold">
  {r.user_name.charAt(0).toUpperCase()}
  </span>
  </div>
+ )}
  <div>
  <p className="text-sm font-semibold text-content-primary">{r.user_name}</p>
  <StarRating value={r.rating} size="sm" />
@@ -241,6 +323,15 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  </div>
  {r.comment && (
  <p className="mt-2 ml-10 text-sm text-content-secondary leading-relaxed">{r.comment}</p>
+ )}
+ {r.photo_urls && r.photo_urls.length > 0 && (
+ <div className="mt-3 ml-10 grid grid-cols-3 gap-2">
+ {r.photo_urls.slice(0, 3).map((photo, index) => (
+ <a key={photo} href={photo} target="_blank" rel="noopener noreferrer" className="aspect-square overflow-hidden rounded-lg border border-border-default">
+ <img src={photo} alt={`Fotografia ${index + 1} da avaliação de ${r.user_name}`} loading="lazy" className="h-full w-full object-cover" />
+ </a>
+ ))}
+ </div>
  )}
  </div>
  ))

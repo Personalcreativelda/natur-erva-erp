@@ -431,7 +431,15 @@ const App = () => {
           }>
             {/* /loja era uma cópia da home que exigia login para ver produtos — agora redirecciona */}
             <Route path="loja" element={<LojaRedirect />} />
-            <Route path="loja/produto/:slug" element={<ProductLandingPage />} />
+            <Route
+              path="loja/produto/:slug"
+              element={(
+                <ProductLandingPage
+                  currentUser={currentUser}
+                  onLoginRequired={() => navigate('/', { state: { openLogin: true } })}
+                />
+              )}
+            />
             {/* Painel do cliente */}
             <Route path="minha-conta" element={currentUser ? <CustomerDashboard currentUser={currentUser} /> : <Navigate to="/" replace />} />
             <Route path="minha-conta/encomendas" element={currentUser ? <CustomerOrders /> : <Navigate to="/" replace />} />

@@ -13,6 +13,10 @@ export interface ProductReview {
   user_name: string;
   rating: number;
   comment: string;
+  avatar_url?: string | null;
+  photo_urls?: string[];
+  product_slug?: string | null;
+  product_name?: string | null;
   created_at: string;
 }
 
@@ -20,6 +24,8 @@ export interface RatingStats {
   average: number;
   total: number;
 }
+
+export type ReviewsSummary = RatingStats;
 
 // Per-product stats cache (TTL: 30 s)
 const statsCache = new Map<string, { data: RatingStats; ts: number }>();
@@ -63,6 +69,15 @@ export async function getAllReviews(limit = 24): Promise<ProductReview[]> {
   }
 }
 
+export async function getReviewsSummary(): Promise<ReviewsSummary> {
+  try {
+    const data = await api.get<ReviewsSummary>('/reviews/summary');
+    return { average: Number(data?.average ?? 0), total: Number(data?.total ?? 0) };
+  } catch {
+    return { average: 0, total: 0 };
+  }
+}
+
 // ── Submit ────────────────────────────────────────────────────────────────────
 
 /** Lança erro se não conseguir gravar na base de dados — o chamador deve avisar o utilizador, nunca fingir sucesso. */
@@ -70,13 +85,15 @@ export async function submitReview(
   productId: string,
   userName: string,
   rating: number,
-  comment: string
+  comment: string,
+  photoData: string[] = []
 ): Promise<void> {
   await api.post('/reviews', {
     product_id: productId,
     user_name: userName.trim(),
     rating,
     comment: comment.trim(),
+    photo_data: photoData.slice(0, 3),
   });
   statsCache.delete(productId);
 }

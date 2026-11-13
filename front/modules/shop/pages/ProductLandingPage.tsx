@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ShoppingCart, Star, Truck, Shield, Minus, Plus,
-    RotateCcw, Check, Loader2, Package, ArrowLeft,
+    RotateCcw, Check, Loader2, Package, ArrowLeft, MessageSquare,
 } from 'lucide-react';
-import { Product, ProductVariant } from '../../core/types/types';
+import { Product, ProductVariant, User } from '../../core/types/types';
 import { productService } from '../../products/services/productService';
 import { getVariantImage } from '../../core/utils/productUtils';
 import { useCart } from '../context/CartContext';
@@ -17,10 +17,16 @@ import {
 } from '../../products/services/reviewService';
 import uploadService from '../../../services/uploadService';
 import { ProductCarousel } from '../components/ProductCarousel';
+import { ReviewModal } from '../../products/components/ui/ReviewModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../core/lib/queryClient';
 
-export const ProductLandingPage: React.FC = () => {
+interface ProductLandingPageProps {
+    currentUser?: User | null;
+    onLoginRequired?: () => void;
+}
+
+export const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ currentUser, onLoginRequired }) => {
     const { slug } = useParams<{ slug: string }>();
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
@@ -31,6 +37,7 @@ export const ProductLandingPage: React.FC = () => {
     const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
     const [reviews, setReviews] = useState<ProductReview[]>([]);
     const [ratingStats, setRatingStats] = useState<RatingStats | null>(null);
+    const [showReviewModal, setShowReviewModal] = useState(false);
     // Barra de compra fixa (mobile) aparece quando o botão principal sai do ecrã
     const mainCtaRef = useRef<HTMLDivElement>(null);
     const [showStickyBar, setShowStickyBar] = useState(false);
@@ -84,6 +91,24 @@ export const ProductLandingPage: React.FC = () => {
         };
         loadProduct();
     }, [slug]);
+
+    useEffect(() => {
+        if (loading || !product || window.location.hash !== '#avaliacoes') return;
+        const frame = window.requestAnimationFrame(() => {
+            document.getElementById('avaliacoes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, [loading, product]);
+
+    const closeReviewModal = useCallback(() => {
+        setShowReviewModal(false);
+        if (!product) return;
+        Promise.all([getProductRating(product.id), getProductReviews(product.id)])
+            .then(([stats, reviewList]) => {
+                setRatingStats(stats);
+                setReviews(reviewList.slice(0, 5));
+            });
+    }, [product]);
 
     const handleAddToCart = useCallback(() => {
         if (!product) return;
@@ -499,9 +524,22 @@ export const ProductLandingPage: React.FC = () => {
             </section>
 
             {/* Reviews Section */}
-            <section className="max-w-7xl mx-auto px-4 py-4 sm:py-10">
+            <section id="avaliacoes" className="max-w-7xl scroll-mt-24 mx-auto px-4 py-4 sm:py-10">
                 <div className="bg-surface-raised rounded-2xl shadow-sm p-5 sm:p-8 border border-border-default">
-                    <h2 className="text-lg sm:text-2xl font-semibold text-content-primary mb-4 sm:mb-6">Avaliações de Clientes</h2>
+                    <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 className="text-lg sm:text-2xl font-semibold text-content-primary">Avaliações de Clientes</h2>
+                            <p className="mt-1 text-sm text-content-muted">Partilhe a sua experiência e, se quiser, adicione fotografias.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => currentUser ? setShowReviewModal(true) : onLoginRequired?.()}
+                            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-green-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-green-700 focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                        >
+                            <MessageSquare className="h-4 w-4" aria-hidden="true" />
+                            {currentUser ? 'Avaliar este produto' : 'Entrar para avaliar'}
+                        </button>
+                    </div>
                     {ratingStats && ratingStats.total > 0 ? (
                         <>
                             <div className="flex flex-col sm:flex-row items-start gap-5 sm:gap-8 mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-border-default">
@@ -535,12 +573,16 @@ export const ProductLandingPage: React.FC = () => {
                                     <div key={review.id || i} className="border-b border-border-default pb-5 last:border-0">
                                         <div className="flex items-start justify-between mb-2">
                                             <div className="flex items-center gap-3">
-                                                <div
-                                                    className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white"
-                                                    style={{ background: 'var(--brand-600)' }}
-                                                >
-                                                    {(review.user_name?.[0] ?? '?').toUpperCase()}
-                                                </div>
+                                                {review.avatar_url ? (
+                                                    <img src={review.avatar_url} alt={`Fotografia de ${review.user_name}`} className="h-10 w-10 rounded-full object-cover" />
+                                                ) : (
+                                                    <div
+                                                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white"
+                                                        style={{ background: 'var(--brand-600)' }}
+                                                    >
+                                                        {(review.user_name?.[0] ?? '?').toUpperCase()}
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <p className="font-medium text-content-primary text-sm">{review.user_name}</p>
                                                     <div className="flex">
@@ -552,7 +594,16 @@ export const ProductLandingPage: React.FC = () => {
                                             </div>
                                             <span className="text-xs text-content-muted">{new Date(review.created_at).toLocaleDateString('pt-PT')}</span>
                                         </div>
-                                        <p className="text-content-secondary text-sm leading-relaxed pl-13">{review.comment}</p>
+                                        <p className="text-content-secondary text-sm italic leading-relaxed sm:pl-[52px]">“{review.comment}”</p>
+                                        {review.photo_urls && review.photo_urls.length > 0 && (
+                                            <div className="mt-3 grid grid-cols-3 gap-2 sm:ml-[52px] sm:max-w-md">
+                                                {review.photo_urls.slice(0, 3).map((photo, index) => (
+                                                    <a key={photo} href={photo} target="_blank" rel="noopener noreferrer" className="aspect-square overflow-hidden rounded-xl border border-border-default">
+                                                        <img src={photo} alt={`Fotografia ${index + 1} da avaliação de ${review.user_name}`} loading="lazy" className="h-full w-full object-cover transition-transform hover:scale-105" />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -575,6 +626,16 @@ export const ProductLandingPage: React.FC = () => {
                         onAddToCart={(p, v) => { if (cart.addItem(p, v, 1).ok) cart.open(); }}
                     />
                 </section>
+            )}
+
+            {showReviewModal && product && (
+                <ReviewModal
+                    productId={product.id}
+                    productName={product.name}
+                    currentUserName={currentUser?.name}
+                    onClose={closeReviewModal}
+                    onStatsChange={setRatingStats}
+                />
             )}
 
             {/* Barra fixa de compra — mobile, quando o botão principal já não está visível */}

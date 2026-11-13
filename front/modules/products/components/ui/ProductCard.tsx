@@ -34,9 +34,10 @@ const ProductCardComponent: React.FC<{
  isMobile?: boolean;
  showFeaturedBadge?: boolean;
  currentUserName?: string;
+ canReview?: boolean;
  /** Cartão deitado (foto à esquerda) — carrosséis no mobile, 1 produto por slide */
  horizontal?: boolean;
-}> = ({ product, onAddToCart, onNotify, index = 0, isMobile = false, showFeaturedBadge = false, currentUserName, horizontal = false }) => {
+}> = ({ product, onAddToCart, onNotify, index = 0, isMobile = false, showFeaturedBadge = false, currentUserName, canReview = false, horizontal = false }) => {
  const availableVariants = useMemo(() =>
  product.variants?.filter(v => v.stock > 0) || [],
  [product.variants]
@@ -177,15 +178,34 @@ const ProductCardComponent: React.FC<{
  </h3>
  </Link>
 
- {(ratingStats.total > 0 || (product.totalSold || 0) > 0) && (
+ {(ratingStats.total > 0 || (product.totalSold || 0) > 0 || canReview) && (
  <div className="flex items-center gap-1.5 text-[11px] text-content-muted leading-none">
  {ratingStats.total > 0 && (
- <span className="flex items-center gap-0.5">
+ <button
+ type="button"
+ onClick={() => setShowReviewModal(true)}
+ className="flex items-center gap-0.5 text-content-muted hover:text-green-700 dark:hover:text-green-400"
+ aria-label={`Avaliação ${ratingStats.average.toFixed(1)} de 5, ${ratingStats.total} avaliações`}
+ >
  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
  {ratingStats.average.toFixed(1)}
- </span>
+ </button>
  )}
- {ratingStats.total > 0 && (product.totalSold || 0) > 0 && <span aria-hidden="true">·</span>}
+ {ratingStats.total === 0 && canReview && (
+ <button
+ type="button"
+ onClick={() => setShowReviewModal(true)}
+ className="flex items-center gap-1 font-medium text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+ >
+ <span className="flex items-center gap-px" aria-hidden="true">
+ {[1, 2, 3, 4, 5].map(star => (
+ <Star key={star} className="w-3 h-3 text-amber-400" />
+ ))}
+ </span>
+ <span>Avaliar</span>
+ </button>
+ )}
+ {(ratingStats.total > 0 || canReview) && (product.totalSold || 0) > 0 && <span aria-hidden="true">·</span>}
  {(product.totalSold || 0) > 0 && (
  <span>{product.totalSold! >= 1000 ? `${(product.totalSold! / 1000).toFixed(1)}k` : product.totalSold} {product.totalSold === 1 ? 'vendido' : 'vendidos'}</span>
  )}
@@ -242,6 +262,20 @@ const ProductCardComponent: React.FC<{
  >
  <StarRating value={ratingStats.average} size="sm" />
  <span className="text-[11px] text-content-muted">({ratingStats.total})</span>
+ </button>
+ )}
+ {ratingStats.total === 0 && canReview && (
+ <button
+ type="button"
+ onClick={() => setShowReviewModal(true)}
+ className="flex items-center gap-1 text-[11px] font-medium text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 focus-visible:ring-2 focus-visible:ring-green-600 rounded"
+ >
+ <span className="flex items-center gap-px" aria-hidden="true">
+ {[1, 2, 3, 4, 5].map(star => (
+ <Star key={star} className="w-3 h-3 text-amber-400" />
+ ))}
+ </span>
+ <span>Avaliar</span>
  </button>
  )}
  {(product.totalSold || 0) > 0 && (
@@ -400,6 +434,8 @@ export const ProductCard = memo(ProductCardComponent, (prevProps, nextProps) => 
  prevStock === nextStock &&
  prevProps.isMobile === nextProps.isMobile &&
  prevProps.showFeaturedBadge === nextProps.showFeaturedBadge &&
+ prevProps.currentUserName === nextProps.currentUserName &&
+ prevProps.canReview === nextProps.canReview &&
  prevProps.onAddToCart === nextProps.onAddToCart
  );
 });

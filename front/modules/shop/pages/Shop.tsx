@@ -500,10 +500,11 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
 
   // Chegou de outra página com "Finalizar pedido" ou "abrir carrinho"
   useEffect(() => {
-    const state = location.state as { startCheckout?: boolean; openCart?: boolean } | null;
+    const state = location.state as { startCheckout?: boolean; openCart?: boolean; openLogin?: boolean } | null;
+    if (state?.openLogin) setShowLogin(true);
     if (state?.startCheckout) openCheckoutRef.current();
     else if (state?.openCart) cart.open();
-    if (state?.startCheckout || state?.openCart) navigate(location.pathname + location.hash, { replace: true, state: null });
+    if (state?.startCheckout || state?.openCart || state?.openLogin) navigate(location.pathname + location.hash, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -758,6 +759,12 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
         </a>
       </section>
 
+      {/* ── AVALIAÇÕES ── */}
+      <TestimonialsSection
+        isAuthenticated={!!currentUser}
+        onAction={() => currentUser ? scrollToProducts() : setShowLogin(true)}
+      />
+
       {/* ── CARROSSÉIS ── */}
       {!loading && isBrowsingAll && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-8 sm:space-y-12">
@@ -772,6 +779,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
             onAddToCart={addToCart}
             onNotify={() => showToast('Será notificado quando estiver disponível!', 'info', 4000)}
             currentUserName={currentUser?.name}
+            canReview={!!currentUser}
           />
           <ProductCarousel
             title="Mais vendidos"
@@ -779,6 +787,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
             onAddToCart={addToCart}
             onNotify={() => showToast('Será notificado quando estiver disponível!', 'info', 4000)}
             currentUserName={currentUser?.name}
+            canReview={!!currentUser}
           />
           <ProductCarousel
             title="Novidades"
@@ -786,6 +795,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
             onAddToCart={addToCart}
             onNotify={() => showToast('Será notificado quando estiver disponível!', 'info', 4000)}
             currentUserName={currentUser?.name}
+            canReview={!!currentUser}
           />
         </section>
       )}
@@ -916,6 +926,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
                       onNotify={() => showToast('Será notificado quando este produto estiver disponível!', 'info', 4000)}
                       isMobile={isMobile}
                       currentUserName={currentUser?.name}
+                      canReview={!!currentUser}
                     />
                   ))}
                 </div>
@@ -947,9 +958,6 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
           </div>
         )}
       </section>
-
-      {/* ── AVALIAÇÕES ── */}
-      <TestimonialsSection />
 
       {/* ── PROGRAMA DE AFILIADOS ── */}
       <section className="px-4 sm:px-6 lg:px-8 py-4 sm:py-10">

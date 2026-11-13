@@ -24,8 +24,9 @@ export const ProductCarousel: React.FC<{
   onAddToCart: (product: Product, variant?: ProductVariant) => void;
   onNotify?: () => void;
   currentUserName?: string;
+  canReview?: boolean;
   autoplay?: boolean;
-}> = ({ title, products, badge, onAddToCart, onNotify, currentUserName, autoplay = true }) => {
+}> = ({ title, products, badge, onAddToCart, onNotify, currentUserName, canReview = false, autoplay = true }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobile(640);
   const [canPrev, setCanPrev] = useState(false);
@@ -158,6 +159,7 @@ export const ProductCarousel: React.FC<{
               horizontal={isMobile}
               index={i}
               currentUserName={currentUserName}
+              canReview={canReview}
             />
           </div>
         ))}
