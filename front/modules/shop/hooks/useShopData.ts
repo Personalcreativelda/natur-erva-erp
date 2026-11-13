@@ -39,7 +39,12 @@ export const useShopBlog = () =>
     queryKey: queryKeys.shop.blog,
     queryFn: async () => ((await api.get<any[]>('/blog')) || [])
       .filter((p: any) => p.status === 'published')
-      .slice(0, 3) as ShopBlogPost[],
+      .sort((a: any, b: any) => {
+        const dateA = new Date(a.publishedAt || a.createdAt || 0).getTime();
+        const dateB = new Date(b.publishedAt || b.createdAt || 0).getTime();
+        return dateB - dateA;
+      })
+      .slice(0, 6) as ShopBlogPost[],
     staleTime: 10 * 60_000,
     meta: persist,
   });

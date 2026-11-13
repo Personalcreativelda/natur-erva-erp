@@ -26,12 +26,15 @@ export const BlogPage: React.FC = () => {
   }, []);
 
   const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'long', year: 'numeric' });
+  const blogCompanyName = companyName
+    .replace(/\s+Sociedade\s+Unipessoal(?:,\s*|\s+)Lda\.?$/i, '')
+    .trim();
 
   return (
     <div className="min-h-screen bg-surface-base">
       <div className="max-w-5xl mx-auto px-4 py-12">
         <div className="mb-10">
-          <h1 className="text-4xl font-bold text-content-primary mb-2">Blog{companyName ? ` ${companyName}` : ''}</h1>
+          <h1 className="text-4xl font-bold text-content-primary mb-2">Blog{blogCompanyName ? ` ${blogCompanyName}` : ''}</h1>
           <p className="text-content-muted">Dicas de saúde, nutrição e bem-estar natural</p>
         </div>
 

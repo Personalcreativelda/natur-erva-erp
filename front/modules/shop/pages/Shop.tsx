@@ -8,7 +8,7 @@ import api from '../../core/services/apiClient';
 import { orderService } from '../../sales/services/orderService';
 import { useShopTracking } from '../../core/hooks/useShopTracking';
 import { useMobile } from '../../core/hooks/useMobile';
-import { ShoppingCart, Search, User, Package, X, MapPin, CheckCircle, Loader2, ChevronRight, Leaf, Droplet, Pill, Heart, Sparkles, Tag, Gift, Users, TrendingUp, XCircle, Copy, Check, Truck, ArrowUpDown, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Search, User, Package, X, MapPin, CheckCircle, Loader2, ChevronLeft, ChevronRight, Leaf, Droplet, Pill, Heart, Sparkles, Tag, Gift, Users, TrendingUp, XCircle, Copy, Check, Truck, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { User as UserType } from '../../core/types/types';
 import { ToastContainer, Toast } from '../../core/components/ui/Toast';
 import { DeliveryZoneSelector } from '../../core/components/forms/DeliveryZoneSelector';
@@ -157,6 +157,8 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
   const PAGE_SIZE = CHUNK * 2; // 16 / 18 / 16 / 20 produtos por página
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [blogSlide, setBlogSlide] = useState(0);
+  const [canScrollBlogPrev, setCanScrollBlogPrev] = useState(false);
+  const [canScrollBlogNext, setCanScrollBlogNext] = useState(false);
 
   const [darkMode, setDarkMode] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -170,6 +172,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
 
   const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes((currentUser as any)?.role || '');
   const productsSectionRef = useRef<HTMLElement>(null);
+  const blogTrackRef = useRef<HTMLDivElement>(null);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const showToast = useCallback((message: string, type: Toast['type'] = 'info', duration?: number) => {
@@ -184,6 +187,42 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
   const scrollToProducts = useCallback(() => {
     productsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
+
+  const updateBlogCarousel = useCallback(() => {
+    const track = blogTrackRef.current;
+    const firstCard = track?.firstElementChild as HTMLElement | null;
+    if (!track || !firstCard) return;
+
+    const gap = parseFloat(getComputedStyle(track).columnGap || '0') || 0;
+    const step = firstCard.offsetWidth + gap;
+    setCanScrollBlogPrev(track.scrollLeft > 4);
+    setCanScrollBlogNext(track.scrollLeft + track.clientWidth < track.scrollWidth - 4);
+    setBlogSlide(step > 0 ? Math.round(track.scrollLeft / step) : 0);
+  }, []);
+
+  const scrollBlog = useCallback((direction: -1 | 1) => {
+    const track = blogTrackRef.current;
+    const firstCard = track?.firstElementChild as HTMLElement | null;
+    if (!track || !firstCard) return;
+
+    const gap = parseFloat(getComputedStyle(track).columnGap || '0') || 0;
+    const step = firstCard.offsetWidth + gap;
+    const cardsPerView = Math.max(1, Math.floor((track.clientWidth + gap) / step));
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    track.scrollBy({
+      left: direction * step * cardsPerView,
+      behavior: reduceMotion ? 'auto' : 'smooth',
+    });
+  }, []);
+
+  useEffect(() => {
+    updateBlogCarousel();
+    const track = blogTrackRef.current;
+    if (!track || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(updateBlogCarousel);
+    observer.observe(track);
+    return () => observer.disconnect();
+  }, [blogPosts.length, updateBlogCarousel]);
 
   const applyUser = useCallback((user: UserType) => {
     setCurrentUser(user);
@@ -946,28 +985,54 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
 
       {/* ── BLOG ── */}
       {blogPosts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
+        <section
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14"
+          aria-label="Artigos recentes"
+          aria-roledescription="carrossel"
+        >
           <div className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h2 className="text-lg sm:text-2xl font-bold text-content-primary">Os nossos artigos</h2>
+              <h2 className="text-lg sm:text-2xl font-bold text-content-primary">Artigos recentes</h2>
               <p className="text-content-muted text-sm mt-1">Dicas de saúde e bem-estar natural</p>
             </div>
-            <Link to="/blog" className="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400 hover:underline">
-              Ver todos <ChevronRight className="w-4 h-4" />
-            </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="hidden sm:flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => scrollBlog(-1)}
+                  disabled={!canScrollBlogPrev}
+                  aria-label="Ver artigos anteriores"
+                  className="w-11 h-11 rounded-full border border-border-default bg-surface-raised flex items-center justify-center text-content-secondary hover:border-green-500 hover:text-green-700 focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollBlog(1)}
+                  disabled={!canScrollBlogNext}
+                  aria-label="Ver artigos seguintes"
+                  className="w-11 h-11 rounded-full border border-border-default bg-surface-raised flex items-center justify-center text-content-secondary hover:border-green-500 hover:text-green-700 focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" aria-hidden="true" />
+                </button>
+              </div>
+              <Link to="/blog" className="flex items-center gap-1.5 min-h-11 px-1 text-sm font-medium text-green-600 dark:text-green-400 hover:underline focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 rounded-lg">
+                Ver todos <ChevronRight className="w-4 h-4" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
-          {/* Mobile: carrossel deslizável; desktop: 3 colunas */}
+          {/* Carrossel: 1 artigo no telemóvel, 2 no tablet e 3 no desktop. */}
           <div
-            className="-mx-4 px-4 scroll-px-4 md:mx-0 md:px-0 md:scroll-px-0 flex md:grid md:grid-cols-3 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-2"
-            onScroll={e => {
-              const el = e.currentTarget;
-              const first = el.firstElementChild as HTMLElement | null;
-              if (first) setBlogSlide(Math.round(el.scrollLeft / (first.offsetWidth + 16)));
-            }}
+            ref={blogTrackRef}
+            onScroll={updateBlogCarousel}
+            className="-mx-4 px-4 scroll-px-4 sm:mx-0 sm:px-0 sm:scroll-px-0 flex gap-4 lg:gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2"
           >
-            {blogPosts.map(post => (
+            {blogPosts.map((post, index) => (
               <Link key={post.id} to={`/blog/${post.slug}`}
-                className="group snap-start shrink-0 w-full sm:w-[48%] md:w-auto bg-surface-raised rounded-2xl overflow-hidden border border-border-default shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col">
+                role="group"
+                aria-roledescription="slide"
+                aria-label={`${index + 1} de ${blogPosts.length}: ${post.title}`}
+                className="group snap-start shrink-0 w-full sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2.5rem)/3)] bg-surface-raised rounded-2xl overflow-hidden border border-border-default shadow-sm hover:shadow-lg hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 transition-all duration-300 flex flex-col">
                 {post.coverImage ? (
                   <img src={post.coverImage} alt={post.title} loading="lazy" className="w-full aspect-[16/10] object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
@@ -995,7 +1060,7 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
           </div>
           {/* Indicadores (mobile: 1 artigo por slide) */}
           {blogPosts.length > 1 && (
-            <div className="md:hidden flex justify-center gap-1.5 mt-3" aria-hidden="true">
+            <div className="sm:hidden flex justify-center gap-1.5 mt-3" aria-hidden="true">
               {blogPosts.map((post, i) => (
                 <span key={post.id} className={`h-1.5 rounded-full transition-all duration-300 ${i === blogSlide ? 'w-5 bg-green-600' : 'w-1.5 bg-gray-300 dark:bg-gray-600'}`} />
               ))}
