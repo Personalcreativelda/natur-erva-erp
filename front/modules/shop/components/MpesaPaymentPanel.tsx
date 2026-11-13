@@ -4,6 +4,7 @@ import api from '../../core/services/apiClient';
 import { getSystemSettings, type PaymentMethodConfig } from '../../core/services/systemSettingsService';
 import { formatMoney } from '../../core/utils/money';
 import { PaymentMethodLogo } from './PaymentMethodLogo';
+import { checkTxInput, TX_EXAMPLES } from '../utils/paymentCode';
 
 /**
  * Pagamento móvel ao comerciante (M-Pesa ou e-Mola), sem fornecedor de pagamentos.
@@ -49,6 +50,7 @@ export const MobilePaymentPanel: React.FC<Props> = ({ orderId, orderNumber, tota
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     getSystemSettings().then(s => {
@@ -66,21 +68,26 @@ export const MobilePaymentPanel: React.FC<Props> = ({ orderId, orderNumber, tota
   const method = methods.find(m => m.id === selected) || null;
   const usedMethod = methods.find(m => m.id === state.paymentMethod) || method;
 
+  const check = method ? checkTxInput(input, method.id) : null;
+  const example = TX_EXAMPLES[method?.id === 'emola' ? 'emola' : 'mpesa'];
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!method) return;
-    const value = input.trim();
-    if (!value) { setError('Escreva o código da transação ou cole a SMS de confirmação.'); return; }
+    if (!method || !check) return;
+    setTouched(true);
+    if (!check.ok) {
+      setError(check.error || 'Escreva o código da transação ou cole a SMS de confirmação.');
+      return;
+    }
     setSending(true); setError('');
     try {
-      // Texto curto sem espaços = código; texto longo = SMS colada (o servidor extrai o código)
-      const looksLikeCode = !/\s/.test(value) && value.length <= 30;
+      // Envia sempre o código validado; a SMS colada vai junto para o servidor conferir valor e comerciante
       const res = await api.post<{ paid: boolean; order?: any }>(`/orders/${orderId}/payment-proof`,
-        { method: method.id, ...(looksLikeCode ? { transactionId: value } : { proofText: value }) });
+        { method: method.id, transactionId: check.code, ...(check.isSms ? { proofText: input.trim() } : {}) });
       const next: MpesaPaymentState = res.order
         ? { paymentStatus: res.order.paymentStatus, paymentMethod: res.order.paymentMethod, mpesaTransactionId: res.order.mpesaTransactionId, paymentSubmittedAt: res.order.paymentSubmittedAt, paymentRejectedReason: res.order.paymentRejectedReason }
         : { ...state, paymentMethod: method.id, paymentStatus: res.paid ? 'paid' : state.paymentStatus, paymentSubmittedAt: new Date().toISOString() };
-      setState(next); onChange?.(next); setInput('');
+      setState(next); onChange?.(next); setInput(''); setTouched(false);
     } catch (err: any) {
       setError(err?.message || 'Não foi possível enviar. Tente novamente.');
     } finally {
@@ -196,14 +203,35 @@ export const MobilePaymentPanel: React.FC<Props> = ({ orderId, orderNumber, tota
             <textarea
               id={`pay-${orderId}`}
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={e => { setInput(e.target.value); setError(''); }}
+              onBlur={() => setTouched(true)}
               rows={2}
               autoCapitalize="characters"
-              placeholder={`Ex.: CJK7XYZ123 — ou cole aqui a SMS do ${method.label}`}
-              className="w-full rounded-xl border border-border-default bg-surface-base px-3 py-2.5 text-content-primary placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-green-500/40 resize-none"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={600}
+              aria-invalid={touched && check?.ok === false && !!check.error}
+              aria-describedby={`pay-${orderId}-hint`}
+              placeholder={`Ex.: ${example} — ou cole aqui a SMS do ${method.label}`}
+              className={`w-full rounded-xl border bg-surface-base px-3 py-2.5 font-mono text-content-primary placeholder:font-sans placeholder:text-content-muted focus:outline-none focus:ring-2 resize-none ${
+                check?.ok ? 'border-green-500 focus:ring-green-500/40'
+                : touched && check?.error ? 'border-red-400 focus:ring-red-400/40'
+                : 'border-border-default focus:ring-green-500/40'}`}
             />
+            <p id={`pay-${orderId}-hint`} className="text-xs" aria-live="polite">
+              {check?.ok ? (
+                <span className="inline-flex items-center gap-1 font-medium text-green-700 dark:text-green-400">
+                  <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  {check.isSms ? 'Código encontrado na SMS: ' : 'Código válido: '}<span className="font-mono">{check.code.toUpperCase()}</span>
+                </span>
+              ) : touched && check?.error ? (
+                <span className="text-red-600 dark:text-red-400">{check.error}</span>
+              ) : (
+                <span className="text-content-muted">Formato do código {method.label}: <span className="font-mono">{example}</span></span>
+              )}
+            </p>
             {error && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>}
-            <button type="submit" disabled={sending}
+            <button type="submit" disabled={sending || !check?.ok}
               className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-60">
               {sending ? <><Loader2 className="w-4 h-4 animate-spin" /> A enviar…</> : 'Já paguei — enviar código'}
             </button>

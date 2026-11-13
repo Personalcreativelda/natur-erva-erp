@@ -197,8 +197,14 @@ const getAllPermissionsList = (): string[] => {
 };
 
 export const usePermissions = (user: User | null): UsePermissionsReturn => {
-  const [permissions, setPermissions] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Começa já com as permissões conhecidas (cache) e sem "a carregar": hasPermission responde desde
+  // o 1.º render (admin/super admin ou mapa local do papel). Antes isLoading começava a true e cada
+  // página protegida mostrava um spinner por um instante — mais um ecrã de loading ao abrir o painel.
+  const [permissions, setPermissions] = useState<string[]>(() => {
+    const cached = user ? permissionsCache[user.id] : undefined;
+    return cached && Date.now() - cached.timestamp < CACHE_DURATION ? cached.permissions : [];
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const loadPermissions = useCallback(async () => {
     if (!user) {

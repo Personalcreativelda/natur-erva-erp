@@ -60,6 +60,8 @@ const toAmount = (raw) => {
 export function parseMpesaMessage(text) {
   const t = String(text || '');
   const tx =
+    // e-Mola: "ID Trans: MP261104.1749.e44538" (antes ficava só "MP261104")
+    t.match(/\b([A-Z]{2}\d{6}\.\d{4}\.[A-Z][A-Z0-9]{4,7})\b/i)?.[1] ||
     t.match(/ID\s*(?:da\s*)?transa[cç][aã]o\s*[:\-]?\s*([A-Z0-9.]{6,20})/i)?.[1] ||
     t.match(/Confirmad[oa]\.?\s+([A-Z0-9]{8,14})\b/i)?.[1] ||
     t.match(/\bID\s*[:\-]\s*([A-Z0-9][A-Z0-9.]{5,30})/i)?.[1] ||
@@ -68,11 +70,49 @@ export function parseMpesaMessage(text) {
     null;
   const amountRaw = t.match(/(\d[\d.,\s]*\d|\d)\s*MT/i)?.[1];
   const phone = t.match(/(?:\+?258)?\s?(8[2-7]\d{7})\b/)?.[1] || null;
+  // "no comerciante 598705 - …" (M-Pesa) / "ao comerciante ID: 801281, …" (e-Mola)
+  const merchantCode = t.match(/comerciante\s*(?:ID\s*[:\-]?\s*)?(\d{4,10})\b/i)?.[1] || null;
   return {
     transactionId: tx ? tx.replace(/\./g, '').toUpperCase() : null,
     amount: amountRaw ? toAmount(amountRaw) : null,
     phone,
+    merchantCode,
   };
+}
+
+// ── Formato dos códigos de transação ─────────────────────────────────────────────────────────────
+// Guardados sem pontos/espaços e em maiúsculas (normalizeTxId). O mesmo formato é validado no
+// painel do cliente (front/modules/shop/utils/paymentCode.ts) — manter os dois iguais.
+//  • M-Pesa: 11 caracteres, começa por letra, com pelo menos um número   → DKD2MBCPN4A
+//  • e-Mola: 2 letras + AAMMDD + HHMM + sufixo (letra + 4–7)             → MP261104.1749.e44538
+const MPESA_TX_RE = /^[A-Z](?=[A-Z0-9]*\d)[A-Z0-9]{10}$/;
+const EMOLA_TX_RE = /^[A-Z]{2}(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})[A-Z][A-Z0-9]{4,7}$/;
+
+/** 'mpesa' | 'emola' | null — a que método pertence um código já normalizado. */
+export function detectTxMethod(txId) {
+  const id = String(txId || '');
+  if (MPESA_TX_RE.test(id)) return 'mpesa';
+  const m = id.match(EMOLA_TX_RE);
+  if (m) {
+    const [, , mm, dd, hh, mi] = m.map(Number);
+    if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31 && hh <= 23 && mi <= 59) return 'emola';
+  }
+  return null;
+}
+
+export const TX_EXAMPLES = { mpesa: 'DKD2MBCPN4A', emola: 'MP261104.1749.e44538' };
+
+async function getMerchantCode(method) {
+  try {
+    const { rows } = await pool.query('SELECT payment_methods, mpesa_merchant_code FROM tax_config LIMIT 1');
+    const cfg = rows[0];
+    if (!cfg) return null;
+    const list = Array.isArray(cfg.payment_methods) ? cfg.payment_methods : [];
+    const code = list.find(m => m && m.id === method)?.merchantCode || (method === 'mpesa' ? cfg.mpesa_merchant_code : '');
+    return String(code || '').replace(/\s+/g, '') || null;
+  } catch {
+    return null;
+  }
 }
 
 /** Normaliza um ID de transação escrito pelo cliente (maiúsculas, sem espaços/pontos). */
@@ -227,6 +267,26 @@ export async function submitPaymentProof({ orderId, user, transactionId, proofTe
   const parsed = parseMpesaMessage(proofText);
   const txId = normalizeTxId(transactionId) || parsed.transactionId;
   if (!txId) return { ok: false, status: 400, error: 'Indique o código da transação que vem na SMS de confirmação.' };
+
+  // Só aceitar códigos com o formato real do M-Pesa / e-Mola — e do método escolhido
+  const chosen = normalizeMethod(method);
+  const detected = detectTxMethod(txId);
+  if (!detected) {
+    return { ok: false, status: 400, error: `Código inválido. Copie o código da SMS de confirmação do ${methodLabel(chosen)} (ex.: ${TX_EXAMPLES[chosen]}).` };
+  }
+  if (detected !== chosen) {
+    return { ok: false, status: 400, error: `Este código é do ${methodLabel(detected)}, mas escolheu pagar com ${methodLabel(chosen)}. Troque o método ou verifique o código.` };
+  }
+  // SMS colada: o valor e o comerciante têm de bater certo com este pedido
+  if (proofText) {
+    if (parsed.amount != null && parsed.amount + 0.5 < Number(order.total_amount || 0)) {
+      return { ok: false, status: 400, error: `A SMS mostra ${fmtMT(parsed.amount)}, mas o total do pedido é ${fmtMT(order.total_amount)}.` };
+    }
+    const expectedMerchant = parsed.merchantCode ? await getMerchantCode(chosen) : null;
+    if (expectedMerchant && parsed.merchantCode !== expectedMerchant) {
+      return { ok: false, status: 400, error: `Esta SMS é de um pagamento a outro comerciante (${parsed.merchantCode}). O nosso código ${methodLabel(chosen)} é ${expectedMerchant}.` };
+    }
+  }
 
   try {
     const upd = await pool.query(

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { User, UserRole } from '../../core/types/types';
+import { closeSystemBrowser } from '../../core/mobile/native';
 const BASE_PATH = '/';
 
 interface UseAppAuthReturn {
@@ -120,6 +121,27 @@ export const useAppAuth = (): UseAppAuthReturn => {
       // /app-login?code=… — esse "code" fazia esta verificação esperar 1,5 s à toa.)
       const urlParams = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
+
+      // Regresso do login Google na app (/app-login?code=…): troca o código pela sessão AQUI, durante
+      // o ecrã de arranque — um só loading em vez de arranque + "A iniciar sessão…" + loja.
+      const handoffCode = window.location.pathname === '/app-login' ? urlParams.get('code') : null;
+      if (handoffCode) {
+        const { user: redeemed } = await authService.redeemAppHandoffCode(handoffCode);
+        // O código pode já ter sido usado pela própria app (polling): com sessão activa, segue em frente
+        const handoffUser = redeemed || (localStorage.getItem('auth_token') ? await authService.getCurrentUser() : null);
+        if (handoffUser) {
+          const isClientOnly = handoffUser.role === UserRole.CLIENTE ||
+            (handoffUser.roles && handoffUser.roles.length === 1 && handoffUser.roles[0] === 'CLIENTE');
+          closeSystemBrowser();
+          setIsShopMode(isClientOnly);
+          setActivePage(isClientOnly ? 'shop' : 'dashboard');
+          setCurrentUser(handoffUser);
+          navigateRef.current(isClientOnly ? '/' : '/admin', { replace: true });
+          setIsAuthLoading(false);
+          return;
+        }
+        // Falhou: segue o fluxo normal e a página /app-login mostra o erro
+      }
 
       // Verificar se está em modo admin (via hash ou query param)
       const adminMode = hash === '#admin' || urlParams.has('admin');
