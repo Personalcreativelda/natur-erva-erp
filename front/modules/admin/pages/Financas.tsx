@@ -7,6 +7,8 @@ import { uploadService } from '../../../services/uploadService';
 import { invalidateLogoCache } from '../../core/services/systemSettingsService';
 import type { Toast } from '../../core/components/ui/Toast';
 import { formatMoney } from '../../core/utils/money';
+import { PaymentMethodsSettings } from '../components/settings/PaymentMethodsSettings';
+import type { PaymentMethodConfig } from '../../core/services/systemSettingsService';
 
 interface FinancasProps {
  showToast?: (msg: string, type: Toast['type']) => void;
@@ -18,6 +20,7 @@ type TaxConfig = {
  vatRate: number; invoicePrefix: string;
  logoUrl?: string; logoIconUrl?: string;
  mpesaMerchantCode?: string; mpesaMerchantName?: string;
+ paymentMethods?: PaymentMethodConfig[];
 };
 
 type TaxReport = {
@@ -45,7 +48,7 @@ export const Financas: React.FC<FinancasProps> = ({ showToast }) => {
  const [config, setConfig] = useState<TaxConfig>({
  companyName: '', companyNuit: '', companyAddress: '',
  companyPhone: '', companyEmail: '', vatRate: 16, invoicePrefix: 'FACT',
- logoUrl: '', logoIconUrl: '',  mpesaMerchantCode: '', mpesaMerchantName: '',
+ logoUrl: '', logoIconUrl: '',  mpesaMerchantCode: '', mpesaMerchantName: '', paymentMethods: [],
  });
  const [saving, setSaving] = useState(false);
  const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -301,20 +304,15 @@ ${s.summary?.expectedCash !== undefined ? `<p class="bold">Fundo esperado em cai
  </div>
 
  <hr className="border-border-default" />
- <h2 className="font-semibold text-content-primary">Pagamento M-Pesa (loja online)</h2>
- <p className="text-sm text-content-muted -mt-2">Os clientes pagam ao código de comerciante no fim do checkout e enviam o código da transação. Deixe vazio para desactivar o pagamento M-Pesa.</p>
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <div>
- <label className={labelCls}>Código do comerciante</label>
- <input value={config.mpesaMerchantCode || ''} onChange={e => setConfig(p => ({ ...p, mpesaMerchantCode: e.target.value.replace(/\s+/g, '') }))}
- className={inputCls} placeholder="Ex.: 0112586" inputMode="numeric" />
- </div>
- <div>
- <label className={labelCls}>Nome do comerciante (como aparece no M-Pesa)</label>
- <input value={config.mpesaMerchantName || ''} onChange={e => setConfig(p => ({ ...p, mpesaMerchantName: e.target.value }))}
- className={inputCls} placeholder="Ex.: Natur Erva Lda" />
- </div>
- </div>
+ <h2 className="font-semibold text-content-primary">Métodos de pagamento (loja online)</h2>
+ <p className="text-sm text-content-muted -mt-2">No fim do checkout o cliente escolhe o método activo, paga ao código de comerciante e envia o código da transação. Os pedidos ficam pagos automaticamente quando a SMS do comerciante tiver o mesmo código.</p>
+ <PaymentMethodsSettings
+ value={config.paymentMethods || []}
+ onChange={next => setConfig(p => ({ ...p, paymentMethods: next }))}
+ inputCls={inputCls}
+ labelCls={labelCls}
+ showToast={showToast as any}
+ />
 
  <hr className="border-border-default" />
  <h2 className="font-semibold text-content-primary">Configuração Fiscal</h2>

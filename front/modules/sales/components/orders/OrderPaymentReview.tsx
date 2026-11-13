@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Clock, Loader2, Smartphone, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react';
+import { PaymentMethodLogo } from '../../../shop/components/PaymentMethodLogo';
 import api from '../../../core/services/apiClient';
 import type { Order } from '../../../core/types/order';
 import { useToast } from '../../../core/contexts/ToastContext';
@@ -45,8 +46,8 @@ export const OrderPaymentReview: React.FC<{ order: Order; onUpdated: (order: Ord
   return (
     <div className="mb-4 rounded-xl border border-border-default p-3 space-y-2.5">
       <div className="flex items-center gap-2">
-        <Smartphone className="w-4 h-4 text-red-600" />
-        <p className="text-xs text-content-muted uppercase font-medium">Pagamento M-Pesa</p>
+        <PaymentMethodLogo method={order.paymentMethod === 'emola' ? 'emola' : 'mpesa'} size="sm" />
+        <p className="text-xs text-content-muted uppercase font-medium">Pagamento {order.paymentMethod === 'emola' ? 'e-Mola' : 'M-Pesa'}</p>
       </div>
 
       {order.mpesaTransactionId && (
@@ -65,7 +66,7 @@ export const OrderPaymentReview: React.FC<{ order: Order; onUpdated: (order: Ord
       ) : order.paymentSubmittedAt ? (
         <>
           <p className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
-            <Clock className="w-4 h-4" /> O cliente indicou que pagou — confirme no M-Pesa do comerciante.
+            <Clock className="w-4 h-4" /> O cliente indicou que pagou — confirme no telemóvel do comerciante.
           </p>
           {rejecting ? (
             <div className="space-y-2">

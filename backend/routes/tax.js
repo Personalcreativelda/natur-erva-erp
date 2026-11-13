@@ -44,6 +44,32 @@ pool.query(`ALTER TABLE tax_config ADD COLUMN IF NOT EXISTS theme_radius VARCHAR
 // Pagamento M-Pesa ao comerciante (checkout da loja). Vazio = pagamento M-Pesa desactivado.
 pool.query(`ALTER TABLE tax_config ADD COLUMN IF NOT EXISTS mpesa_merchant_code VARCHAR(30) NOT NULL DEFAULT ''`).catch(() => {});
 pool.query(`ALTER TABLE tax_config ADD COLUMN IF NOT EXISTS mpesa_merchant_name VARCHAR(200) NOT NULL DEFAULT ''`).catch(() => {});
+// Métodos de pagamento móvel do checkout (M-Pesa, e-Mola), configuráveis no painel
+pool.query(`ALTER TABLE tax_config ADD COLUMN IF NOT EXISTS payment_methods JSONB NOT NULL DEFAULT '[]'`).catch(() => {});
+
+const PAYMENT_METHOD_DEFAULTS = [
+  { id: 'mpesa', label: 'M-Pesa', enabled: false, merchantCode: '', merchantName: 'Natur Erva', ussd: '*150#', logoUrl: '' },
+  { id: 'emola', label: 'e-Mola', enabled: false, merchantCode: '', merchantName: 'Natur Erva', ussd: '*898#', logoUrl: '' },
+];
+
+/** Junta o que está guardado com os valores por omissão (só métodos conhecidos). */
+function normalizePaymentMethods(stored, legacy = {}) {
+  const list = Array.isArray(stored) ? stored : (stored ? JSON.parse(stored) : []);
+  return PAYMENT_METHOD_DEFAULTS.map(def => {
+    const s = list.find(m => m && m.id === def.id) || {};
+    // Compatibilidade: código M-Pesa guardado antes da lista de métodos
+    const legacyCode = def.id === 'mpesa' && !list.length ? (legacy.mpesa_merchant_code || '') : '';
+    const merchantCode = String(s.merchantCode ?? legacyCode ?? '').replace(/\s+/g, '');
+    return {
+      ...def,
+      enabled: s.enabled !== undefined ? !!s.enabled : !!legacyCode,
+      merchantCode,
+      merchantName: String(s.merchantName || legacy.mpesa_merchant_name || def.merchantName).trim() || def.merchantName,
+      ussd: String(s.ussd || def.ussd).trim(),
+      logoUrl: String(s.logoUrl || '').trim(),
+    };
+  });
+}
 
 const mapConfig = (r) => ({
   companyName:        r.company_name,
@@ -71,6 +97,7 @@ const mapConfig = (r) => ({
   themeRadius:        r.theme_radius || '',
   mpesaMerchantCode:  r.mpesa_merchant_code || '',
   mpesaMerchantName:  r.mpesa_merchant_name || '',
+  paymentMethods:     normalizePaymentMethods(r.payment_methods, r),
 });
 
 // GET /api/tax/config
@@ -119,6 +146,7 @@ router.put('/config', authMiddleware, async (req, res) => {
         theme_radius         = COALESCE($18, theme_radius),
         mpesa_merchant_code  = COALESCE($19, mpesa_merchant_code),
         mpesa_merchant_name  = COALESCE($20, mpesa_merchant_name),
+        payment_methods      = COALESCE($21, payment_methods),
         updated_at           = NOW()
        WHERE id = 1`,
       [c.companyName, c.companyNuit, c.companyAddress, c.companyPhone,
@@ -129,7 +157,8 @@ router.put('/config', authMiddleware, async (req, res) => {
        c.bankAccounts !== undefined ? JSON.stringify(c.bankAccounts) : null,
        c.themePrimaryColor || null, c.themeFont || null, c.themeRadius || null,
        c.mpesaMerchantCode !== undefined ? String(c.mpesaMerchantCode).replace(/\s+/g, '') : null,
-       c.mpesaMerchantName ?? null]
+       c.mpesaMerchantName ?? null,
+       Array.isArray(c.paymentMethods) ? JSON.stringify(normalizePaymentMethods(c.paymentMethods)) : null]
     );
     const { rows } = await pool.query('SELECT * FROM tax_config WHERE id = 1');
     res.json(mapConfig(rows[0]));

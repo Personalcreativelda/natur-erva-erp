@@ -62,6 +62,7 @@ export function parseMpesaMessage(text) {
   const tx =
     t.match(/ID\s*(?:da\s*)?transa[cç][aã]o\s*[:\-]?\s*([A-Z0-9.]{6,20})/i)?.[1] ||
     t.match(/Confirmad[oa]\.?\s+([A-Z0-9]{8,14})\b/i)?.[1] ||
+    t.match(/\bID\s*[:\-]\s*([A-Z0-9][A-Z0-9.]{5,30})/i)?.[1] ||
     // código solto com letras E números (ex.: "CJK7XYZ123") — nunca um telefone
     (t.match(/\b(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*\d)[A-Z0-9]{8,12}\b/) || [])[0] ||
     null;
@@ -108,6 +109,10 @@ export async function notifyStaff(text) {
   }
 }
 
+export const PAYMENT_METHOD_LABELS = { mpesa: 'M-Pesa', emola: 'e-Mola' };
+export const normalizeMethod = (m) => (String(m || '').toLowerCase().replace(/[^a-z]/g, '') === 'emola' ? 'emola' : 'mpesa');
+const methodLabel = (m) => PAYMENT_METHOD_LABELS[normalizeMethod(m)];
+
 const fmtMT = (n) => `${Number(n || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
 
 // ── Confirmar / rejeitar ────────────────────────────────────────────────────────────────────────
@@ -153,7 +158,7 @@ export async function confirmOrderPayment({ orderId, confirmedBy, transactionId 
   // Notificações (fora da transacção; não bloqueiam a confirmação)
   const contact = await getCustomerContact(order);
   if (contact.email) {
-    sendPaymentConfirmedEmail({ to: contact.email, name: contact.name, orderNumber: order.order_number, totalAmount: order.total_amount, transactionId: order.mpesa_transaction_id }).catch(() => {});
+    sendPaymentConfirmedEmail({ to: contact.email, name: contact.name, orderNumber: order.order_number, totalAmount: order.total_amount, transactionId: order.mpesa_transaction_id, methodLabel: methodLabel(order.payment_method) }).catch(() => {});
   }
   if (contact.phone) {
     sendWhatsAppMessage({ phone: contact.phone, message: `✅ Natur Erva: o pagamento do pedido #${order.order_number} (${fmtMT(order.total_amount)}) foi confirmado. Já estamos a preparar a sua encomenda.` }).catch(() => {});
@@ -202,7 +207,7 @@ async function tryMatch(order) {
  * Cliente envia o comprovativo: ID da transação e/ou o texto da SMS que recebeu.
  * Tenta confirmar logo (se a SMS do comerciante já tiver chegado); senão avisa a equipa.
  */
-export async function submitPaymentProof({ orderId, user, transactionId, proofText }) {
+export async function submitPaymentProof({ orderId, user, transactionId, proofText, method }) {
   await schemaReady;
   const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
   const order = rows[0];
@@ -221,21 +226,21 @@ export async function submitPaymentProof({ orderId, user, transactionId, proofTe
 
   const parsed = parseMpesaMessage(proofText);
   const txId = normalizeTxId(transactionId) || parsed.transactionId;
-  if (!txId) return { ok: false, status: 400, error: 'Indique o código da transação que vem na SMS do M-Pesa.' };
+  if (!txId) return { ok: false, status: 400, error: 'Indique o código da transação que vem na SMS de confirmação.' };
 
   try {
     const upd = await pool.query(
       `UPDATE orders SET mpesa_transaction_id = $2, payment_proof_text = COALESCE($3, payment_proof_text),
-         payment_method = 'mpesa', payment_submitted_at = NOW(), payment_rejected_reason = NULL, updated_at = NOW()
+         payment_method = $4, payment_submitted_at = NOW(), payment_rejected_reason = NULL, updated_at = NOW()
        WHERE id = $1 RETURNING *`,
-      [orderId, txId, proofText ? String(proofText).slice(0, 2000) : null]
+      [orderId, txId, proofText ? String(proofText).slice(0, 2000) : null, normalizeMethod(method)]
     );
     const updated = upd.rows[0];
     const matched = await tryMatch(updated);
     if (matched?.ok) return { ok: true, paid: true, order: matched.order };
 
     notifyStaff(
-      `💰 Pagamento a confirmar\nPedido #${updated.order_number} · ${fmtMT(updated.total_amount)}\nCliente: ${updated.customer_name}\nTransação M-Pesa: ${txId}\n\nResponda:\nCONFIRMAR ${updated.order_number}\nou REJEITAR ${updated.order_number} motivo`
+      `💰 Pagamento a confirmar (${methodLabel(method)})\nPedido #${updated.order_number} · ${fmtMT(updated.total_amount)}\nCliente: ${updated.customer_name}\nTransação ${methodLabel(method)}: ${txId}\n\nResponda:\nCONFIRMAR ${updated.order_number}\nou REJEITAR ${updated.order_number} motivo`
     );
     return { ok: true, paid: false, order: updated };
   } catch (err) {
@@ -300,7 +305,7 @@ export async function handleStaffPaymentMessage(config, phone, text) {
   }
 
   // SMS de confirmação do M-Pesa reencaminhada pela equipa
-  if (/confirmad[oa]|recebeste|transa[cç][aã]o|m-?pesa/i.test(t) && /MT/i.test(t)) {
+  if (/confirmad[oa]|recebeste|transa[cç][aã]o|m-?pesa|e-?mola|movitel/i.test(t) && /MT/i.test(t)) {
     const parsed = parseMpesaMessage(t);
     if (!parsed.transactionId) return false;
     const r = await recordMerchantSms({ text: t, receivedFrom: `whatsapp:${phone}` });

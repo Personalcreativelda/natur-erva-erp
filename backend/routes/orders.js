@@ -287,8 +287,8 @@ router.get('/my-orders/:id', authMiddleware, async (req, res) => {
 // Cliente envia o código da transação (ou a SMS colada); confirma sozinho se a SMS do comerciante já chegou.
 router.post('/:id/payment-proof', authMiddleware, async (req, res) => {
   try {
-    const { transactionId, proofText } = req.body || {};
-    const result = await submitPaymentProof({ orderId: req.params.id, user: req.user, transactionId, proofText });
+    const { transactionId, proofText, method } = req.body || {};
+    const result = await submitPaymentProof({ orderId: req.params.id, user: req.user, transactionId, proofText, method });
     if (!result.ok) return res.status(result.status || 400).json({ error: result.error });
     res.json({ paid: !!result.paid || !!result.alreadyPaid, order: result.order ? mapOrder(result.order) : undefined });
   } catch (err) {

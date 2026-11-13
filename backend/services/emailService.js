@@ -132,15 +132,15 @@ export async function sendOrderConfirmationEmail({ to, name, orderNumber, items,
 
 const mt = (n) => `${Number(n || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
 
-/** Pagamento M-Pesa confirmado (pela equipa ou por correspondência automática da SMS do comerciante). */
-export async function sendPaymentConfirmedEmail({ to, name, orderNumber, totalAmount, transactionId }) {
+/** Pagamento móvel (M-Pesa / e-Mola) confirmado (pela equipa ou por correspondência automática da SMS do comerciante). */
+export async function sendPaymentConfirmedEmail({ to, name, orderNumber, totalAmount, transactionId, methodLabel = 'M-Pesa' }) {
   const html = baseTemplate(`
     <h2>Pagamento confirmado ✅</h2>
     <p>Olá <strong>${name || 'cliente'}</strong>, confirmámos o pagamento do seu pedido. Já estamos a prepará-lo.</p>
     <div class="box">
       <div class="box-item"><span class="label">Nº Pedido</span><span class="value">#${orderNumber}</span></div>
       <div class="box-item"><span class="label">Valor pago</span><span class="value" style="color:#16a34a"><strong>${mt(totalAmount)}</strong></span></div>
-      ${transactionId ? `<div class="box-item"><span class="label">Transação M-Pesa</span><span class="value">${transactionId}</span></div>` : ''}
+      ${transactionId ? `<div class="box-item"><span class="label">Transação ${methodLabel}</span><span class="value">${transactionId}</span></div>` : ''}
     </div>
     <div style="text-align:center">
       <a class="btn" href="${APP_URL}/minha-conta/encomendas">Acompanhar pedido</a>
@@ -156,7 +156,7 @@ export async function sendPaymentRejectedEmail({ to, name, orderNumber, reason }
     <h2>Não conseguimos confirmar o pagamento</h2>
     <p>Olá <strong>${name || 'cliente'}</strong>, não foi possível confirmar o pagamento do pedido <strong>#${orderNumber}</strong>.</p>
     ${reason ? `<div class="box"><div class="box-item"><span class="label">Motivo</span><span class="value">${reason}</span></div></div>` : ''}
-    <p>Verifique o código da transação na SMS do M-Pesa e envie-o novamente na página do pedido, ou contacte-nos.</p>
+    <p>Verifique o código da transação na SMS de confirmação e envie-o novamente na página do pedido, ou contacte-nos.</p>
     <div style="text-align:center">
       <a class="btn" href="${APP_URL}/minha-conta/encomendas">Ver pedido</a>
     </div>

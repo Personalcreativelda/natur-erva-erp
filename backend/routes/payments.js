@@ -20,8 +20,8 @@ router.post('/mpesa-sms/:secret', async (req, res) => {
   const from = String(body.from || body.sender || '');
   if (!text) return res.status(400).json({ error: 'Mensagem vazia' });
 
-  // Só SMS do M-Pesa: evita que outra mensagem no mesmo telemóvel seja tomada como pagamento
-  if (from && !/m-?pesa|vodacom|^\d{3,6}$/i.test(from)) return res.json({ ok: true, ignored: 'remetente não é o M-Pesa' });
+  // Só SMS do M-Pesa / e-Mola: evita que outra mensagem no mesmo telemóvel seja tomada como pagamento
+  if (from && !/m-?pesa|vodacom|e-?mola|movitel|^\d{3,6}$/i.test(from)) return res.json({ ok: true, ignored: 'remetente não é o M-Pesa nem o e-Mola' });
 
   try {
     const result = await recordMerchantSms({ text, receivedFrom: `sms:${from || 'desconhecido'}` });

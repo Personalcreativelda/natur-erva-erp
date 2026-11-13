@@ -1,6 +1,17 @@
 import { appSystemConfig } from '../../../config/appConfig';
 import api from './apiClient';
 
+/** Método de pagamento móvel do checkout (backend: tax_config.payment_methods). */
+export interface PaymentMethodConfig {
+  id: 'mpesa' | 'emola';
+  label: string;
+  enabled: boolean;
+  merchantCode: string;
+  merchantName: string;
+  ussd: string;
+  logoUrl: string;
+}
+
 export interface SystemSettings {
   system_name?: string;
   logo_light?: string;
@@ -18,6 +29,7 @@ export interface SystemSettings {
   company_website?: string;
   mpesa_merchant_code?: string;
   mpesa_merchant_name?: string;
+  payment_methods?: PaymentMethodConfig[];
   [key: string]: unknown;
 }
 
@@ -54,6 +66,8 @@ export const getSystemSettings = async (): Promise<SystemSettings> => {
       // Pagamento M-Pesa ao comerciante (vazio = checkout sem pagamento M-Pesa)
       mpesa_merchant_code: config.mpesaMerchantCode || '',
       mpesa_merchant_name: config.mpesaMerchantName || '',
+      // Métodos de pagamento móvel (M-Pesa, e-Mola) configurados em Finanças
+      payment_methods: Array.isArray(config.paymentMethods) ? config.paymentMethods : [],
     };
 
     localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: settings }));

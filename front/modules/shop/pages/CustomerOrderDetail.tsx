@@ -235,6 +235,7 @@ export const CustomerOrderDetail: React.FC = () => {
             orderNumber={order.orderNumber}
             total={order.totalAmount}
             paymentStatus={order.paymentStatus}
+            paymentMethod={order.paymentMethod}
             mpesaTransactionId={order.mpesaTransactionId}
             paymentSubmittedAt={order.paymentSubmittedAt}
             paymentRejectedReason={order.paymentRejectedReason}
