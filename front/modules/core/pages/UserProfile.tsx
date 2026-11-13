@@ -62,15 +62,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!validTypes.includes(file.type)) {
-      showToast?.('Tipo de arquivo não suportado. Use JPEG, PNG, WEBP ou GIF.', 'error');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      showToast?.('Arquivo muito grande. Tamanho máximo: 2MB.', 'error');
-      return;
-    }
+    // Validação de tipo/tamanho e compressão ficam em uploadAvatar (fotos do telemóvel são reduzidas).
     setIsUploading(true);
     try {
       const avatarUrl = await uploadAvatar(file, currentUser.id);

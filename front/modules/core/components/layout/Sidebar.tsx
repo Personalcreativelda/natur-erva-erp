@@ -328,6 +328,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
  { id: 'coupons', label: 'Cupões', icon: Tag, permission: 'sales.discount', group: 'marketing' },
  { id: 'affiliates', label: 'Afiliados', icon: Share2, permission: 'users.view', group: 'marketing' },
  { id: 'blog', label: 'Blog', icon: FileText, permission: 'media.view', group: 'marketing' },
+ { id: 'reviews', label: 'Avaliações', icon: MessageSquare, permission: 'sales.view', group: 'marketing' },
 
  // ── Finanças ───────────────────────────────────────────────────────
  { id: 'financas', label: 'Finanças', icon: Wallet, permission: 'finance.view', group: 'financas', children: [

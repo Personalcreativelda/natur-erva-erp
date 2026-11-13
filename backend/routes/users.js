@@ -293,14 +293,22 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 // POST /api/users/:id/avatar — upload de foto de perfil para MinIO
 router.post('/:id/avatar', authMiddleware, async (req, res) => {
   try {
+    // Cada utilizador (incluindo clientes) pode mudar a sua própria foto; só staff muda a de outros.
+    const roles = Array.isArray(req.user?.roles) && req.user.roles.length ? req.user.roles : [req.user?.role];
+    const isStaff = req.user?.isSuperAdmin || roles.some(r => r && String(r).toUpperCase() !== 'CLIENTE');
+    if (String(req.user?.id) !== String(req.params.id) && !isStaff) {
+      return res.status(403).json({ error: 'Só pode alterar a sua própria foto' });
+    }
+
     const { imageData } = req.body;
     if (!imageData) return res.status(400).json({ error: 'imageData obrigatório' });
 
-    const match = imageData.match(/^data:([^;]+);base64,(.+)$/);
-    if (!match) return res.status(400).json({ error: 'Formato base64 inválido' });
+    const match = imageData.match(/^data:(image\/(?:jpeg|png|webp|gif));base64,(.+)$/);
+    if (!match) return res.status(400).json({ error: 'Use uma imagem JPG, PNG, WebP ou GIF' });
 
     const [, mime, b64] = match;
     const buffer = Buffer.from(b64, 'base64');
+    if (buffer.length > 5 * 1024 * 1024) return res.status(400).json({ error: 'A foto deve ter no máximo 5 MB' });
     const { url } = await uploadToMinio(buffer, 'avatars', mime);
 
     await pool.query('UPDATE profiles SET avatar_url = $1, updated_at = NOW() WHERE id = $2', [url, req.params.id]);

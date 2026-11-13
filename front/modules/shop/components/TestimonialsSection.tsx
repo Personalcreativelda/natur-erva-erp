@@ -28,62 +28,68 @@ const StarRow: React.FC<{ rating: number; className?: string }> = ({ rating, cla
 );
 
 const ReviewAvatar: React.FC<{ review: ProductReview }> = ({ review }) => {
+  const [broken, setBroken] = useState(false);
   const initial = review.user_name?.trim().charAt(0).toUpperCase() || 'C';
-  return review.avatar_url ? (
+  return review.avatar_url && !broken ? (
     <img
       src={review.avatar_url}
       alt={`Fotografia de ${review.user_name}`}
       loading="lazy"
-      className="h-12 w-12 shrink-0 rounded-full border-2 border-white object-cover shadow-sm dark:border-gray-700"
+      onError={() => setBroken(true)}
+      className="h-14 w-14 shrink-0 rounded-full border-2 border-white object-cover shadow-md ring-2 ring-green-100 dark:border-gray-700 dark:ring-green-900/40"
     />
   ) : (
     <span
       aria-hidden="true"
-      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-700 text-base font-bold text-white shadow-sm"
+      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-700 text-lg font-bold text-white shadow-md ring-2 ring-green-100 dark:ring-green-900/40"
     >
       {initial}
     </span>
   );
 };
 
-const ReviewCard: React.FC<{ review: ProductReview; index: number; total: number; productUrl?: string }> = ({ review, index, total, productUrl }) => (
-  <article
-    role="group"
-    aria-roledescription="slide"
-    aria-label={`Avaliação ${index + 1} de ${total}`}
-    className="relative flex min-h-[190px] h-full flex-col rounded-2xl border border-border-default bg-surface-raised p-5 shadow-sm sm:min-h-0 sm:p-6"
-  >
-    <Quote className="absolute right-5 top-5 h-8 w-8 fill-green-50 text-green-100 dark:fill-green-900/20 dark:text-green-900/40" aria-hidden="true" />
-    <div className="flex items-center gap-3 pr-10">
-      <ReviewAvatar review={review} />
-      <div className="min-w-0">
-        <p className="truncate text-sm font-bold text-content-primary">{review.user_name}</p>
-        <p className="mt-0.5 text-xs text-content-muted">{formatDate(review.created_at)}</p>
+// Ordem do cartão: comentário → estrelas → avatar + nome (centrados).
+const ReviewCard: React.FC<{ review: ProductReview; index: number; total: number; productUrl?: string }> = ({ review, index, total, productUrl }) => {
+  const quote = (
+    <blockquote className="text-sm italic leading-relaxed sm:text-[15px]">“{review.comment}”</blockquote>
+  );
+  return (
+    <article
+      role="group"
+      aria-roledescription="slide"
+      aria-label={`Avaliação ${index + 1} de ${total}`}
+      className="relative flex h-full min-h-[240px] flex-col items-center rounded-2xl border border-border-default bg-surface-raised p-5 text-center shadow-sm sm:p-6"
+    >
+      <Quote className="mb-3 h-7 w-7 shrink-0 fill-green-50 text-green-200 dark:fill-green-900/20 dark:text-green-900/50" aria-hidden="true" />
+      {productUrl ? (
+        <Link
+          to={productUrl}
+          aria-label={`Abrir o produto relacionado com o comentário de ${review.user_name}`}
+          className="flex-1 rounded-md text-content-secondary transition-colors hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 dark:hover:text-green-400"
+        >
+          {quote}
+        </Link>
+      ) : (
+        <div className="flex-1 text-content-secondary">{quote}</div>
+      )}
+      <StarRow rating={review.rating} className="mt-4 justify-center" />
+      <div className="mt-4 flex flex-col items-center">
+        <ReviewAvatar review={review} />
+        <p className="mt-2 max-w-full truncate text-sm font-bold text-content-primary">{review.user_name}</p>
+        <p className="text-xs text-content-muted">
+          {review.product_name ? <>{review.product_name} · </> : null}{formatDate(review.created_at)}
+        </p>
       </div>
-    </div>
-    <StarRow rating={review.rating} className="mt-4" />
-    {productUrl ? (
-      <Link
-        to={productUrl}
-        aria-label={`Abrir o produto relacionado com o comentário de ${review.user_name}`}
-        className="mt-4 flex-1 rounded-md text-content-secondary transition-colors hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 dark:hover:text-green-400"
-      >
-        <blockquote className="text-sm italic leading-relaxed">“{review.comment}”</blockquote>
-      </Link>
-    ) : (
-      <blockquote className="mt-4 flex-1 text-sm italic leading-relaxed text-content-secondary">“{review.comment}”</blockquote>
-    )}
-  </article>
-);
+    </article>
+  );
+};
 
 const SkeletonCard = () => (
-  <div className="h-60 rounded-2xl border border-border-default bg-surface-raised p-6 animate-pulse">
-    <div className="flex items-center gap-3">
-      <div className="h-12 w-12 rounded-full bg-surface-overlay" />
-      <div className="flex-1 space-y-2"><div className="h-3 w-1/2 rounded bg-surface-overlay" /><div className="h-2 w-1/3 rounded bg-surface-overlay" /></div>
-    </div>
+  <div className="flex h-60 flex-col items-center rounded-2xl border border-border-default bg-surface-raised p-6 animate-pulse">
+    <div className="w-full space-y-2"><div className="h-3 rounded bg-surface-overlay" /><div className="mx-auto h-3 w-4/5 rounded bg-surface-overlay" /></div>
     <div className="mt-5 h-3 w-24 rounded bg-yellow-100 dark:bg-yellow-900/30" />
-    <div className="mt-5 space-y-2"><div className="h-3 rounded bg-surface-overlay" /><div className="h-3 w-4/5 rounded bg-surface-overlay" /></div>
+    <div className="mt-5 h-14 w-14 rounded-full bg-surface-overlay" />
+    <div className="mt-2 h-3 w-1/3 rounded bg-surface-overlay" />
   </div>
 );
 
@@ -110,7 +116,7 @@ export const TestimonialsSection: React.FC<{
   }, []);
 
   useEffect(() => {
-    getAllReviews(24)
+    getAllReviews(60)
       .then(setReviews)
       .catch(() => {
         setReviews([]);

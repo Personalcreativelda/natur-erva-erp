@@ -59,6 +59,8 @@ export const ADMIN_ROUTE_MAP: Record<string, string> = {
   'marketing': '/admin/marketing',
   // Blog
   'blog': '/admin/blog',
+  // Avaliações (moderação)
+  'reviews': '/admin/avaliacoes',
   // Caixa (gestão de sessões) e POS (interface de venda)
   'pos': '/admin/caixa',
   'caixa': '/admin/caixa',

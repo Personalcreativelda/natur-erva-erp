@@ -507,23 +507,56 @@ export const uploadPaymentProof = async (
 /**
  * Upload de avatar via backend → MinIO (não usa Supabase)
  */
+const readAsDataUrl = (file: Blob) => new Promise<string>((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = (ev) => resolve(ev.target?.result as string);
+  reader.onerror = () => reject(new Error('Erro ao ler ficheiro'));
+  reader.readAsDataURL(file);
+});
+
+/** Corta ao centro em quadrado e reduz para no máx. 512 px (JPEG ~85%). */
+const compressAvatar = async (file: File, maxSize = 512): Promise<string> => {
+  const sourceUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('Formato de imagem não suportado neste dispositivo. Use JPG ou PNG.'));
+      el.src = sourceUrl;
+    });
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    const target = Math.min(maxSize, side);
+    const canvas = document.createElement('canvas');
+    canvas.width = target;
+    canvas.height = target;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return readAsDataUrl(file);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, target, target);
+    ctx.drawImage(
+      img,
+      (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side,
+      0, 0, target, target
+    );
+    return canvas.toDataURL('image/jpeg', 0.85);
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
+  }
+};
+
 export const uploadAvatar = async (
   file: File,
   userId: string
 ): Promise<string | null> => {
   try {
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!validTypes.includes(file.type))
-      throw new Error('Tipo não suportado. Use JPEG, PNG, WEBP ou GIF.');
-    if (file.size > 2 * 1024 * 1024)
-      throw new Error('Ficheiro demasiado grande. Máximo: 2MB.');
+    // Fotos tiradas no telemóvel têm muitas vezes 3–10 MB (e às vezes vêm sem tipo ou em HEIC).
+    // Redimensionamos no dispositivo para um JPEG quadrado leve antes de enviar.
+    if (file.type && !file.type.startsWith('image/'))
+      throw new Error('Escolha um ficheiro de imagem.');
+    if (file.size > 25 * 1024 * 1024)
+      throw new Error('Ficheiro demasiado grande. Máximo: 25 MB.');
 
-    const imageData = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => resolve(ev.target?.result as string);
-      reader.onerror = () => reject(new Error('Erro ao ler ficheiro'));
-      reader.readAsDataURL(file);
-    });
+    const imageData = await compressAvatar(file);
 
     const { default: api } = await import('../../core/services/apiClient');
     const result = await (api as any).post(`/users/${userId}/avatar`, { imageData });

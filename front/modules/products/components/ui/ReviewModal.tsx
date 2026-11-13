@@ -13,8 +13,12 @@ interface ReviewModalProps {
  productId: string;
  productName: string;
  currentUserName?: string;
+ /** Encomenda de onde vem a avaliação (quando aberta a partir da conta do cliente). */
+ orderId?: string;
  onClose: () => void;
  onStatsChange?: (stats: RatingStats) => void;
+ /** Chamado depois de a avaliação ser gravada com sucesso. */
+ onSubmitted?: () => void;
 }
 
 const fileToDataUrl = (file: File): Promise<string> => new Promise((resolve, reject) => {
@@ -28,8 +32,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  productId,
  productName,
  currentUserName,
+ orderId,
  onClose,
  onStatsChange,
+ onSubmitted,
 }) => {
  const [reviews, setReviews] = useState<ProductReview[]>([]);
  const [stats, setStats] = useState<RatingStats>({ average: 0, total: 0 });
@@ -72,7 +78,8 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
  setSubmitting(true);
  setSubmitError(null);
  try {
- await submitReview(productId, newName.trim(), newRating, newComment.trim(), newPhotos);
+ await submitReview(productId, newName.trim(), newRating, newComment.trim(), newPhotos, orderId);
+ onSubmitted?.();
  setSuccessMsg(true);
  setNewComment('');
  setNewRating(5);

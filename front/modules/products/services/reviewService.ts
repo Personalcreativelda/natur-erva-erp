@@ -17,7 +17,20 @@ export interface ProductReview {
   photo_urls?: string[];
   product_slug?: string | null;
   product_name?: string | null;
+  user_id?: string | null;
+  user_email?: string | null;
+  order_id?: string | null;
+  is_hidden?: boolean;
   created_at: string;
+}
+
+export interface PendingReviewItem {
+  product_id: string;
+  order_id: string;
+  product_name: string;
+  product_slug?: string | null;
+  product_image?: string | null;
+  received_at: string;
 }
 
 export interface RatingStats {
@@ -60,7 +73,7 @@ export async function getProductReviews(productId: string): Promise<ProductRevie
 
 // ── All reviews (for testimonials section) ───────────────────────────────────
 
-export async function getAllReviews(limit = 24): Promise<ProductReview[]> {
+export async function getAllReviews(limit = 60): Promise<ProductReview[]> {
   try {
     const data = await api.get<ProductReview[]>(`/reviews?limit=${limit}`);
     return Array.isArray(data) ? data : [];
@@ -86,7 +99,8 @@ export async function submitReview(
   userName: string,
   rating: number,
   comment: string,
-  photoData: string[] = []
+  photoData: string[] = [],
+  orderId?: string
 ): Promise<void> {
   await api.post('/reviews', {
     product_id: productId,
@@ -94,6 +108,39 @@ export async function submitReview(
     rating,
     comment: comment.trim(),
     photo_data: photoData.slice(0, 3),
+    order_id: orderId,
   });
   statsCache.delete(productId);
+}
+
+// ── Conta do cliente ─────────────────────────────────────────────────────────
+
+/** Produtos de encomendas entregues/concluídas que o cliente ainda não avaliou. */
+export async function getPendingReviews(): Promise<PendingReviewItem[]> {
+  const data = await api.get<PendingReviewItem[]>('/reviews/pending');
+  return Array.isArray(data) ? data : [];
+}
+
+export async function getMyReviews(): Promise<ProductReview[]> {
+  const data = await api.get<ProductReview[]>('/reviews/me');
+  return Array.isArray(data) ? data : [];
+}
+
+// ── Moderação (admin) ────────────────────────────────────────────────────────
+
+export async function getAdminReviews(status: 'all' | 'visible' | 'hidden' = 'all', q = ''): Promise<ProductReview[]> {
+  const params = new URLSearchParams({ status });
+  if (q.trim()) params.set('q', q.trim());
+  const data = await api.get<ProductReview[]>(`/reviews/admin?${params.toString()}`);
+  return Array.isArray(data) ? data : [];
+}
+
+export async function setReviewHidden(id: string, isHidden: boolean): Promise<void> {
+  await api.patch(`/reviews/${id}`, { is_hidden: isHidden });
+  statsCache.clear();
+}
+
+export async function deleteReview(id: string): Promise<void> {
+  await api.delete(`/reviews/${id}`);
+  statsCache.clear();
 }

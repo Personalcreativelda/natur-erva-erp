@@ -1,27 +1,54 @@
-import { activateOnKey } from '../../core/utils/a11y';
-﻿import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, RefreshCw, ChevronRight, Loader2, Gift, Star, Copy, Check, TrendingUp } from 'lucide-react';
+import { ShoppingBag, RefreshCw, ChevronRight, Loader2, Gift, Star, Copy, Check, TrendingUp, Camera, MessageSquarePlus, PackageCheck } from 'lucide-react';
+import { activateOnKey } from '../../core/utils/a11y';
+import api from '../../core/services/apiClient';
+import { Order } from '../../core/types/order';
+import { uploadAvatar } from '../../media/services/imageService';
+import { ReviewModal } from '../../products/components/ui/ReviewModal';
+import { getPendingReviews, getMyReviews } from '../../products/services/reviewService';
+import type { PendingReviewItem, ProductReview } from '../../products/services/reviewService';
 
 const getInitials = (name: string) =>
   (name || '?').split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
 
-const UserAvatar: React.FC<{ user: any; size?: 'md' | 'lg' }> = ({ user, size = 'lg' }) => {
-  const dim = size === 'lg' ? 'w-14 h-14 text-xl' : 'w-10 h-10 text-sm';
+/** O backend devolve um avatar gerado (ui-avatars) quando não há foto; tratamos isso como "sem foto". */
+const realAvatar = (url?: string | null) => (url && !url.includes('ui-avatars.com') ? url : '');
+
+const UserAvatar: React.FC<{ user: any; uploading?: boolean; onPick?: () => void }> = ({ user, uploading, onPick }) => {
+  const [broken, setBroken] = useState(false);
+  const src = realAvatar(user?.avatar);
+  useEffect(() => setBroken(false), [src]);
   return (
-    <div
-      className={`${dim} rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 overflow-hidden`}
-      style={{ background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', boxShadow: '0 4px 12px rgba(5,150,105,0.35)' }}
-    >
-      {user?.avatar
-        ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-        : <span>{getInitials(user?.name)}</span>
-      }
+    <div className="relative flex-shrink-0">
+      <div
+        className="w-16 h-16 text-xl rounded-full flex items-center justify-center font-bold text-white overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', boxShadow: '0 4px 12px rgba(5,150,105,0.35)' }}
+      >
+        {src && !broken
+          ? <img src={src} alt={user?.name} onError={() => setBroken(true)} className="w-full h-full object-cover" />
+          : <span>{getInitials(user?.name)}</span>
+        }
+        {uploading && (
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45">
+            <Loader2 className="w-6 h-6 animate-spin text-white" aria-hidden="true" />
+          </span>
+        )}
+      </div>
+      {onPick && (
+        <button
+          type="button"
+          onClick={onPick}
+          disabled={uploading}
+          aria-label="Alterar fotografia de perfil"
+          className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-green-600 text-white shadow-md hover:bg-green-700 disabled:opacity-60 dark:border-gray-800"
+        >
+          <Camera className="h-4 w-4" aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 };
-import api from '../../core/services/apiClient';
-import { Order } from '../../core/types/order';
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Pendente', processing: 'Em Processamento',
@@ -116,8 +143,45 @@ function PointsCard({ points }: { points: number }) {
   );
 }
 
-export const CustomerDashboard: React.FC<{ currentUser: any }> = ({ currentUser }) => {
+export const CustomerDashboard: React.FC<{
+  currentUser: any;
+  onUserUpdate?: (user: any) => void;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
+}> = ({ currentUser, onUserUpdate, showToast }) => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [pendingReviews, setPendingReviews] = useState<PendingReviewItem[]>([]);
+  const [myReviews, setMyReviews] = useState<ProductReview[]>([]);
+  const [reviewTarget, setReviewTarget] = useState<PendingReviewItem | null>(null);
+
+  const loadReviews = useCallback(() => {
+    getPendingReviews().then(setPendingReviews).catch(() => setPendingReviews([]));
+    getMyReviews().then(setMyReviews).catch(() => setMyReviews([]));
+  }, []);
+
+  useEffect(() => { loadReviews(); }, [loadReviews]);
+
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !currentUser?.id) return;
+    setAvatarError(null);
+    setUploadingAvatar(true);
+    try {
+      const url = await uploadAvatar(file, currentUser.id);
+      if (!url) throw new Error('Não foi possível guardar a fotografia.');
+      onUserUpdate?.({ ...currentUser, avatar: url });
+      showToast?.('Fotografia de perfil actualizada!', 'success');
+    } catch (err: any) {
+      const message = err?.message || 'Não foi possível guardar a fotografia. Tente novamente.';
+      setAvatarError(message);
+      showToast?.(message, 'error');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [affiliate, setAffiliate] = useState<AffiliateSnippet | null | false>(null);
@@ -154,13 +218,30 @@ export const CustomerDashboard: React.FC<{ currentUser: any }> = ({ currentUser 
         {/* Cabeçalho */}
         <div className="bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-default">
           <div className="flex items-center gap-4">
-            <UserAvatar user={currentUser} size="lg" />
+            <UserAvatar user={currentUser} uploading={uploadingAvatar} onPick={() => fileInputRef.current?.click()} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
+              onChange={handleAvatarFile}
+            />
             <div className="min-w-0">
               <p className="text-xs font-medium text-content-muted mb-0.5">Área de Membro</p>
               <h1 className="text-xl font-bold text-content-primary leading-tight">Olá, {currentUser?.name?.split(' ')[0] || 'Cliente'}!</h1>
               <p className="text-sm text-content-muted truncate">{currentUser?.email}</p>
+              {!realAvatar(currentUser?.avatar) && !uploadingAvatar && (
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-1 text-xs font-semibold text-green-700 hover:underline dark:text-green-400">
+                  Adicionar fotografia de perfil
+                </button>
+              )}
             </div>
           </div>
+          {avatarError && (
+            <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-400">{avatarError}</p>
+          )}
         </div>
 
         {/* Estatísticas */}
@@ -179,6 +260,80 @@ export const CustomerDashboard: React.FC<{ currentUser: any }> = ({ currentUser 
 
         {/* Pontos e Medalhas */}
         <PointsCard points={points} />
+
+        {/* Avaliar compras recebidas */}
+        {(pendingReviews.length > 0 || myReviews.length > 0) && (
+          <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-default overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-border-default">
+              <Star className="w-5 h-5 text-yellow-500" aria-hidden="true" />
+              <h2 className="font-semibold text-content-primary">Avaliar as suas compras</h2>
+              {pendingReviews.length > 0 && (
+                <span className="ml-auto rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                  {pendingReviews.length} por avaliar
+                </span>
+              )}
+            </div>
+            {pendingReviews.length > 0 ? (
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {pendingReviews.map(item => (
+                  <li key={item.product_id} className="flex items-center gap-3 px-5 py-3">
+                    <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-surface-overlay">
+                      {item.product_image
+                        ? <img src={item.product_image} alt="" loading="lazy" className="h-full w-full object-cover" />
+                        : <PackageCheck className="m-3 h-6 w-6 text-content-muted" aria-hidden="true" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-content-primary">{item.product_name}</p>
+                      <p className="text-xs text-content-muted">Recebido em {new Date(item.received_at).toLocaleDateString('pt-MZ')}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReviewTarget(item)}
+                      className="flex min-h-10 items-center gap-1.5 rounded-xl bg-green-600 px-3 text-xs font-semibold text-white hover:bg-green-700"
+                    >
+                      <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
+                      Avaliar
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-5 py-4 text-sm text-content-muted">Obrigado! Já avaliou todos os produtos que recebeu.</p>
+            )}
+            {myReviews.length > 0 && (
+              <div className="border-t border-border-default px-5 py-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-content-muted">As suas avaliações</p>
+                <ul className="space-y-3">
+                  {myReviews.slice(0, 5).map(r => (
+                    <li key={r.id} className="text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="flex" aria-label={`${r.rating} de 5 estrelas`}>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} aria-hidden="true" className={`h-3.5 w-3.5 ${i < r.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                          ))}
+                        </span>
+                        <span className="truncate text-xs text-content-muted">{r.product_name}</span>
+                        {r.is_hidden && <span className="ml-auto text-[11px] text-content-muted">(oculta pela loja)</span>}
+                      </div>
+                      {r.comment && <p className="mt-1 line-clamp-2 text-content-secondary">{r.comment}</p>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {reviewTarget && (
+          <ReviewModal
+            productId={reviewTarget.product_id}
+            productName={reviewTarget.product_name}
+            orderId={reviewTarget.order_id}
+            currentUserName={currentUser?.name}
+            onClose={() => { setReviewTarget(null); loadReviews(); }}
+            onSubmitted={() => { setReviewTarget(null); loadReviews(); showToast?.('Obrigado pela sua avaliação!', 'success'); }}
+          />
+        )}
 
         {/* Últimas encomendas */}
         <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-default overflow-hidden">

@@ -67,6 +67,7 @@ const AdminDeliveryZones = lazy(() => import('./modules/admin/pages/DeliveryZone
 const AdminLogistics = lazy(() => import('./modules/admin/pages/Logistics').then(m => ({ default: m.Logistics })));
 const AdminMarketing = lazy(() => import('./modules/admin/pages/Marketing').then(m => ({ default: m.Marketing })));
 const AdminBlog = lazy(() => import('./modules/admin/pages/Blog').then(m => ({ default: m.Blog })));
+const AdminReviews = lazy(() => import('./modules/admin/pages/Reviews').then(m => ({ default: m.Reviews })));
 const BlogPage = lazy(() => import('./modules/shop/pages/BlogPage').then(m => ({ default: m.BlogPage })));
 const BlogPostPage = lazy(() => import('./modules/shop/pages/BlogPostPage').then(m => ({ default: m.BlogPostPage })));
 const ResetPasswordPage = lazy(() => import('./modules/shop/pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
@@ -441,7 +442,7 @@ const App = () => {
               )}
             />
             {/* Painel do cliente */}
-            <Route path="minha-conta" element={currentUser ? <CustomerDashboard currentUser={currentUser} /> : <Navigate to="/" replace />} />
+            <Route path="minha-conta" element={currentUser ? <CustomerDashboard currentUser={currentUser} onUserUpdate={setCurrentUser} showToast={showToast} /> : <Navigate to="/" replace />} />
             <Route path="minha-conta/encomendas" element={currentUser ? <CustomerOrders /> : <Navigate to="/" replace />} />
             <Route path="minha-conta/encomendas/:id" element={currentUser ? <CustomerOrderDetail /> : <Navigate to="/" replace />} />
             <Route path="minha-conta/reembolsos" element={currentUser ? <CustomerRefunds /> : <Navigate to="/" replace />} />
@@ -1030,6 +1031,13 @@ const App = () => {
                 <ProtectedRoute user={currentUser} permission="admin.access">
                   <TrackedPage pagePath="/admin/blog" pageTitle="Blog">
                     <AdminBlog showToast={showToast} />
+                  </TrackedPage>
+                </ProtectedRoute>
+              } />
+              <Route path="avaliacoes" element={
+                <ProtectedRoute user={currentUser} permission="admin.access">
+                  <TrackedPage pagePath="/admin/avaliacoes" pageTitle="Avaliações">
+                    <AdminReviews showToast={showToast} />
                   </TrackedPage>
                 </ProtectedRoute>
               } />
