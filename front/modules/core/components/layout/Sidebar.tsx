@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, ShoppingCart, Package, LogOut, Award, TrendingUp, Warehouse, ChevronLeft, ChevronRight, ChevronDown, ShoppingBag, Egg, UserCheck, Repeat, Truck, FileText, BarChart3, ArrowLeftRight, Wallet, Download, Activity, ArrowRight, Upload, Globe, CreditCard, Megaphone, Target, Share2, Eye, MapPin, Store, Image, Tv, List, Layers, Ruler, Tag, ClipboardCheck, Scale, AlertTriangle, Shield, Boxes, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, FolderOpen, HeartPulse, Calendar, Pill, Bot } from 'lucide-react';
+import { LayoutDashboard, Search, Users, ShoppingCart, Package, LogOut, Award, TrendingUp, Warehouse, ChevronLeft, ChevronRight, ChevronDown, ShoppingBag, Egg, UserCheck, Repeat, Truck, FileText, BarChart3, ArrowLeftRight, Wallet, Download, Activity, ArrowRight, Upload, Globe, CreditCard, Megaphone, Target, Share2, Eye, MapPin, Store, Image, Tv, List, Layers, Ruler, Tag, ClipboardCheck, Scale, AlertTriangle, Shield, Boxes, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, FolderOpen, HeartPulse, Calendar, Pill, Bot } from 'lucide-react';
 import { User, UserRole } from '../../../core/types/types';
 import { useLanguage } from '../../../core/contexts/LanguageContext';
 
@@ -80,6 +80,7 @@ const GROUP_LABELS: Record<string, string> = {
  financas: 'Finanças',
  gestao: 'Equipa & Gestão',
  servicos: 'Serviços',
+ relatorios: 'Relatórios',
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -261,7 +262,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
  const allMenuItems: MenuItem[] = [
  // ── Geral ──────────────────────────────────────────────────────────
  { id: 'dashboard', label: t.nav.dashboard, icon: LayoutDashboard, permission: 'dashboard.view', group: 'geral' },
- { id: 'tracking', label: t.nav.statistics, icon: Activity, permission: 'analytics.view', group: 'geral' },
+ { id: 'tracking', label: t.nav.statistics, icon: Activity, permission: 'analytics.view', group: 'relatorios' },
 
  // ── Comercial ──────────────────────────────────────────────────────
  {
@@ -376,7 +377,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
  // Filtrar itens baseado apenas nas permissões (sistema simplificado)
  const filteredMenuItems = useMemo(() => {
- return allMenuItems.filter(item => {
+ const visible = allMenuItems.filter(item => {
  // 1. Check Module status
  if (!isModuleEnabled(item.id)) return false;
 
@@ -384,7 +385,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
  if (!item.permission) return true;
  return hasPermission(item.permission);
  });
+ // Estatísticas fica como última opção do menu
+ return [...visible.filter(i => i.id !== 'tracking'), ...visible.filter(i => i.id === 'tracking')];
  }, [hasPermission, t, enabledModules]);
+
+ // Pesquisa no menu (itens e submenus, sem acentos nem maiúsculas)
+ const [menuQuery, setMenuQuery] = useState('');
+ const menuSearchResults = useMemo(() => {
+ const norm = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+ const q = norm(menuQuery.trim());
+ if (!q) return null;
+ const out: { key: string; label: string; parent?: string; icon: any; onSelect: () => void }[] = [];
+ for (const item of filteredMenuItems) {
+ if (item.children && item.children.length > 0) {
+ const parentMatch = norm(item.label).includes(q);
+ for (const child of item.children) {
+ if (parentMatch || norm(child.label).includes(q)) out.push({ key: child.id, label: child.label, parent: item.label, icon: child.icon || item.icon, onSelect: () => navigate(child.path) });
+ }
+ } else if (norm(item.label).includes(q)) {
+ out.push({ key: item.id, label: item.label, icon: item.icon, onSelect: () => onNavigate(item.id) });
+ }
+ }
+ return out;
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [menuQuery, filteredMenuItems]);
 
  // IDs dos itens que iniciam uma nova secção (para desenhar o cabeçalho de grupo antes deles)
  const groupStartIds = useMemo(() => {
@@ -437,7 +461,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
  </div>
  </div>
 
- <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-2">
+ {/* Pesquisa no menu (só com a barra aberta) */}
+ {isOpen && (
+ <div className="px-3 pt-3">
+ <div className="relative">
+ <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted pointer-events-none" />
+ <input
+ type="search"
+ value={menuQuery}
+ onChange={e => setMenuQuery(e.target.value)}
+ onKeyDown={e => { if (e.key === 'Escape') setMenuQuery(''); if (e.key === 'Enter' && menuSearchResults?.[0]) { menuSearchResults[0].onSelect(); setMenuQuery(''); } }}
+ placeholder="Pesquisar no menu…"
+ aria-label="Pesquisar no menu"
+ className="w-full h-9 pl-9 pr-3 rounded-lg bg-surface-base border border-border-default text-sm text-content-primary placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500"
+ />
+ </div>
+ </div>
+ )}
+
+ {isOpen && menuSearchResults && (
+ <nav className="flex-1 overflow-y-auto py-3 space-y-0.5 px-2" aria-label="Resultados da pesquisa">
+ {menuSearchResults.length === 0 ? (
+ <p className="px-3 py-6 text-center text-sm text-content-muted">Nenhum menu encontrado</p>
+ ) : menuSearchResults.map(r => {
+ const RIcon = r.icon;
+ return (
+ <button key={r.key} onClick={() => { r.onSelect(); setMenuQuery(''); }}
+ className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm font-medium text-content-secondary hover:bg-black/[0.04] dark:hover:bg-surface-raised/[0.05] hover:text-content-primary">
+ {RIcon && <RIcon className="w-5 h-5 flex-shrink-0 text-content-muted" />}
+ <span className="min-w-0 truncate">{r.parent && <span className="text-content-muted font-normal">{r.parent} › </span>}{r.label}</span>
+ </button>
+ );
+ })}
+ </nav>
+ )}
+
+ <nav className={`flex-1 overflow-y-auto py-4 space-y-1 px-2 ${isOpen && menuSearchResults ? 'hidden' : ''}`}>
  {filteredMenuItems.map((item) => {
  const isGroupStart = !!item.group && groupStartIds.has(item.id);
  const groupSeparator = isGroupStart ? (
