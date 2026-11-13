@@ -5,6 +5,7 @@ import { exitApp, getLaunchUrl, isNativeApp, onAndroidBack, onAppUrlOpen, onKeyb
 import { installNativeFileBridge } from './nativeFiles';
 import { installResponsiveTables } from './responsiveTables';
 import { closeTopOverlay } from './overlays';
+import { installPullToRefresh } from './pullToRefresh';
 
 /**
  * Comportamentos de "app nativa", montado uma vez dentro do Router. Não renderiza nada.
@@ -15,6 +16,7 @@ import { closeTopOverlay } from './overlays';
  */
 
 const EXIT_WINDOW_MS = 2000;
+let launchUrlHandled = false;
 const KEYBOARD_MIN_PX = 150;
 
 const isEditable = (el: Element | null): boolean =>
@@ -43,6 +45,9 @@ export const MobileShell: React.FC = () => {
     return () => mo.disconnect();
   }, []);
 
+  // ── puxar para actualizar (só na app; o Chrome já tem o seu) ──────────────────
+  useEffect(() => (isNativeApp() ? installPullToRefresh() : undefined), []);
+
   // ── tabelas largas → cartões no telemóvel ────────────────────────────────────
   useEffect(() => installResponsiveTables(), []);
 
@@ -52,20 +57,29 @@ export const MobileShell: React.FC = () => {
   }, [showToast]);
 
   // ── links do site abertos a partir de outras apps (deep links) ───────────────
+  // Regista-se UMA vez. O `navigate` muda de identidade a cada mudança de página: com ele nas
+  // dependências, o efeito voltava a correr em cada navegação, relia o link de arranque (ex.: o
+  // /minha-conta da mensagem de WhatsApp) e levava o utilizador de volta para lá — a app ficava "presa".
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
   useEffect(() => {
     const SITE = /^https:\/\/(www\.)?natur-erva\.co\.mz/i;
     const open = (url: string | null) => {
       if (!url || !SITE.test(url)) return;
       const u = new URL(url);
       const target = u.pathname + u.search + u.hash;
-      if (target !== window.location.pathname + window.location.search + window.location.hash) navigate(target);
+      if (target !== window.location.pathname + window.location.search + window.location.hash) navigateRef.current(target);
     };
-    getLaunchUrl().then(open);
+    // O link de arranque só se aplica uma vez por sessão da app (sobrevive a remontagens)
+    if (!launchUrlHandled) {
+      launchUrlHandled = true;
+      getLaunchUrl().then(open);
+    }
     let handle: { remove: () => unknown } | null = null;
     let disposed = false;
     onAppUrlOpen(open).then(h => { if (disposed) h?.remove(); else handle = h; });
     return () => { disposed = true; handle?.remove(); };
-  }, [navigate]);
+  }, []);
 
   // ── scroll: topo em páginas novas, posição reposta ao voltar ────────────────
   const positions = useRef(new Map<string, number>());

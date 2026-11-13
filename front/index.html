@@ -350,8 +350,22 @@
       .animate-drawer-in {
         animation: drawer-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
       }
+      /* Menu do painel no telemóvel (MobileAdminMenu): abre a aparecer; sub-páginas deslizam da direita */
+      @keyframes menu-sheet-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: none; }
+      }
+      @keyframes menu-push-in {
+        from { transform: translateX(100%); }
+        to   { transform: translateX(0); }
+      }
+      .animate-menu-sheet-in { animation: menu-sheet-in 0.2s ease-out; }
+      .animate-menu-push-in { animation: menu-push-in 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
+      /* Teclado aberto (pesquisa): a barra inferior esconde-se, o menu ocupa até ao fundo */
+      html.keyboard-open .admin-menu-sheet { bottom: 0 !important; }
       @media (prefers-reduced-motion: reduce) {
-        .animate-drawer-in, .animate-modal-enter, .animate-fade-in-up { animation: none; }
+        .animate-drawer-in, .animate-modal-enter, .animate-fade-in-up,
+        .animate-menu-sheet-in, .animate-menu-push-in { animation: none; }
       }
       
       /* Prevent text size adjustment on iOS */

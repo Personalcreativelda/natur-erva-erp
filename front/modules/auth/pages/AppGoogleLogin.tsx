@@ -63,9 +63,15 @@ export const AppGoogleLogin: React.FC = () => {
             ) : (
               <div className="flex justify-center min-h-[44px]">
                 <GoogleOAuthProvider clientId={googleClientId}>
+                {/* useOneTap: o seletor de contas da Google abre sozinho ao chegar a esta página (sem
+                    tocar no botão); auto_select entra directamente se só houver uma conta já usada.
+                    O botão fica como alternativa se o One Tap for fechado ou não estiver disponível. */}
                 <GoogleLogin
                   onSuccess={r => onGoogle(r.credential)}
                   onError={() => { setError('Erro ao autenticar com Google.'); setState('error'); }}
+                  useOneTap
+                  auto_select
+                  cancel_on_tap_outside={false}
                   text="continue_with" shape="pill" width="280"
                 />
                 </GoogleOAuthProvider>

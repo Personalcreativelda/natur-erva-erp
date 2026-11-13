@@ -2,6 +2,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { AdminBottomNavigation } from './AdminBottomNavigation';
+import { MobileAdminMenu } from './MobileAdminMenu';
 import { RouteTransition } from '../../mobile/RouteTransition';
 
 import { User, UserRole } from '../../../core/types/types';
@@ -39,7 +40,6 @@ interface LayoutProps {
 const MOBILE_MENU_HIDDEN = new Set(['tracking', 'subscriptions', 'helpdesk']);
 
 /** Texto comparável: sem acentos e em minúsculas ("Logística" ≈ "logistica"). */
-const normalizeMenuText = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 export const Layout: React.FC<LayoutProps> = ({
  children,
@@ -76,69 +76,6 @@ export const Layout: React.FC<LayoutProps> = ({
 
  // Obter pathname atual
  const location = useLocation();
-
- // Estrutura simplificada para verificação de rotas (definida antes do useEffect)
- const menuItemsWithChildren = [
- { id: 'sales', children: [{ path: '/admin/pos' }, { path: '/admin/caixa' }, { path: '/admin/cotacoes' }, { path: '/admin/vendas/pedidos' }, { path: '/admin/vendas/clientes' }, { path: '/admin/vendas' }, { path: '/admin/vendas/por-produto' }] },
- { id: 'purchases', children: [{ path: '/admin/compras' }, { path: '/admin/compras/por-produto' }, { path: '/admin/compras/fornecedores' }, { path: '/admin/compras-flow' }] },
- { id: 'products', children: [{ path: '/admin/produtos' }, { path: '/admin/produtos/categorias' }, { path: '/admin/produtos/unidades' }, { path: '/admin/produtos/etiquetas' }] },
- { id: 'stock-management', children: [{ path: '/admin/stock' }, { path: '/admin/stock/alertas' }, { path: '/admin/stock/movimentos' }, { path: '/admin/stock/lotes' }, { path: '/admin/stock/auditoria' }, { path: '/admin/stock/ajustes' }] },
- { id: 'users', children: [{ path: '/admin/usuarios' }, { path: '/admin/usuarios/roles' }] },
- { id: 'financas', children: [{ path: '/admin/financas' }, { path: '/admin/faturas' }, { path: '/admin/contas-pagar' }, { path: '/admin/razao-geral' }] },
- { id: 'clinic', children: [{ path: '/admin/clinica' }] },
- ];
-
- // Estado para controlar quais submenus estão expandidos no mobile
- const [mobileExpandedMenus, setMobileExpandedMenus] = useState<Record<string, boolean>>({});
-
- // Auto-expandir apenas o menu que contém a rota atual (mobile)
- useEffect(() => {
- const currentPath = location.pathname;
- let activeMenuId: string | null = null;
-
- // Encontrar qual menu pai contém a rota atual
- for (const item of menuItemsWithChildren) {
- if (item.children?.some(child =>
- toMenuPath(currentPath) === child.path || toMenuPath(currentPath).startsWith(child.path + '/')
- )) {
- activeMenuId = item.id;
- break;
- }
- }
-
- // Se encontrou um menu ativo, expandir apenas esse
- if (activeMenuId) {
- setMobileExpandedMenus(prev => {
- const shouldUpdate = !prev[activeMenuId] ||
- Object.keys(prev).some(key => key !== activeMenuId && prev[key]);
-
- if (shouldUpdate) {
- const newState: Record<string, boolean> = {};
- menuItemsWithChildren.forEach(item => {
- newState[item.id] = item.id === activeMenuId;
- });
- return newState;
- }
- return prev;
- });
- }
- }, [location.pathname]);
-
- const toggleMobileMenuExpansion = (menuId: string) => {
- setMobileExpandedMenus(prev => {
- const isCurrentlyExpanded = prev[menuId];
- // Comportamento accordion - fecha outros ao expandir
- if (!isCurrentlyExpanded) {
- const newState: Record<string, boolean> = {};
- menuItemsWithChildren.forEach(item => {
- newState[item.id] = item.id === menuId;
- });
- return newState;
- } else {
- return { ...prev, [menuId]: false };
- }
- });
- };
 
  // Submenu item interface
  interface SubMenuItem {
@@ -357,42 +294,6 @@ export const Layout: React.FC<LayoutProps> = ({
  [filteredMenuItems]
  );
 
- // Pesquisa no menu do telemóvel: itens e submenus, sem acentos nem maiúsculas
- const [menuQuery, setMenuQuery] = useState('');
- const menuSearchResults = useMemo(() => {
- const q = normalizeMenuText(menuQuery.trim());
- if (!q) return null;
- const results: { key: string; label: string; parent?: string; icon: any; onSelect: () => void }[] = [];
- for (const item of mobileMenuItems) {
- if (item.children && item.children.length > 0) {
- const parentMatches = normalizeMenuText(item.label).includes(q);
- for (const child of item.children) {
- if (parentMatches || normalizeMenuText(child.label).includes(q)) {
- results.push({ key: child.id, label: child.label, parent: item.label, icon: child.icon || item.icon, onSelect: () => navigate(child.path) });
- }
- }
- } else if (normalizeMenuText(item.label).includes(q)) {
- results.push({ key: item.id, label: item.label, icon: item.icon, onSelect: () => handleNavigate(item.id) });
- }
- }
- return results;
- // eslint-disable-next-line react-hooks/exhaustive-deps
- }, [menuQuery, mobileMenuItems]);
- useEffect(() => { if (!mobileMenuOpen) setMenuQuery(''); }, [mobileMenuOpen]);
-
- // IDs dos itens que iniciam uma nova secção (igual ao Sidebar)
- const groupStartIds = useMemo(() => {
- const seen = new Set<string>();
- const starts = new Set<string>();
- mobileMenuItems.forEach(item => {
- if (item.group && !seen.has(item.group)) {
- seen.add(item.group);
- starts.add(item.id);
- }
- });
- return starts;
- }, [mobileMenuItems]);
-
  const handleNavigate = (page: string) => {
  onNavigate(page);
  setMobileMenuOpen(false);
@@ -557,243 +458,24 @@ export const Layout: React.FC<LayoutProps> = ({
  )}
 
  {/* Mobile Menu Sidebar */}
+ {/* Menu do telemóvel: lista agrupada com sub-páginas (MobileAdminMenu) */}
  {mobileMenuOpen && (
- <>
- <div
- className="md:hidden fixed inset-0 min-h-screen min-w-full z-40 modal-overlay transition-opacity"
- onClick={() => setMobileMenuOpen(false)}
+ <MobileAdminMenu
+ items={mobileMenuItems}
+ groupLabels={GROUP_LABELS}
+ currentUser={currentUser}
+ activePage={activePage}
+ currentPath={toMenuPath(location.pathname)}
+ language={language}
+ onSetLanguage={setLanguage}
+ onNavigateItem={handleNavigate}
+ onNavigatePath={(path) => { navigate(path); setMobileMenuOpen(false); }}
+ onOpenProfile={() => { navigate('/admin/perfis'); setMobileMenuOpen(false); }}
+ onGoToSite={() => { setMobileMenuOpen(false); navigate('/'); }}
+ onLogout={handleLogout}
+ onClose={() => setMobileMenuOpen(false)}
+ logoutLabel={t.auth.logout}
  />
- <div
- className="md:hidden fixed left-0 top-0 h-full w-[85vw] max-w-sm bg-surface-raised z-50 shadow-2xl overflow-y-auto overscroll-contain animate-drawer-in rounded-r-3xl"
- style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
- onClick={e => e.stopPropagation()}
- role="dialog"
- aria-modal="true"
- aria-label="Menu de navegação"
- >
- {/* Menu Header */}
- <div className="sticky top-0 z-10 px-4 h-16 flex items-center justify-between border-b border-border-default bg-surface-raised/95 backdrop-blur-xl">
- <button
- onClick={() => {
- setMobileMenuOpen(false);
- navigate('/admin');
- }}
- className="tap-target cursor-pointer hover:opacity-80 transition-opacity"
- aria-label="Ir para o painel"
- >
- <Logo width={140} height={40} className="h-10 w-auto max-w-[140px] object-contain" isDarkMode={isDarkMode} />
- </button>
- <button
- onClick={() => setMobileMenuOpen(false)}
- className="tap-target w-11 h-11 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-overlay active:scale-95 transition-all"
- aria-label="Fechar menu"
- >
- <X className="w-5 h-5" />
- </button>
- </div>
-
- {/* Pesquisa no menu */}
- <div className="px-3 pt-3">
- <div className="relative">
- <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-content-muted pointer-events-none" />
- <input
- type="search"
- value={menuQuery}
- onChange={e => setMenuQuery(e.target.value)}
- placeholder="Pesquisar no menu…"
- aria-label="Pesquisar no menu"
- enterKeyHint="search"
- className={`w-full h-11 pl-11 ${menuQuery ? 'pr-10' : 'pr-3'} rounded-xl bg-surface-base border border-border-default text-content-primary placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500`}
- />
- {menuQuery && (
- <button
- type="button"
- onClick={() => setMenuQuery('')}
- aria-label="Limpar pesquisa"
- className="tap-target absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 !min-h-0 flex items-center justify-center rounded-full text-content-muted hover:bg-surface-overlay"
- >
- <X className="w-4 h-4" />
- </button>
- )}
- </div>
- </div>
-
- {/* Resultados da pesquisa */}
- {menuSearchResults && (
- <nav className="flex-1 py-3 px-2 space-y-1" aria-label="Resultados da pesquisa">
- {menuSearchResults.length === 0 ? (
- <p className="px-4 py-6 text-center text-[15px] text-content-muted">Nenhum menu encontrado</p>
- ) : menuSearchResults.map(r => {
- const RIcon = r.icon;
- return (
- <button
- key={r.key}
- onClick={() => { r.onSelect(); setMobileMenuOpen(false); }}
- className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left text-base font-medium text-content-secondary active:bg-surface-raised hover:bg-surface-raised hover:text-content-primary touch-manipulation"
- >
- {RIcon && <RIcon className="w-5 h-5 flex-shrink-0 text-content-muted" />}
- <span className="min-w-0 truncate">
- {r.parent && <span className="text-content-muted font-normal">{r.parent} › </span>}
- {r.label}
- </span>
- </button>
- );
- })}
- </nav>
- )}
-
- {/* Navigation Menu com Submenus Accordion */}
- <nav className={`flex-1 py-3 sm:py-4 px-2 sm:px-3 space-y-1 ${menuSearchResults ? 'hidden' : ''}`}>
- {mobileMenuItems.map((item) => {
- const Icon = item.icon;
- const hasChildren = item.children && item.children.length > 0;
- const isExpanded = mobileExpandedMenus[item.id];
-
- // Verificar se algum submenu está ativo
- const isSubmenuActive = hasChildren && item.children?.some(
- child => toMenuPath(location.pathname) === child.path || toMenuPath(location.pathname).startsWith(child.path + '/')
- );
- const isActive = activePage === item.id || activePage.startsWith(item.id + '-') || isSubmenuActive;
-
- const isGroupStart = !!item.group && groupStartIds.has(item.id);
- const groupSeparator = isGroupStart && item.id !== mobileMenuItems[0]?.id ? (
- <div className="px-4 pt-4 pb-1.5">
- <span className="text-[11px] font-semibold uppercase tracking-wider text-content-muted/70">
- {GROUP_LABELS[item.group!] || item.group}
- </span>
- </div>
- ) : null;
-
- if (hasChildren) {
- return (
- <div key={item.id} className="space-y-1">
- {groupSeparator}
- {/* Menu principal com seta de expansão */}
- <button
- onClick={() => toggleMobileMenuExpansion(item.id)}
- className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-colors text-base font-medium touch-manipulation ${isActive
- ? 'bg-brand-600/10 dark:bg-brand-600/20 text-brand-700 dark:text-brand-300 '
- : 'text-content-secondary active:bg-surface-raised hover:bg-surface-raised hover:text-content-primary'
- }`}
- >
- <div className="flex items-center space-x-3">
- <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-brand-700 dark:text-brand-300 ' : 'text-content-muted'}`} />
- <span className="truncate">{item.label}</span>
- </div>
- <ChevronDown className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''} ${isActive ? 'text-brand-700 dark:text-brand-300 ' : 'text-content-muted'}`} />
- </button>
-
- {/* Submenus com animação */}
- <div className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
- <div className="pl-4 space-y-0.5 pt-1">
- {item.children?.map(child => {
- const ChildIcon = child.icon;
-
- // Encontrar o melhor match entre os irmãos (o path mais longo que coincide)
- const matchingSiblings = item.children?.filter(c =>
- toMenuPath(location.pathname) === c.path || toMenuPath(location.pathname).startsWith(c.path + '/')
- ) || [];
- const bestSiblingMatch = matchingSiblings.reduce((prev, curr) =>
- (curr.path.length > prev.path.length) ? curr : prev
- , matchingSiblings[0]);
-
- const isChildActive = child.id === bestSiblingMatch?.id;
- return (
- <button
- key={child.id}
- onClick={() => {
- navigate(child.path);
- setMobileMenuOpen(false);
- }}
- className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors text-base font-medium touch-manipulation ${isChildActive
- ? 'bg-brand-600/10 dark:bg-brand-600/20 text-brand-700 dark:text-brand-300 border-l-2 border-l-brand-600 dark:border-l-brand-400'
- : 'text-content-secondary active:bg-surface-raised hover:bg-surface-raised hover:text-content-primary'
- }`}
- >
- {ChildIcon && <ChildIcon className={`w-[18px] h-[18px] flex-shrink-0 ${isChildActive ? 'text-brand-600 dark:text-brand-400' : 'text-content-muted'}`} />}
- <span className="truncate">{child.label}</span>
- </button>
- );
- })}
- </div>
- </div>
- </div>
- );
- }
-
- // Item sem submenus
- return (
- <React.Fragment key={item.id}>
- {groupSeparator}
- <button
- onClick={() => handleNavigate(item.id)}
- className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors text-base font-medium touch-manipulation ${isActive
- ? 'bg-brand-600/10 dark:bg-brand-600/20 text-brand-700 dark:text-brand-300 '
- : 'text-content-secondary active:bg-surface-raised hover:bg-surface-raised hover:text-content-primary'
- }`}
- >
- <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-brand-700 dark:text-brand-300 ' : 'text-content-muted'}`} />
- <span className="truncate">{item.label}</span>
- </button>
- </React.Fragment>
- );
- })}
- </nav>
-
- {/* Menu Footer */}
- <div className="p-2 border-t border-border-default space-y-2">
- <div className="flex items-center space-x-2 px-2 py-1.5 rounded-lg bg-surface-base">
- <Avatar
- src={currentUser.avatar}
- alt={currentUser.name}
- name={currentUser.name}
- size="sm"
- className="bg-border-strong"
- />
- <div className="flex-1 min-w-0">
- <p className="text-xs font-medium text-content-primary truncate">{currentUser.name}</p>
- </div>
- </div>
-
- {/* Idioma PT / EN */}
- <div className="flex gap-1">
- <button
- onClick={() => setLanguage('pt')}
- className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-colors ${language === 'pt' ? 'border-brand-500 bg-brand-600/10 dark:bg-brand-600/20 text-brand-700 dark:text-brand-300 ' : 'border-border-default text-content-secondary hover:bg-surface-raised'}`}
- >
- PT
- </button>
- <button
- onClick={() => setLanguage('en')}
- className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-colors ${language === 'en' ? 'border-brand-500 bg-brand-50 dark:bg-brand-600/20 text-brand-700 dark:text-brand-400' : 'border-border-default text-content-secondary hover:bg-surface-raised'}`}
- >
- EN
- </button>
- </div>
-
- {/* Botão Voltar ao Site */}
- <button
- onClick={() => {
- setMobileMenuOpen(false);
- navigate('/');
- }}
- className="w-full flex items-center space-x-2 px-3 py-2 border border-border-default rounded-lg text-sm font-medium text-content-secondary hover:bg-brand-50 dark:hover:bg-brand-900/20 hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-100 transition-colors"
- >
- <Globe className="w-4 h-4" />
- <span>Voltar ao Site</span>
- </button>
-
- {/* Botão Sair */}
- <button
- onClick={handleLogout}
- className="w-full flex items-center space-x-2 px-3 py-2 border border-border-default rounded-lg text-sm font-medium text-content-secondary hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 hover:border-red-100 transition-colors"
- >
- <LogOut className="w-4 h-4" />
- <span>{t.auth.logout}</span>
- </button>
- </div>
- </div>
- </>
  )}
 
  {/* Mobile Bottom Navigation (zona do polegar) */}

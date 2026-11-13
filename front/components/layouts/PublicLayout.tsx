@@ -10,6 +10,7 @@ import { useCart } from '../../modules/shop/context/CartContext';
 import { ShopTabBar } from '../../modules/shop/components/ShopTabBar';
 import { RouteTransition } from '../../modules/core/mobile/RouteTransition';
 import { loadShopChatWidget } from '../../modules/shop/chatWidget';
+import { useRefreshKey } from '../../modules/core/hooks/useRefreshKey';
 
 interface PublicLayoutProps {
   currentUser: User | null;
@@ -31,6 +32,7 @@ const PublicLayoutContent: React.FC<PublicLayoutProps> = ({
   const shopContext = useShopContextSafe();
   // Carrinho único (CartContext) — o mesmo em todas as páginas públicas
   const cart = useCart();
+  const refreshKey = useRefreshKey();
 
   // Chat de atendimento: só existe na loja (o admin nunca o carrega)
   useEffect(() => { loadShopChatWidget(); }, []);
@@ -85,7 +87,10 @@ const PublicLayoutContent: React.FC<PublicLayoutProps> = ({
         {/* Só o conteúdo mostra o carregamento; o cabeçalho e o rodapé ficam no lugar */}
         <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center" role="status" aria-label="A carregar"><Loader2 className="w-7 h-7 animate-spin text-green-600" /></div>}>
           <RouteTransition>
-            <Outlet />
+            {/* key muda ao "puxar para actualizar" (app): só o conteúdo volta a carregar */}
+            <React.Fragment key={refreshKey}>
+              <Outlet />
+            </React.Fragment>
           </RouteTransition>
         </Suspense>
       </main>

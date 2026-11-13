@@ -31,7 +31,7 @@ export function buildOrderCreatedWhatsApp(order, name) {
   const unpaid = order?.payment_status !== 'paid';
 
   return [
-    `Olá *${firstName(name)}*! 🌿`,
+    `Olá *${firstName(name)}*!`,
     '',
     `Recebemos o seu pedido *#${order?.order_number}*. Obrigado pela preferência!`,
     '',
@@ -43,7 +43,7 @@ export function buildOrderCreatedWhatsApp(order, name) {
     '',
     `Acompanhe aqui: ${trackLink(order)}`,
     '',
-    '🌿 *Natur Erva*',
+    '*Natur Erva*',
   ].join('\n');
 }
 
@@ -53,26 +53,26 @@ export function buildStatusWhatsApp(order, name, status) {
   const link = trackLink(order);
   const messages = {
     confirmed:
-      `Olá *${n}*! 🎉\n\nO seu pedido *#${num}* foi confirmado.\n\nEstamos já a preparar os seus produtos. Obrigado pela confiança!\n\n🌿 *Natur Erva*`,
+      `Olá *${n}*! 🎉\n\nO seu pedido *#${num}* foi confirmado.\n\nEstamos já a preparar os seus produtos. Obrigado pela confiança!\n\n*Natur Erva*`,
     processing:
-      `Olá *${n}*! 📦\n\nO seu pedido *#${num}* está em preparação — estamos a embalar os seus produtos com todo o cuidado.\n\nEm breve sairá para entrega!\n\n🌿 *Natur Erva*`,
+      `Olá *${n}*! 📦\n\nO seu pedido *#${num}* está em preparação — estamos a embalar os seus produtos com todo o cuidado.\n\nEm breve sairá para entrega!\n\n*Natur Erva*`,
     out_for_delivery:
-      `Olá *${n}*! 🚚\n\nO seu pedido *#${num}* saiu para entrega e está a caminho.\n\nEsteja disponível para o receber.\n\nAcompanhe aqui: ${link}\n\n🌿 *Natur Erva*`,
+      `Olá *${n}*! 🚚\n\nO seu pedido *#${num}* saiu para entrega e está a caminho.\n\nEsteja disponível para o receber.\n\nAcompanhe aqui: ${link}\n\n*Natur Erva*`,
     delivered:
-      `Olá *${n}*! 🎉\n\nO seu pedido *#${num}* foi entregue!\n\nEsperamos que goste dos produtos. Confirme a receção e deixe a sua avaliação na sua conta:\n👉 ${appUrl()}/minha-conta\n\nObrigado por escolher a Natur Erva! 🌿`,
+      `Olá *${n}*! 🎉\n\nO seu pedido *#${num}* foi entregue!\n\nEsperamos que goste dos produtos. Confirme a receção e deixe a sua avaliação na sua conta:\n👉 ${appUrl()}/minha-conta\n\nObrigado por escolher a Natur Erva!`,
     completed:
-      `Olá *${n}*! ✅\n\nO seu pedido *#${num}* foi concluído.\n\nObrigado pela preferência! Conte-nos o que achou dos produtos:\n👉 ${appUrl()}/minha-conta\n\n🌿 *Natur Erva*`,
+      `Olá *${n}*! ✅\n\nO seu pedido *#${num}* foi concluído.\n\nObrigado pela preferência! Conte-nos o que achou dos produtos:\n👉 ${appUrl()}/minha-conta\n\n*Natur Erva*`,
     cancelled:
-      `Olá *${n}*. ℹ️\n\nO seu pedido *#${num}* foi cancelado.\n\nSe tiver alguma dúvida ou quiser fazer um novo pedido, estamos disponíveis para ajudar.\n\n🌿 *Natur Erva* — ${appUrl()}`,
+      `Olá *${n}*. ℹ️\n\nO seu pedido *#${num}* foi cancelado.\n\nSe tiver alguma dúvida ou quiser fazer um novo pedido, estamos disponíveis para ajudar.\n\n*Natur Erva* — ${appUrl()}`,
   };
   return messages[status]
-    || `Olá *${n}*! O seu pedido *#${num}* foi actualizado.\n\nAcompanhe aqui: ${link}\n\n🌿 *Natur Erva*`;
+    || `Olá *${n}*! O seu pedido *#${num}* foi actualizado.\n\nAcompanhe aqui: ${link}\n\n*Natur Erva*`;
 }
 
 export function buildPaymentConfirmedWhatsApp(order, name, methodLabel = 'M-Pesa') {
-  return `Olá *${firstName(name)}*! ✅\n\nRecebemos o seu pagamento ${methodLabel} de *${fmtMT(order?.total_amount)}* para o pedido *#${order?.order_number}*${order?.mpesa_transaction_id ? ` (transação ${order.mpesa_transaction_id})` : ''}.\n\nJá estamos a preparar a sua encomenda.\n\nAcompanhe aqui: ${trackLink(order)}\n\n🌿 *Natur Erva*`;
+  return `Olá *${firstName(name)}*! ✅\n\nRecebemos o seu pagamento ${methodLabel} de *${fmtMT(order?.total_amount)}* para o pedido *#${order?.order_number}*${order?.mpesa_transaction_id ? ` (transação ${order.mpesa_transaction_id})` : ''}.\n\nJá estamos a preparar a sua encomenda.\n\nAcompanhe aqui: ${trackLink(order)}\n\n*Natur Erva*`;
 }
 
 export function buildPaymentRejectedWhatsApp(order, name, reason) {
-  return `Olá *${firstName(name)}*. ⚠️\n\nNão conseguimos confirmar o pagamento do pedido *#${order?.order_number}*${reason ? `: ${reason}` : '.'}\n\nVerifique o código da transação e envie-o novamente na página do pedido:\n👉 ${appUrl()}/minha-conta/encomendas/${order?.id}\n\n🌿 *Natur Erva*`;
+  return `Olá *${firstName(name)}*. ⚠️\n\nNão conseguimos confirmar o pagamento do pedido *#${order?.order_number}*${reason ? `: ${reason}` : '.'}\n\nVerifique o código da transação e envie-o novamente na página do pedido:\n👉 ${appUrl()}/minha-conta/encomendas/${order?.id}\n\n*Natur Erva*`;
 }

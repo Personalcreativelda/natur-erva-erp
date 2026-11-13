@@ -4,6 +4,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Layout } from '../../modules/core/components/layout/Layout';
 import { User } from '../../modules/core/types/types';
 import { getActivePageFromPath, getAdminPath } from '../../modules/core/routes/adminRoutes';
+import { useRefreshKey } from '../../modules/core/hooks/useRefreshKey';
 
 const ContentLoader = () => (
   <div className="min-h-[50vh] flex items-center justify-center" role="status" aria-label="A carregar">
@@ -26,7 +27,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+  const refreshKey = useRefreshKey();
+
   const handleNavigate = (page: string) => {
     const route = getAdminPath(page);
     navigate(route);
@@ -44,7 +46,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       {/* Suspense aqui (e não à volta do layout): ao abrir uma página pela 1.ª vez só o
           conteúdo mostra o carregamento — cabeçalho, menu e barra inferior ficam no lugar */}
       <Suspense fallback={<ContentLoader />}>
-        <Outlet />
+        {/* key muda ao "puxar para actualizar" (app): só o conteúdo volta a carregar */}
+        <React.Fragment key={refreshKey}>
+          <Outlet />
+        </React.Fragment>
       </Suspense>
     </Layout>
   );

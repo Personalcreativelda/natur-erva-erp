@@ -100,6 +100,7 @@ import { ForgotPasswordModal } from './modules/core/components/modals/ForgotPass
 import { SignUpModal } from './modules/core/components/modals/SignUpModal';
 import { LoginModal } from './modules/core/components/modals/LoginModal';
 import { authService } from './modules/auth/services/authService';
+import { APP_REFRESH_EVENT } from './modules/core/mobile/pullToRefresh';
 
 // Base path para deploy na raiz
 const BASE_PATH = '/';
@@ -366,6 +367,13 @@ const App = () => {
         if (settings.theme_radius) applyBorderRadius(settings.theme_radius);
       }).catch(() => {});
     }
+  }, [currentUser, loadData]);
+
+  // "Puxar para actualizar" na app: o painel volta a pedir os dados partilhados (vendas, pedidos…)
+  useEffect(() => {
+    const onRefresh = () => { if (currentUser && !isClientUser(currentUser)) loadData(); };
+    window.addEventListener(APP_REFRESH_EVENT, onRefresh);
+    return () => window.removeEventListener(APP_REFRESH_EVENT, onRefresh);
   }, [currentUser, loadData]);
 
   // Pré-carregar (quando o browser estiver livre) o código das páginas da barra inferior,
