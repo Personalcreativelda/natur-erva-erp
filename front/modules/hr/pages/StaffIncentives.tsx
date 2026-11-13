@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
 import api, { downloadBlob } from '../../core/services/apiClient';
@@ -93,6 +94,10 @@ const fmtMT = (n: number) => `${n.toLocaleString('pt-MZ', { minimumFractionDigit
 export function StaffIncentives({ showToast }: Props) {
   const confirm = useConfirm();
   const [tab, setTab] = useState<Tab>(TAB.GOALS);
+  const nav = useSectionNav([
+    { id: TAB.GOALS, label: 'Metas', icon: Target, description: 'Metas e regras de bónus da equipa' },
+    { id: TAB.REPORT, label: 'Relatório de Bónus', icon: Award, description: 'Bónus ganhos por funcionário' },
+  ], tab, setTab);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -234,7 +239,7 @@ export function StaffIncentives({ showToast }: Props) {
 
   return (
     <PageShell title="Metas & Bónus" description="Metas de vendas e bónus para o staff interno do caixa"
-      actions={
+      actions={nav.listMode ? undefined : 
         tab === TAB.GOALS ? (
           <button onClick={openNewGoal}
             className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition-colors">
@@ -243,17 +248,8 @@ export function StaffIncentives({ showToast }: Props) {
         ) : null
       }>
       <div className="bg-surface-raised rounded-2xl border border-border-default overflow-hidden">
-        <div className="flex border-b border-border-default overflow-x-auto">
-          {[
-            { id: TAB.GOALS, label: 'Metas', icon: Target },
-            { id: TAB.REPORT, label: 'Relatório de Bónus', icon: Award },
-          ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${tab === t.id ? 'border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400' : 'border-transparent text-content-muted hover:text-content-primary'}`}>
-              <t.icon className="w-4 h-4" />{t.label}
-            </button>
-          ))}
-        </div>
+        <SectionNav nav={nav} />
+        {!nav.listMode && (<>
 
         <div className="p-4">
           {tab === TAB.GOALS ? (
@@ -367,6 +363,7 @@ export function StaffIncentives({ showToast }: Props) {
             </div>
           )}
         </div>
+        </>)}
       </div>
 
       {/* Modal: Nova/Editar Meta */}

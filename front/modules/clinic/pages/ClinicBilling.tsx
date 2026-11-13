@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import { PageShell } from '../../core/components/layout/PageShell';
 import api, { downloadBlob } from '../../core/services/apiClient';
 import { useConfirm } from '../../core/contexts/ConfirmContext';
@@ -45,6 +46,10 @@ const EMPTY_INVOICE_FORM = { patientId: '', customerName: '', customerPhone: '',
 export function ClinicBilling({ showToast }: Props) {
   const confirm = useConfirm();
   const [tab, setTab] = useState<Tab>(TAB.PRICING);
+  const nav = useSectionNav([
+    { id: TAB.PRICING, label: 'Tabela de Preços', icon: Tag, description: 'Serviços e valores da clínica' },
+    { id: TAB.BILLING, label: 'Faturação', icon: Receipt, description: 'Faturas a pacientes' },
+  ], tab, setTab);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -179,7 +184,7 @@ export function ClinicBilling({ showToast }: Props) {
 
   return (
     <PageShell title="Faturação da Clínica" description="Tabela de preços e recibos próprios da clínica, independentes da loja"
-      actions={
+      actions={nav.listMode ? undefined : 
         tab === TAB.PRICING ? (
           <button onClick={openNewService}
             className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition-colors">
@@ -193,17 +198,8 @@ export function ClinicBilling({ showToast }: Props) {
         )
       }>
       <div className="bg-surface-raised rounded-2xl border border-border-default overflow-hidden">
-        <div className="flex border-b border-border-default overflow-x-auto">
-          {[
-            { id: TAB.PRICING, label: 'Tabela de Preços', icon: Tag },
-            { id: TAB.BILLING, label: 'Faturação', icon: Receipt },
-          ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${tab === t.id ? 'border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400' : 'border-transparent text-content-muted hover:text-content-primary'}`}>
-              <t.icon className="w-4 h-4" />{t.label}
-            </button>
-          ))}
-        </div>
+        <SectionNav nav={nav} />
+        {!nav.listMode && (<>
 
         <div className="p-4">
           {loading ? (
@@ -286,6 +282,7 @@ export function ClinicBilling({ showToast }: Props) {
             </div>
           )}
         </div>
+        </>)}
       </div>
 
       {/* Modal: Novo/Editar Serviço */}

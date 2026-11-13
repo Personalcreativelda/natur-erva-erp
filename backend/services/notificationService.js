@@ -109,6 +109,20 @@ async function sendWhatsApp(evo, phone, text) {
   }
 }
 
+/** Foto com legenda (montra de produtos). Evolution API v2: /message/sendMedia. */
+async function sendWhatsAppImage(evo, phone, imageUrl, caption) {
+  const ext = String(imageUrl).split('?')[0].split('.').pop().toLowerCase();
+  const mimetype = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  try {
+    await evolutionFetch(evo, '/message/sendMedia', {
+      number: phone, mediatype: 'image', mimetype, media: imageUrl, caption, fileName: `produto.${ext || 'jpg'}`,
+    });
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 async function logAttempt({ orderId, event, channel, recipient, status, error }) {
   await pool.query(
     `INSERT INTO customer_notifications (order_id, event, channel, recipient, status, error) VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -298,6 +312,28 @@ export async function sendCustomerWhatsApp(rawPhone, text, { event = 'marketing'
   } catch (err) {
     return { ok: false, error: err.message };
   }
+}
+
+/**
+ * Montra no WhatsApp: cada produto como foto + legenda, com uma pequena pausa entre fotos.
+ * Produtos sem foto seguem como texto. Devolve quantas mensagens saíram.
+ */
+export async function sendCustomerProductCards(rawPhone, products, { event = 'marketing_products', captionFor } = {}) {
+  const cfg = await getConfig();
+  const phone = normalizePhone(rawPhone);
+  if (!cfg.evolutionReady || !phone || !products?.length) return 0;
+  let sent = 0;
+  for (const p of products.slice(0, 6)) {
+    const caption = captionFor ? captionFor(p) : p.name;
+    const r = p.image
+      ? await sendWhatsAppImage(cfg.evolution, phone, p.image, caption)
+      : await evolutionFetch(cfg.evolution, '/message/sendText', { number: phone, text: caption }).then(() => ({ ok: true }), e => ({ ok: false, error: e.message }));
+    if (r.ok) sent++;
+    else console.warn(`[notify] foto do produto falhou → ${phone}: ${r.error}`);
+    await new Promise(res => setTimeout(res, 1500 + Math.random() * 1500));
+  }
+  if (sent) await logAttempt({ event, channel: 'whatsapp', recipient: phone, status: 'sent', error: null });
+  return sent;
 }
 
 export async function isWhatsAppReady() {

@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import { Users, TrendingUp, Download, Check, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
@@ -141,32 +142,16 @@ export const Affiliates: React.FC<{
 
  const pendingCommissions = commissions.filter(c => c.status === 'pending').length;
  const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending').length;
+ const nav = useSectionNav([
+ { id: 'affiliates', label: 'Afiliados', description: 'Parceiros e códigos de indicação', badge: affiliates.length || undefined },
+ { id: 'commissions', label: 'Comissões', description: 'Comissões por aprovar e pagas', badge: pendingCommissions || undefined },
+ { id: 'withdrawals', label: 'Levantamentos', description: 'Pedidos de pagamento aos afiliados', badge: pendingWithdrawals || undefined },
+ ], tab, setTab);
 
  return (
  <PageShell title="Programa de Afiliados" icon={<TrendingUp className="w-5 h-5" />}>
- {/* Tabs */}
- <div className="flex gap-1 bg-surface-base p-1 rounded-xl mb-6">
- {([
- ['affiliates', 'Afiliados', affiliates.length],
- ['commissions', 'Comissões', pendingCommissions || undefined],
- ['withdrawals', 'Levantamentos', pendingWithdrawals || undefined],
- ] as const).map(([key, label, badge]) => (
- <button
- key={key}
- onClick={() => setTab(key)}
- className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
- tab === key ? 'bg-surface-raised text-content-primary shadow-sm' : 'text-content-secondary hover:text-content-primary '
- }`}
- >
- {label}
- {badge ? (
- <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
- {badge}
- </span>
- ) : null}
- </button>
- ))}
- </div>
+ <div className="mb-5"><SectionNav nav={nav} card={nav.isMobile} /></div>
+ {!nav.listMode && (<>
 
  {loading ? (
  <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-content-muted" /></div>
@@ -368,6 +353,7 @@ export const Affiliates: React.FC<{
  )}
  </>
  )}
+ </>)}
  </PageShell>
  );
 };

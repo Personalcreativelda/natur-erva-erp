@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
 import api from '../../core/services/apiClient';
@@ -28,6 +29,10 @@ const fmt = (n: number) => `MT ${Number(n||0).toFixed(2)}`;
 export function Subscriptions({ showToast }: Props) {
   const confirm = useConfirm();
   const [tab, setTab] = useState<typeof TAB[keyof typeof TAB]>(TAB.SUBS);
+  const nav = useSectionNav([
+    { id: TAB.SUBS, label: 'Assinaturas', description: 'Clientes com assinatura activa' },
+    { id: TAB.PLANS, label: 'Planos', description: 'Planos e preços disponíveis' },
+  ], tab, setTab);
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -116,14 +121,14 @@ export function Subscriptions({ showToast }: Props) {
 
   return (
     <PageShell title="Assinaturas" description="Gestão de planos e assinaturas recorrentes"
-      actions={
+      actions={nav.listMode ? undefined : 
         <button onClick={() => { setEditing(null); setPlanForm({ name:'', description:'', price:'', billing_cycle:'monthly', features:'', status:'active' }); setSubForm({ customer_id:'', plan_id:'', amount:'', start_date: new Date().toISOString().slice(0,10), auto_renew:true, notes:'' }); setModal(tab === TAB.PLANS ? 'plan' : 'sub'); }}
           className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium">
           <Plus className="w-4 h-4" /> {tab === TAB.PLANS ? 'Novo Plano' : 'Nova Assinatura'}
         </button>
       }>
 
-      {stats && (
+      {stats && !nav.sectionMode && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: 'Total', value: stats.total, color: 'text-content-primary' },
@@ -140,14 +145,8 @@ export function Subscriptions({ showToast }: Props) {
       )}
 
       <div className="bg-surface-raised rounded-2xl border border-border-default overflow-hidden">
-        <div className="flex border-b border-border-default">
-          {[{ id: TAB.SUBS, label: 'Assinaturas' }, { id: TAB.PLANS, label: 'Planos' }].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`px-5 py-3.5 text-sm font-medium border-b-2 transition-colors ${tab === t.id ? 'border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400' : 'border-transparent text-content-muted hover:text-content-primary'}`}>
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <SectionNav nav={nav} />
+        {!nav.listMode && (<>
         <div className="p-4">
           {loading ? (
             <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-content-muted" /></div>
@@ -211,6 +210,7 @@ export function Subscriptions({ showToast }: Props) {
             </table></div>
           )}
         </div>
+        </>)}
       </div>
 
       {/* Modal Nova Assinatura */}

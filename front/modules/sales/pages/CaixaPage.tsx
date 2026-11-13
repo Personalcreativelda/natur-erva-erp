@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import {
  Store, Printer, Clock, Banknote, Smartphone,
  CreditCard, CheckCircle, RefreshCw, Download, Wallet, TrendingUp, ShoppingCart,
@@ -93,6 +94,10 @@ function printCloseReport(
 export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  const confirm = useConfirm();
  const [tab, setTab] = useState<'atual' | 'anteriores'>('atual');
+ const nav = useSectionNav([
+ { id: 'atual', label: 'Caixa Atual', description: 'Sessão aberta, vendas e fecho' },
+ { id: 'anteriores', label: 'Caixas Anteriores', description: 'Histórico e relatórios de fecho' },
+ ], tab, setTab);
  const [session, setSession] = useState<PosSession | null | 'loading'>('loading');
  const [sessions, setSessions] = useState<SessionHistory[]>([]);
  const [loadingSessions, setLoadingSessions] = useState(false);
@@ -268,27 +273,11 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  <PageShell
  title="Caixa"
  description="Gerencie a sua sessão de caixa"
- actions={statusBadge}
+ actions={nav.listMode ? undefined : statusBadge}
  compactHeaderMobile
  >
- {/* Tabs — margens negativas para ir de borda a borda dentro do <main> */}
- <div className="border-b border-border-default -mx-3 sm:-mx-4 md:-mx-8 px-3 sm:px-4 md:px-8">
- <div className="flex">
- {([
- { id: 'atual', label: 'Caixa Atual' },
- { id: 'anteriores', label: 'Caixas Anteriores' },
- ] as const).map(t => (
- <button key={t.id} onClick={() => setTab(t.id)}
- className={`shrink-0 whitespace-nowrap px-4 py-3.5 text-sm font-medium border-b-2 transition-colors ${
- tab === t.id
- ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400'
- : 'border-transparent text-content-muted hover:text-content-primary'
- }`}>
- {t.label}
- </button>
- ))}
- </div>
- </div>
+ <div className="mb-5"><SectionNav nav={nav} card={nav.isMobile} /></div>
+ {!nav.listMode && (<>
 
  {/* ── Tab: Caixa Atual — sem sessão ──────────────────────────────────── */}
  {tab === 'atual' && !sess && (
@@ -532,6 +521,7 @@ export const CaixaPage: React.FC<CaixaPageProps> = ({ showToast }) => {
  </div>
  )}
 
+ </>)}
  </PageShell>
  );
 };

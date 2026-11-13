@@ -13,8 +13,17 @@
 import cron from 'node-cron';
 import { randomBytes } from 'crypto';
 import pool from '../db.js';
-import { notifyCustomer, resolveOrderContact, ensureNotificationSchema } from './notificationService.js';
+import { notifyCustomer, resolveOrderContact, ensureNotificationSchema, sendCustomerProductCards } from './notificationService.js';
 import { sendMarketingEmail } from './emailService.js';
+import { getShowcaseProducts, buildProductGridHtml, productCaption } from './productShowcase.js';
+
+/** Canais de cada automação: 'both' (WhatsApp e email — omissão), 'whatsapp_first' (email só se falhar), 'email_only'. */
+export const CHANNEL_OPTIONS = ['both', 'whatsapp_first', 'email_only'];
+const channelsFor = (mode) => (
+  mode === 'email_only' ? { whatsapp: false, email: true }
+  : mode === 'whatsapp_first' ? { whatsapp: true, email: true, emailOnlyIfWhatsAppFails: true }
+  : { whatsapp: true, email: true }
+);
 
 const APP_URL = () => (process.env.APP_URL || process.env.FRONTEND_URL || 'https://www.natur-erva.co.mz').replace(/\/$/, '');
 const MAX_PER_RUN = 40;
@@ -193,12 +202,24 @@ export function renderTemplate(template, vars) {
     .trim();
 }
 
-const textToHtml = (text) => String(text)
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  .replace(/\*([^*\n]+)\*/g, '<strong>$1</strong>')
-  .replace(/_([^_\n]+)_/g, '<em>$1</em>')
-  .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1">$1</a>')
-  .split('\n').map(l => (l ? `<p style="margin:0 0 8px">${l}</p>` : '')).join('');
+/** Texto do WhatsApp → HTML de email. Uma linha só com o link (ex.: "👉 https://…") vira um botão. */
+const BUTTON_LINE = /^\s*(?:👉|🛒|🔗)?\s*(?:[^\s]+:\s*)?(https?:\/\/\S+)\s*$/u;
+const textToHtml = (text, buttonLabel = 'Ver na loja') => String(text)
+  .split('\n')
+  .map(raw => {
+    const btn = raw.match(BUTTON_LINE);
+    if (btn) {
+      return `<p style="margin:16px 0"><a href="${btn[1].replace(/"/g, '&quot;')}" style="display:inline-block;padding:12px 28px;background:#16a34a;color:#fff;border-radius:10px;text-decoration:none;font-weight:600">${buttonLabel}</a></p>`;
+    }
+    const l = raw
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/~([^~\n]+)~/g, '<s>$1</s>')
+      .replace(/\*([^*\n]+)\*/g, '<strong>$1</strong>')
+      .replace(/(^|\s)_([^_\n]+)_/g, '$1<em>$2</em>')
+      .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1">$1</a>');
+    return l ? `<p style="margin:0 0 8px">${l}</p>` : '';
+  })
+  .join('');
 
 let storeNameCache = null;
 async function storeName() {
@@ -228,7 +249,7 @@ async function loadRules() {
       ...def,
       enabled: !!row.enabled,
       enabledAt: row.enabled_at || null,
-      config: { ...def.defaultConfig, ...(row.config || {}) },
+      config: { channels: 'both', ...(def.key === 'new_products' ? { sendImages: true } : {}), ...def.defaultConfig, ...(row.config || {}) },
       templates: def.templates.map((t, i) => (typeof templates[i] === 'string' && templates[i].trim() ? templates[i] : t)),
     };
   });
@@ -488,6 +509,7 @@ async function candidatesNewProducts(rule) {
   return customers.map(c => ({
     targetKey: `bc${broadcast.id}:${c.pk}`, step: 0, orderId: c.last_order_id, templateIndex: 0, phoneKey: c.pk,
     vars: { produtos: broadcast.text, link: `${APP_URL()}/` },
+    productIds: broadcast.product_ids || [],
   }));
 }
 
@@ -557,18 +579,32 @@ export async function runFollowups({ force = false } = {}) {
           summary.failed++; continue;
         }
         const vars = { nome: firstName(contact.name), loja, ...cand.vars, ...extra };
-        let text = renderTemplate(rule.templates[cand.templateIndex] || rule.templates[0], vars);
-        if (rule.marketing) text += OPT_OUT_FOOTER;
+        const template = rule.templates[cand.templateIndex] || rule.templates[0];
         const subject = renderTemplate(rule.subject, vars);
 
+        // Montra de produtos (novidades/promoções): fotos no WhatsApp e grelha com imagens no email
+        const products = cand.productIds?.length ? await getShowcaseProducts(cand.productIds) : [];
+        const withImages = products.length > 0 && rule.config.sendImages !== false;
+        let text = renderTemplate(template, withImages ? { ...vars, produtos: '' } : vars);
+        if (rule.marketing) text += OPT_OUT_FOOTER;
+        const emailText = renderTemplate(template, products.length ? { ...vars, produtos: '' } : vars);
+        const emailBody = textToHtml(emailText) + (products.length ? buildProductGridHtml(products) : '');
+
+        const ch = channelsFor(rule.config.channels);
         const result = await notifyCustomer({
           contact,
           orderId: contact.order?.id,
           event: `followup_${rule.key}`,
           whatsapp: text,
           marketing: rule.marketing,
-          sendEmail: contact.email ? () => sendMarketingEmail({ to: contact.email, subject, body: textToHtml(text) }) : null,
+          channels: ch.emailOnlyIfWhatsAppFails ? { whatsapp: true } : ch,
+          sendEmail: contact.email
+            ? () => sendMarketingEmail({ to: contact.email, subject, body: emailBody, unsubscribeToken: rule.marketing ? randomBytes(16).toString('hex') : undefined })
+            : null,
         });
+        if (result.whatsapp === 'sent' && withImages) {
+          await sendCustomerProductCards(contact.phone, products, { event: `followup_${rule.key}_products`, captionFor: productCaption });
+        }
         const ok = result.whatsapp === 'sent' || String(result.email).startsWith('sent');
         const optedOut = result.whatsapp === 'opted_out';
         await pool.query(`UPDATE followup_log SET result = $4 WHERE rule_key = $1 AND target_key = $2 AND step = $3`,
@@ -628,6 +664,8 @@ export async function updateRule(key, { enabled, config, templates }) {
   // Ao ligar, só conta o que acontecer a partir de agora
   const enabledAt = nextEnabled && !current.enabled ? new Date() : current.enabled_at || null;
   const nextConfig = config && typeof config === 'object' ? { ...def.defaultConfig, ...(current.config || {}), ...config } : current.config || def.defaultConfig;
+  if (nextConfig.channels !== undefined && !CHANNEL_OPTIONS.includes(nextConfig.channels)) nextConfig.channels = 'both';
+  if (nextConfig.sendImages !== undefined) nextConfig.sendImages = nextConfig.sendImages !== false;
   const nextTemplates = Array.isArray(templates)
     ? def.templates.map((t, i) => (typeof templates[i] === 'string' && templates[i].trim() ? String(templates[i]).slice(0, 1500) : t))
     : current.templates || null;

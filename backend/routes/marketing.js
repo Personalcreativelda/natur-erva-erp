@@ -1,8 +1,9 @@
 import express from 'express';
 import pool from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { sendMarketingEmail } from '../services/emailService.js';
-import { normalizePhone, listOptedOutPhones, sendCustomerWhatsApp, isWhatsAppReady } from '../services/notificationService.js';
+import { sendMarketingEmail, buildMarketingEmailHtml } from '../services/emailService.js';
+import { normalizePhone, listOptedOutPhones, sendCustomerWhatsApp, sendCustomerProductCards, isWhatsAppReady } from '../services/notificationService.js';
+import { listShowcaseProducts, getShowcaseProducts, buildProductGridHtml, productCaption } from '../services/productShowcase.js';
 import { OPT_OUT_FOOTER } from '../services/followupService.js';
 import { randomBytes } from 'crypto';
 
@@ -76,12 +77,42 @@ router.get('/whatsapp-status', authMiddleware, async (_req, res) => {
   res.json({ ready: await isWhatsAppReady() });
 });
 
+// GET /api/marketing/products — produtos para a montra (promoções primeiro)
+router.get('/products', authMiddleware, async (_req, res) => {
+  try {
+    res.json(await listShowcaseProducts());
+  } catch (err) {
+    console.error('[GET /marketing/products]', err);
+    res.status(500).json({ error: 'Erro ao buscar produtos' });
+  }
+});
+
+/** Corpo do email com a montra de produtos no fim. */
+async function emailBodyWithProducts(body, productIds, productsTitle) {
+  const products = await getShowcaseProducts(productIds);
+  return `${body || ''}${buildProductGridHtml(products, { title: productsTitle })}`;
+}
+
+// POST /api/marketing/email-preview — HTML final do email (para a pré-visualização no painel)
+router.post('/email-preview', authMiddleware, async (req, res) => {
+  try {
+    const { body, productIds, productsTitle } = req.body || {};
+    const html = await buildMarketingEmailHtml({ body: personalize(await emailBodyWithProducts(body, productIds, productsTitle), 'Ana') });
+    res.json({ html });
+  } catch (err) {
+    console.error('[POST /marketing/email-preview]', err);
+    res.status(500).json({ error: 'Erro na pré-visualização' });
+  }
+});
+
 // POST /api/marketing/send-email — enviar campanha por email
 router.post('/send-email', authMiddleware, async (req, res) => {
   try {
-    const { subject, body, recipientIds, sendToAll, attachments } = req.body;
-    if (!subject?.trim() || !body?.trim())
-      return res.status(400).json({ error: 'Assunto e corpo são obrigatórios' });
+    const { subject, recipientIds, sendToAll, attachments, productIds, productsTitle } = req.body;
+    const hasProducts = Array.isArray(productIds) && productIds.length > 0;
+    if (!subject?.trim() || (!req.body.body?.trim() && !hasProducts))
+      return res.status(400).json({ error: 'Assunto e mensagem (ou produtos) são obrigatórios' });
+    const body = hasProducts ? await emailBodyWithProducts(req.body.body, productIds, productsTitle) : req.body.body;
 
     const all = await loadCustomers();
     const ids = new Set(Array.isArray(recipientIds) ? recipientIds.map(String) : []);
@@ -122,11 +153,15 @@ router.post('/send-email', authMiddleware, async (req, res) => {
 });
 
 /** Envio em segundo plano, com ritmo humano (o WhatsApp bloqueia números que enviam em rajada). */
-async function runWhatsAppCampaign(campaignId, recipients, message) {
+async function runWhatsAppCampaign(campaignId, recipients, message, products = []) {
   let sent = 0, failed = 0;
   for (const r of recipients) {
     const text = personalize(message, r.name) + OPT_OUT_FOOTER;
     const result = await sendCustomerWhatsApp(r.whatsapp, text, { event: 'campaign' });
+    // Montra: cada produto como foto com legenda, logo a seguir à mensagem
+    if (result.ok && products.length) {
+      await sendCustomerProductCards(r.whatsapp, products, { event: 'campaign_products', captionFor: productCaption });
+    }
     if (result.ok) sent++; else failed++;
     await pool.query('UPDATE marketing_campaigns SET sent_count = $2, failed_count = $3 WHERE id = $1', [campaignId, sent, failed]).catch(() => {});
     if (result.ok) await new Promise(resolve => setTimeout(resolve, 4000 + Math.random() * 5000));
@@ -138,7 +173,8 @@ async function runWhatsAppCampaign(campaignId, recipients, message) {
 // POST /api/marketing/whatsapp-send — campanha por WhatsApp (Evolution API); links wa.me se não estiver configurada
 router.post('/whatsapp-send', authMiddleware, async (req, res) => {
   try {
-    const { message, recipientIds, sendToAll } = req.body;
+    const { message, recipientIds, sendToAll, productIds } = req.body;
+    const products = (await getShowcaseProducts(productIds)).slice(0, 4);
     if (!message?.trim()) return res.status(400).json({ error: 'Mensagem obrigatória' });
     if (message.length > 3000) return res.status(400).json({ error: 'Mensagem demasiado longa (máx. 3000 caracteres)' });
 
@@ -165,18 +201,19 @@ router.post('/whatsapp-send', authMiddleware, async (req, res) => {
         [message.trim().split('\n')[0].slice(0, 80), message, recipients.length, skipped, req.user.id]
       );
       const campaignId = rows[0].id;
-      runWhatsAppCampaign(campaignId, recipients, message).catch(err => {
+      runWhatsAppCampaign(campaignId, recipients, message, products).catch(err => {
         console.error('[marketing] campanha WhatsApp', err);
         pool.query(`UPDATE marketing_campaigns SET status = 'failed', finished_at = NOW() WHERE id = $1`, [campaignId]).catch(() => {});
       });
-      // ~6,5 s por mensagem em média
-      return res.json({ mode: 'evolution', campaignId, total: recipients.length, skipped, estimatedSeconds: Math.round(recipients.length * 6.5) });
+      // ~6,5 s por mensagem em média, mais ~2,3 s por foto de produto
+      return res.json({ mode: 'evolution', campaignId, total: recipients.length, skipped, estimatedSeconds: Math.round(recipients.length * (6.5 + products.length * 2.3)) });
     }
 
     // Sem Evolution: links wa.me para enviar um a um
+    const productLines = products.length ? `\n\n${products.map(p => productCaption(p)).join('\n\n')}` : '';
     const links = recipients.map(r => ({
       name: r.name, phone: r.whatsapp,
-      link: `https://wa.me/${r.whatsapp}?text=${encodeURIComponent(personalize(message, r.name))}`,
+      link: `https://wa.me/${r.whatsapp}?text=${encodeURIComponent(personalize(message, r.name) + productLines)}`,
     }));
     await pool.query(
       `INSERT INTO marketing_campaigns (title, body, channel, status, recipient_count, created_by)

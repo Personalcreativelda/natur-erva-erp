@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import {
   FileText, Plus, Search, CheckCircle, XCircle, Clock,
   AlertTriangle, RefreshCw, X, Loader2, DollarSign,
@@ -370,6 +371,10 @@ function BillDetail({ bill, onClose, onAction, showToast }: {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export const APPage: React.FC<APPageProps> = ({ showToast }) => {
   const [tab, setTab]         = useState<Tab>(TAB.BILLS);
+  const nav = useSectionNav([
+    { id: TAB.BILLS, label: 'Facturas', description: 'Facturas de fornecedores por pagar' },
+    { id: TAB.AGING, label: 'Aging AP', description: 'Antiguidade das dívidas' },
+  ], tab, setTab);
   const [data, setData]       = useState<APResponse | null>(null);
   const [aging, setAging]     = useState<AgingResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -423,7 +428,7 @@ export const APPage: React.FC<APPageProps> = ({ showToast }) => {
 
   return (
     <PageShell title="Contas a Pagar" description="Gestão de facturas de fornecedores"
-      actions={
+      actions={nav.listMode ? undefined : 
         <div className="flex items-center gap-2">
           <button onClick={load} className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base" title="Actualizar">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -434,27 +439,18 @@ export const APPage: React.FC<APPageProps> = ({ showToast }) => {
         </div>
       } compactHeaderMobile>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      {/* KPIs — só na visão geral */}
+      {!nav.sectionMode && <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {kpis.map(k => (
           <div key={k.label} className="bg-surface-raised border border-border-default rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">{k.icon}<span className="text-xs text-content-muted font-medium">{k.label}</span></div>
             <p className={`text-xl font-bold tabular-nums ${k.color}`}>{k.value}</p>
           </div>
         ))}
-      </div>
+      </div>}
 
-      {/* Tabs */}
-      <div className="border-b border-border-default -mx-3 sm:-mx-4 md:-mx-8 px-3 sm:px-4 md:px-8 mb-5">
-        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-          {[{ id: TAB.BILLS, label: 'Facturas' }, { id: TAB.AGING, label: 'Aging AP' }].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`shrink-0 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t.id ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400' : 'border-transparent text-content-muted hover:text-content-primary'}`}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="mb-5"><SectionNav nav={nav} card={nav.isMobile} /></div>
+      {!nav.listMode && (<>
 
       {/* BILLS TAB */}
       {tab === TAB.BILLS && (
@@ -582,6 +578,7 @@ export const APPage: React.FC<APPageProps> = ({ showToast }) => {
 
       {showCreate && <CreateBillModal onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); load(); }} showToast={showToast} />}
       {selected && <BillDetail bill={selected} onClose={() => setSelected(null)} onAction={() => { load(); setSelected(null); }} showToast={showToast} />}
+      </>)}
     </PageShell>
   );
 };

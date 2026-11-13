@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import { User } from '../../core/types/types';
 import { authService } from '../../auth/services/authService';
 import { uploadAvatar } from '../../media/services/imageService';
@@ -34,6 +35,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   isDarkMode = true
 }) => {
   const [tab, setTab] = useState<TabId>(TAB.PROFILE);
+  const nav = useSectionNav([
+    { id: TAB.PROFILE, label: 'Meu Perfil', icon: UserCircle, description: 'Nome, telefone e fotografia' },
+    { id: TAB.APPEARANCE, label: 'Aparência', icon: Palette, description: 'Tema, cores e letra' },
+  ], tab, setTab);
 
   const [name, setName] = useState(currentUser.name || '');
   const [phone, setPhone] = useState(currentUser.phone || '');
@@ -166,30 +171,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       <PageShell
         title="Meu Perfil"
         description="Gerencie suas informações pessoais e aparência da interface"
-        actions={headerActions}
+        actions={nav.listMode ? undefined : headerActions}
         compactHeaderMobile
       >
-        {/* Tabs */}
-        <div className="border-b border-border-default -mx-3 sm:-mx-4 md:-mx-8 px-3 sm:px-4 md:px-8">
-          <div className="flex overflow-x-auto">
-            {[
-              { id: TAB.PROFILE,    label: 'Meu Perfil',  icon: UserCircle },
-              { id: TAB.APPEARANCE, label: 'Aparência',   icon: Palette },
-            ].map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`flex items-center gap-2 px-4 sm:px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  tab === t.id
-                    ? 'border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400'
-                    : 'border-transparent text-content-muted hover:text-content-primary'
-                }`}
-              >
-                <t.icon className="w-4 h-4" />{t.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <div className="mb-5"><SectionNav nav={nav} card={nav.isMobile} /></div>
+        {!nav.listMode && (<>
 
         {/* ── Meu Perfil ── */}
         {tab === TAB.PROFILE && (
@@ -411,6 +397,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           </div>
         )}
 
+        </>)}
       </PageShell>
     </div>
   );

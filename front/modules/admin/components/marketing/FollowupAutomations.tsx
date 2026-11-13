@@ -33,6 +33,13 @@ const PLACEHOLDERS: Record<string, string[]> = {
   coupon_expiring: ['nome', 'cupao', 'desconto', 'validade', 'link', 'loja'],
 };
 
+const CHANNEL_OPTIONS = [
+  { id: 'both', label: 'WhatsApp e email', hint: 'O cliente recebe nos dois' },
+  { id: 'whatsapp_first', label: 'WhatsApp', hint: 'Email só se o WhatsApp falhar' },
+  { id: 'email_only', label: 'Só email', hint: 'Sem WhatsApp' },
+];
+const CHANNEL_LABEL: Record<string, string> = { both: 'WhatsApp + email', whatsapp_first: 'WhatsApp', email_only: 'Email' };
+
 const STEP_LABELS: Record<string, string[]> = {
   payment_reminder: ['1.º lembrete', '2.º lembrete', 'Último lembrete'],
 };
@@ -170,6 +177,9 @@ const RuleCard: React.FC<{ rule: Rule; onSaved: (r: Rule) => void; showToast: To
             <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${rule.marketing ? 'bg-pink-50 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' : 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300'}`}>
               {rule.marketing ? 'Promocional · respeita SAIR' : 'Aviso do pedido'}
             </span>
+            <span className="rounded-full bg-surface-overlay px-2 py-0.5 text-[11px] font-medium text-content-secondary">
+              {CHANNEL_LABEL[rule.config.channels || 'both']}
+            </span>
           </div>
           <p className="mt-1 text-sm text-content-muted">{rule.description}</p>
           <p className="mt-1.5 text-xs text-content-muted">
@@ -193,6 +203,28 @@ const RuleCard: React.FC<{ rule: Rule; onSaved: (r: Rule) => void; showToast: To
 
       {open && (
         <div className="space-y-4 border-t border-border-default p-4">
+          <fieldset>
+            <legend className="text-sm font-medium text-content-primary">Enviar por</legend>
+            <div className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+              {CHANNEL_OPTIONS.map(o => (
+                <label key={o.id}
+                  className={`flex cursor-pointer items-start gap-2 rounded-lg border p-2.5 text-sm ${(config.channels || 'both') === o.id ? 'border-brand-600 bg-brand-600/5' : 'border-border-default hover:bg-surface-overlay/50'}`}>
+                  <input type="radio" name={`ch-${rule.key}`} checked={(config.channels || 'both') === o.id}
+                    onChange={() => setConfig(c => ({ ...c, channels: o.id }))} className="mt-0.5 accent-brand-600" />
+                  <span>
+                    <span className="block font-medium text-content-primary">{o.label}</span>
+                    <span className="block text-xs text-content-muted">{o.hint}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          {rule.key === 'new_products' && (
+            <label className="flex items-start gap-2 text-sm text-content-secondary">
+              <input type="checkbox" checked={config.sendImages !== false} onChange={e => setConfig(c => ({ ...c, sendImages: e.target.checked }))} className="mt-0.5 h-4 w-4 accent-brand-600" />
+              <span>Montra com fotos: no WhatsApp cada produto segue como foto com preço e link; no email, cartões com foto e botão Comprar.</span>
+            </label>
+          )}
           <ConfigFields rule={rule} config={config} set={patch => setConfig(c => ({ ...c, ...patch }))} />
 
           {templates.map((tpl, i) => (
@@ -281,7 +313,11 @@ export const FollowupAutomations: React.FC<{ showToast: Toast }> = ({ showToast 
       <div className="flex flex-col gap-3 rounded-xl border border-border-default bg-surface-raised p-4 sm:flex-row sm:items-center">
         <Zap className="hidden h-8 w-8 shrink-0 text-brand-600 sm:block" aria-hidden="true" />
         <div className="min-w-0 flex-1 text-sm text-content-secondary">
-          <p className="font-semibold text-content-primary">Follow-up automático por WhatsApp (com email de reserva)</p>
+          <p className="font-semibold text-content-primary">Follow-up automático por WhatsApp e email</p>
+          <p className="mt-0.5 text-xs">
+            Não precisa de escolher números: cada automação encontra sozinha os clientes certos a partir dos pedidos
+            (ex.: quem não pagou, quem recebeu há X dias, quem passou um valor de compras). Basta ligá-la.
+          </p>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-content-muted">
             <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Verifica de 10 em 10 min · envia das 08:00 às 20:00</span>
             <span className="inline-flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Pausa entre mensagens · nunca repete · só conta a partir de quando liga</span>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import {
   BookOpen, TrendingUp, TrendingDown, Scale, List,
   RefreshCw, Plus, X, Loader2, ChevronDown, ChevronUp,
@@ -226,6 +227,12 @@ function ManualEntryModal({ accounts, onClose, onCreated, showToast }: { account
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
   const [tab, setTab]               = useState<Tab>(TAB.PNL);
+  const nav = useSectionNav([
+    { id: TAB.PNL, label: 'Demonstração de Resultados', description: 'Proveitos, custos e resultado' },
+    { id: TAB.BALANCE, label: 'Balanço', description: 'Activo, passivo e capital' },
+    { id: TAB.ACCOUNTS, label: 'Plano de Contas', description: 'Contas e saldos' },
+    { id: TAB.ENTRIES, label: 'Lançamentos', description: 'Diário de movimentos' },
+  ], tab, setTab);
   const [loading, setLoading]       = useState(false);
   const [pnl, setPnl]               = useState<PnL | null>(null);
   const [balance, setBalance]       = useState<BalanceSheet | null>(null);
@@ -283,7 +290,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
 
   return (
     <PageShell title="Razão Geral" description="Demonstrações financeiras e plano de contas"
-      actions={
+      actions={nav.listMode ? undefined : 
         <div className="flex items-center gap-2">
           <button onClick={load} className="tap-target p-2 rounded-lg text-content-muted hover:bg-surface-base" title="Actualizar">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -291,17 +298,8 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
         </div>
       } compactHeaderMobile>
 
-      {/* Tabs */}
-      <div className="border-b border-border-default -mx-3 sm:-mx-4 md:-mx-8 px-3 sm:px-4 md:px-8 mb-5">
-        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-          {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 sm:px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t.id ? 'border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400' : 'border-transparent text-content-muted hover:text-content-primary'}`}>
-              {t.icon}{t.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="mb-5"><SectionNav nav={nav} card={nav.isMobile} /></div>
+      {!nav.listMode && (<>
 
       {/* Period selector */}
       {tab !== TAB.BALANCE && (
@@ -557,6 +555,7 @@ export const LedgerPage: React.FC<LedgerPageProps> = ({ showToast }) => {
 
       {showAddAccount && <AddAccountModal onClose={() => setShowAddAccount(false)} onCreated={() => { setShowAddAccount(false); load(); }} showToast={showToast} />}
       {showManualEntry && <ManualEntryModal accounts={accounts.length ? accounts : []} onClose={() => setShowManualEntry(false)} onCreated={() => { setShowManualEntry(false); load(); }} showToast={showToast} />}
+      </>)}
     </PageShell>
   );
 };

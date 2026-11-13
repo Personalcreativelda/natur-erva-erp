@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import { Save, Loader2, FileText, TrendingUp, Receipt, Printer, Store, CheckCircle, XCircle, Clock, Upload, Image, Download, FileSpreadsheet } from 'lucide-react';
 import { PageShell } from '../../core/components/layout/PageShell';
 import { useConfirm } from '../../core/contexts/ConfirmContext';
@@ -41,6 +42,13 @@ const thisMonth = () => {
 export const Financas: React.FC<FinancasProps> = ({ showToast }) => {
  const confirm = useConfirm();
  const [tab, setTab] = useState<'config' | 'report' | 'sessions' | 'export' | 'ar'>(TAB.CONFIG);
+ const nav = useSectionNav([
+ { id: TAB.CONFIG, label: 'Config. Fiscal', icon: FileText, description: 'Empresa, NUIT, IVA e pagamentos' },
+ { id: TAB.REPORT, label: 'Relatório IVA', icon: TrendingUp, description: 'IVA liquidado e dedutível' },
+ { id: TAB.SESSIONS, label: 'Sessões Caixa', icon: Store, description: 'Aberturas e fechos de caixa' },
+ { id: TAB.EXPORT, label: 'Exportação', icon: Download, description: 'SAF-T e ficheiros para o contabilista' },
+ { id: TAB.AR, label: 'Contas a Receber', icon: TrendingUp, description: 'Valores em dívida de clientes' },
+ ], tab, setTab);
 
  type Session = { id: string; cashierName: string; openedAt: string; closedAt?: string; initialAmount: number; isOpen: boolean; totalSales: number; totalOrders: number; summary?: any };
  const [sessions, setSessions] = useState<Session[]>([]);
@@ -197,29 +205,13 @@ ${s.summary?.expectedCash !== undefined ? `<p class="bold">Fundo esperado em cai
  const inputCls = 'w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-content-primary focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm';
  const labelCls = 'block text-sm font-medium text-content-secondary mb-1';
 
+ // Sessões de caixa carregam ao abrir a secção (clique, Voltar ou link directo)
+ React.useEffect(() => { if (tab === TAB.SESSIONS) loadSessions(); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
+
  return (
  <PageShell title="Finanças / IVA" description="Configuração fiscal e relatório de IVA" compactHeaderMobile>
- {/* Tabs */}
- <div className="border-b border-border-default -mx-3 sm:-mx-4 md:-mx-8 px-3 sm:px-4 md:px-8">
- <div className="flex overflow-x-auto scrollbar-hide">
- {[
- { id: TAB.CONFIG, label: 'Config. Fiscal', icon: FileText },
- { id: TAB.REPORT, label: 'Relatório IVA', icon: TrendingUp },
- { id: TAB.SESSIONS, label: 'Sessões Caixa', icon: Store },
-         { id: TAB.EXPORT, label: 'Exportação', icon: Download },
-         { id: TAB.AR, label: 'Contas a Receber', icon: TrendingUp },
- ].map(t => (
- <button key={t.id} onClick={() => { setTab(t.id as any); if (t.id === TAB.SESSIONS) loadSessions(); }}
- className={`flex items-center gap-2 px-4 sm:px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
- tab === t.id
- ? 'border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400'
- : 'border-transparent text-content-muted hover:text-content-primary'
- }`}>
- <t.icon className="w-4 h-4" />{t.label}
- </button>
- ))}
- </div>
- </div>
+ <div className="mb-5"><SectionNav nav={nav} card={nav.isMobile} /></div>
+ {!nav.listMode && (<>
 
  {/* ── Configuração Fiscal ── */}
  {tab === TAB.CONFIG && (
@@ -534,6 +526,7 @@ ${s.summary?.expectedCash !== undefined ? `<p class="bold">Fundo esperado em cai
  {/* ── Contas a Receber ── */}
  {tab === TAB.AR && <ARTab showToast={showToast} />}
 
+ </>)}
  </PageShell>
  );
 };

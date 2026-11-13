@@ -235,13 +235,19 @@ export async function sendPasswordResetEmail({ to, name, resetToken }) {
   await send(to, `Recuperação de senha — ${APP_NAME}`, html);
 }
 
-export async function sendMarketingEmail({ to, subject, body, unsubscribeToken, attachments }) {
+/** HTML final de um email de marketing (também usado na pré-visualização do painel). */
+export async function buildMarketingEmailHtml({ body, unsubscribeToken }) {
   const footer = unsubscribeToken
     ? `<p style="font-size:11px;color:#9ca3af;margin-top:8px">
         <a href="${APP_URL}/unsubscribe?token=${unsubscribeToken}" style="color:#9ca3af">Cancelar subscrição</a>
        </p>`
     : '';
-  const html = baseTemplate(`${body}${footer}`);
+  // O logótipo é substituído aqui (antes os emails de marketing saíam com "{{LOGO_URL}}" partido)
+  return baseTemplate(`${body}${footer}`).split(LOGO_PLACEHOLDER).join(await getLogoUrl());
+}
+
+export async function sendMarketingEmail({ to, subject, body, unsubscribeToken, attachments }) {
+  const html = await buildMarketingEmailHtml({ body, unsubscribeToken });
 
   const client = getResend();
   if (!client) {

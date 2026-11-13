@@ -1,9 +1,11 @@
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Send, Users, Mail, MessageCircle, Loader2, RefreshCw, ExternalLink, Paperclip, X as XIcon, Zap, Search, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Send, Users, Mail, MessageCircle, Loader2, RefreshCw, ExternalLink, Paperclip, X as XIcon, Zap, Search, CheckCircle2, AlertCircle, Eye, ImageOff } from 'lucide-react';
 import api from '../../core/services/apiClient';
 import { PageShell } from '../../core/components/layout/PageShell';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import { getSystemSettings } from '../../core/services/systemSettingsService';
 import { FollowupAutomations } from '../components/marketing/FollowupAutomations';
+import { ProductShowcasePicker, useShowcaseProducts, fmtMT } from '../components/marketing/ProductShowcasePicker';
 
 interface Customer {
   id: string;
@@ -68,6 +70,9 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
   const [body, setBody] = useState('');
   const [attachments, setAttachments] = useState<{ filename: string; content: string }[]>([]);
   const [sending, setSending] = useState(false);
+  const [emailProductIds, setEmailProductIds] = useState<string[]>([]);
+  const [emailPreview, setEmailPreview] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState(false);
 
   // WhatsApp
   const [waReady, setWaReady] = useState<boolean | null>(null);
@@ -75,6 +80,9 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
   const [waLinks, setWaLinks] = useState<WALink[]>([]);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [sendingWA, setSendingWA] = useState(false);
+  const [waProductIds, setWaProductIds] = useState<string[]>([]);
+  const allProducts = useShowcaseProducts();
+  const waProducts = useMemo(() => waProductIds.map(id => allProducts?.find(p => p.id === id)).filter(Boolean) as NonNullable<typeof allProducts>, [waProductIds, allProducts]);
   const pollRef = useRef<number | null>(null);
 
   const loadCampaigns = () => api.get<Campaign[]>('/marketing/campaigns').then(setCampaigns).catch(() => {});
@@ -123,19 +131,43 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
   };
 
   const handleSendEmail = async () => {
-    if (!subject.trim() || !body.trim()) return showToast('Assunto e corpo são obrigatórios', 'error');
+    if (!subject.trim() || (!body.trim() && !emailProductIds.length)) return showToast('Escreva o assunto e a mensagem (ou escolha produtos)', 'error');
     if (!recipientCount) return showToast('Selecione pelo menos um destinatário', 'error');
     setSending(true);
     try {
-      const r = await api.post<{ sent: number }>('/marketing/send-email', { subject, body, attachments, recipientIds: selectedIds, sendToAll });
+      const r = await api.post<{ sent: number }>('/marketing/send-email', {
+        subject, body, attachments, recipientIds: selectedIds, sendToAll,
+        productIds: emailProductIds, productsTitle: emailProductIds.length ? 'Escolhidos para si' : undefined,
+      });
       showToast(`Email enviado para ${r.sent} clientes`, 'success');
-      setSubject(''); setBody(''); setSelectedIds([]); setSendToAll(false); setAttachments([]);
+      setSubject(''); setBody(''); setSelectedIds([]); setSendToAll(false); setAttachments([]); setEmailProductIds([]); setEmailPreview(null);
       loadCampaigns();
     } catch (err: any) {
       showToast(err.message || 'Erro ao enviar campanha', 'error');
     } finally {
       setSending(false);
     }
+  };
+
+  const previewEmail = async () => {
+    setPreviewing(true);
+    try {
+      const r = await api.post<{ html: string }>('/marketing/email-preview', {
+        body, productIds: emailProductIds, productsTitle: emailProductIds.length ? 'Escolhidos para si' : undefined,
+      });
+      setEmailPreview(r.html);
+    } catch (err: any) {
+      showToast(err.message || 'Erro na pré-visualização', 'error');
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
+  const applyPromoEmailTemplate = () => {
+    setSubject('Promoções da semana na ' + store.name);
+    setBody('<h2>Olá {nome}!</h2><p>Seleccionámos algumas ofertas especiais para si. Os preços são por tempo limitado — aproveite!</p>');
+    const promos = (allProducts || []).filter(p => p.isPromo).slice(0, 6).map(p => p.id);
+    if (promos.length) setEmailProductIds(promos);
   };
 
   const pollCampaign = (campaignId: string, total: number, skipped: number) => {
@@ -158,12 +190,12 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
     setSendingWA(true);
     setWaLinks([]); setProgress(null);
     try {
-      const r = await api.post<any>('/marketing/whatsapp-send', { message: waMessage, recipientIds: selectedIds, sendToAll });
+      const r = await api.post<any>('/marketing/whatsapp-send', { message: waMessage, recipientIds: selectedIds, sendToAll, productIds: waProductIds });
       if (r.mode === 'evolution') {
         const mins = Math.max(1, Math.round((r.estimatedSeconds || 0) / 60));
         showToast(`A enviar para ${r.total} clientes (~${mins} min). Pode sair desta página.`, 'success');
         pollCampaign(r.campaignId, r.total, r.skipped || 0);
-        setSelectedIds([]); setSendToAll(false);
+        setSelectedIds([]); setSendToAll(false); setWaProductIds([]);
       } else {
         setWaLinks(r.links || []);
         showToast(`${r.count} links gerados — clique para enviar`, 'info');
@@ -180,11 +212,12 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
   const previewText = waMessage.replace(/{nome}/gi, previewName).replace(/{nome_completo}/gi, previewName) + OPT_OUT_FOOTER;
   const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  const TABS: { id: Tab; label: string; icon: any }[] = [
-    { id: 'email', label: 'Email', icon: Mail },
-    { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
-    { id: 'automations', label: 'Automações', icon: Zap },
+  const TABS: { id: Tab; label: string; icon: any; description: string }[] = [
+    { id: 'email', label: 'Email', icon: Mail, description: 'Campanhas com montra de produtos' },
+    { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, description: 'Mensagens e fotos de produtos' },
+    { id: 'automations', label: 'Automações', icon: Zap, description: 'Lembretes e follow-up automáticos' },
   ];
+  const nav = useSectionNav(TABS, tab, switchTab);
 
   return (
     <PageShell title="Marketing" actions={
@@ -217,20 +250,9 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
         </div>
       )}
 
-      {/* Separadores */}
-      <div className="flex gap-1 bg-surface-overlay p-1 rounded-xl w-full sm:w-fit mb-6 overflow-x-auto" role="tablist">
-        {TABS.map(t => {
-          const Icon = t.icon;
-          return (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => switchTab(t.id)}
-              className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${tab === t.id ? 'bg-surface-raised text-content-primary shadow-sm' : 'text-content-secondary hover:text-content-primary'}`}>
-              <Icon className="w-4 h-4" /> {t.label}
-            </button>
-          );
-        })}
-      </div>
+      <div className="mb-6"><SectionNav nav={nav} card={nav.isMobile} /></div>
 
-      {tab === 'automations' ? (
+      {!nav.listMode && (tab === 'automations' ? (
         <FollowupAutomations showToast={showToast} />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -295,6 +317,27 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
                     className="w-full px-3 py-2 rounded-lg border border-border-default bg-surface-base text-content-primary text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-y font-mono" />
                   <p className="text-xs text-content-muted mt-1">Pode usar HTML e {'{nome}'} para personalizar.</p>
                 </div>
+                <ProductShowcasePicker selected={emailProductIds} onChange={ids => { setEmailProductIds(ids); setEmailPreview(null); }} max={8}
+                  hint="Os produtos aparecem no fim do email em cartões com foto, preço (antigo riscado nas promoções) e botão Comprar." />
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={applyPromoEmailTemplate}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-3 py-1.5 text-xs font-medium text-content-secondary hover:bg-surface-overlay">
+                    Modelo: Promoções da semana
+                  </button>
+                  <button type="button" onClick={previewEmail} disabled={previewing || (!body.trim() && !emailProductIds.length)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-3 py-1.5 text-xs font-medium text-content-secondary hover:bg-surface-overlay disabled:opacity-50">
+                    {previewing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />} Pré-visualizar email
+                  </button>
+                </div>
+                {emailPreview && (
+                  <div className="overflow-hidden rounded-xl border border-border-default">
+                    <div className="flex items-center justify-between border-b border-border-default bg-surface-base px-3 py-1.5 text-xs text-content-muted">
+                      <span>Pré-visualização (com o nome de exemplo "Ana")</span>
+                      <button type="button" onClick={() => setEmailPreview(null)} aria-label="Fechar pré-visualização" className="hover:text-content-primary"><XIcon className="h-4 w-4" /></button>
+                    </div>
+                    <iframe title="Pré-visualização do email" srcDoc={emailPreview} sandbox="" className="h-[520px] w-full bg-white" />
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs font-medium text-content-secondary mb-1.5">Anexos (opcional)</label>
                   <div className="flex flex-wrap gap-2">
@@ -351,12 +394,31 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
                   <p className="text-right text-[11px] text-content-muted tabular-nums">{waMessage.length}/3000</p>
                 </div>
 
+                <ProductShowcasePicker selected={waProductIds} onChange={setWaProductIds} max={4}
+                  hint="Cada produto segue logo a seguir à mensagem, como foto com o nome, o preço e o link de compra." />
+
                 <div>
                   <p className="text-xs font-medium text-content-secondary mb-1.5">Pré-visualização</p>
                   <div className="rounded-xl bg-[#efeae2] dark:bg-[#0b141a] p-3">
                     <div className="ml-auto max-w-[85%] rounded-lg rounded-tr-none bg-[#d9fdd3] dark:bg-[#005c4b] px-3 py-2 text-sm text-gray-900 dark:text-gray-100 shadow-sm">
                       <p className="whitespace-pre-wrap break-words">{previewText}</p>
                     </div>
+                    {waProducts.map(p => (
+                      <div key={p.id} className="ml-auto mt-2 w-[70%] max-w-[260px] overflow-hidden rounded-lg rounded-tr-none bg-[#d9fdd3] dark:bg-[#005c4b] p-1 shadow-sm">
+                        <div className="flex h-36 items-center justify-center rounded-md bg-white">
+                          {p.image ? <img src={p.image} alt="" className="h-full w-full object-contain" /> : <ImageOff className="h-6 w-6 text-gray-400" aria-hidden="true" />}
+                        </div>
+                        <div className="px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100">
+                          <p className="font-semibold leading-tight">{p.name}</p>
+                          <p>
+                            {p.isPromo && <span className="mr-1 text-gray-500 line-through">{fmtMT(p.price)}</span>}
+                            <strong>{fmtMT(p.isPromo ? (p.promoPrice as number) : p.price)}</strong>
+                            {p.isPromo && p.discountPercent > 0 && ` (-${p.discountPercent}%)`}
+                          </p>
+                          <p className="truncate text-xs text-sky-700 dark:text-sky-300">🛒 {p.url}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                   <p className="mt-1 text-xs text-content-muted">A linha "Responda SAIR…" é acrescentada automaticamente — quem responder SAIR deixa de receber promoções.</p>
                 </div>
@@ -411,7 +473,7 @@ export const Marketing: React.FC<{ showToast: (msg: string, type: 'success' | 'e
             )}
           </div>
         </div>
-      )}
+      ))}
     </PageShell>
   );
 };

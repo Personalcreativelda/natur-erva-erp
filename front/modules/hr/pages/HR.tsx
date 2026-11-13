@@ -2,6 +2,7 @@ import { activateOnKey } from '../../core/utils/a11y';
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { PageShell } from '../../core/components/layout/PageShell';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import api, { downloadBlob } from '../../core/services/apiClient';
 import {
   Users, Building2, FileText, Calendar, Plus, Pencil, Trash2,
@@ -421,13 +422,14 @@ export function HR({ showToast }: Props) {
     { id: TAB.PAYROLL, label: 'Salários', icon: DollarSign },
     { id: TAB.TIMESHEETS, label: 'Horas', icon: Clock },
   ];
+  const nav = useSectionNav(tabs, tab, setTab);
 
   const totalHours = timeEntries.reduce((s, e) => s + Number(e.hours), 0);
   const billableHours = timeEntries.filter(e => e.billable).reduce((s, e) => s + Number(e.hours), 0);
 
   return (
     <PageShell title="Recursos Humanos" description="Gestão de funcionários, departamentos, ausências, salários e horas"
-      actions={
+      actions={nav.listMode ? undefined : (
         tab === TAB.PAYROLL ? (
           <div className="flex items-center gap-2">
             <button onClick={openConfig}
@@ -450,11 +452,11 @@ export function HR({ showToast }: Props) {
             <Plus className="w-4 h-4" />
             {tab === TAB.DEPARTMENTS ? 'Novo Departamento' : tab === TAB.LEAVES ? 'Pedir Ausência' : 'Novo Funcionário'}
           </button>
-        )
+        ))
       }>
 
-      {/* Stats */}
-      {stats && (
+      {/* Stats — só na visão geral (no telemóvel, dentro de uma secção, ficam escondidos) */}
+      {stats && !nav.sectionMode && (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <KpiCard label="Total" value={stats.total} sub="funcionários registados"
             icon={<Users className="w-4 h-4 text-blue-600" />} accent="bg-blue-50 dark:bg-blue-900/20" />
@@ -471,16 +473,9 @@ export function HR({ showToast }: Props) {
 
       {/* Tabs */}
       <div className="bg-surface-raised rounded-2xl border border-border-default overflow-hidden">
-        <div className="flex border-b border-border-default overflow-x-auto">
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${tab === t.id ? 'border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400' : 'border-transparent text-content-muted hover:text-content-primary'}`}>
-              <t.icon className="w-4 h-4" />{t.label}
-            </button>
-          ))}
-        </div>
+        <SectionNav nav={nav} />
 
-        <div className="p-4">
+        {!nav.listMode && <div className="p-4">
           {loading ? (
             <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-content-muted" /></div>
           ) : tab === TAB.EMPLOYEES ? (
@@ -847,7 +842,7 @@ export function HR({ showToast }: Props) {
               {leaves.length === 0 && <p className="text-center py-12 text-content-muted">Nenhum pedido de ausência</p>}
             </div>
           )}
-        </div>
+        </div>}
       </div>
 
       {/* Modal Funcionário */}

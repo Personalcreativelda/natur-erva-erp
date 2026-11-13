@@ -1,5 +1,6 @@
 import { activateOnKey } from '../../core/utils/a11y';
 import React, { useState, useEffect, useCallback } from 'react';
+import { SectionNav, useSectionNav } from '../../core/components/layout/SectionNav';
 import { PageShell } from '../../core/components/layout/PageShell';
 import api from '../../core/services/apiClient';
 import {
@@ -53,6 +54,7 @@ const TABS = [
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 export function PurchaseFlowPage({ showToast }: Props) {
   const [tab, setTab] = useState<'requests' | 'orders' | 'receive'>('requests');
+  const nav = useSectionNav(TABS as any, tab, setTab);
   const [requests, setRequests] = useState<any[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
@@ -77,22 +79,8 @@ export function PurchaseFlowPage({ showToast }: Props) {
 
   return (
     <PageShell title="Fluxo de Compras" description="Requisições, aprovação, encomendas e recepção de mercadoria">
-      {/* Tab bar */}
-      <div className="flex gap-1 overflow-x-auto scrollbar-hide border-b border-border-default -mx-3 sm:-mx-6 px-3 sm:px-6 mb-6">
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id as any)}
-            className={`shrink-0 whitespace-nowrap px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id
-                ? 'border-brand-500 text-brand-600 dark:text-brand-400'
-                : 'border-transparent text-content-muted hover:text-content-primary'
-            }`}>
-            {t.label}
-          </button>
-        ))}
-        <button aria-label="Atualizar" onClick={load} disabled={loading} className="tap-target ml-auto flex items-center gap-1.5 px-3 py-2 text-sm text-content-muted hover:text-content-primary transition-colors disabled:opacity-50">
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
+      <div className="mb-5"><SectionNav nav={nav} card={nav.isMobile} /></div>
+      {!nav.listMode && (<>
 
       {tab === 'requests' && (
         <RequestsTab requests={requests} onRefresh={load} showToast={showToast} />
@@ -103,6 +91,7 @@ export function PurchaseFlowPage({ showToast }: Props) {
       {tab === 'receive' && (
         <ReceiveTab purchases={purchases} onRefresh={load} showToast={showToast} />
       )}
+      </>)}
     </PageShell>
   );
 }
