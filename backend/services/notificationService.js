@@ -27,6 +27,12 @@ const schemaReady = (async () => {
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`);
   await q(`CREATE INDEX IF NOT EXISTS customer_notifications_order_idx ON customer_notifications (order_id, created_at DESC)`);
+  // Quem respondeu SAIR no WhatsApp deixa de receber mensagens promocionais (os avisos do pedido continuam)
+  await q(`CREATE TABLE IF NOT EXISTS marketing_optouts (
+    phone TEXT PRIMARY KEY,
+    source TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
 })();
 
 export const NOTIFY_MODES = ['whatsapp_first', 'both', 'email_only'];
@@ -162,11 +168,13 @@ export async function resolveOrderContact(orderOrId) {
  * @param sendEmail   () => Promise — envia o email (as funções de emailService)
  * @param channels    opcional { whatsapp: bool, email: bool } — escolha explícita da equipa (ignora o modo)
  */
-export async function notifyCustomer({ contact, orderId, event, whatsapp, sendEmail, channels }) {
+export async function notifyCustomer({ contact, orderId, event, whatsapp, sendEmail, channels, marketing = false }) {
   try {
     if (!contact) return { whatsapp: 'skipped', email: 'skipped' };
     const cfg = await getConfig();
     if (!cfg.enabled && !channels) return { whatsapp: 'disabled', email: 'disabled' };
+    // Mensagens promocionais respeitam o "SAIR" (avisos do pedido não)
+    if (marketing && contact.phone && await isOptedOut(contact.phone)) return { whatsapp: 'opted_out', email: 'opted_out' };
 
     const wantWhatsApp = channels ? !!channels.whatsapp : cfg.mode !== 'email_only';
     const wantEmailAlways = channels ? !!channels.email : cfg.mode === 'both' || cfg.mode === 'email_only';
@@ -211,13 +219,13 @@ export async function notifyCustomer({ contact, orderId, event, whatsapp, sendEm
 }
 
 /** Notificação a partir de um pedido (id ou linha): resolve o contacto e envia. Nunca lança. */
-export async function notifyOrderCustomer(orderOrId, { event, whatsapp, sendEmail, channels }) {
+export async function notifyOrderCustomer(orderOrId, { event, whatsapp, sendEmail, channels, marketing = false }) {
   try {
     const contact = await resolveOrderContact(orderOrId);
     if (!contact) return null;
     const text = typeof whatsapp === 'function' ? whatsapp(contact) : whatsapp;
     const email = sendEmail ? () => sendEmail(contact) : null;
-    return notifyCustomer({ contact, orderId: contact.order.id, event, whatsapp: text, sendEmail: email, channels });
+    return notifyCustomer({ contact, orderId: contact.order.id, event, whatsapp: text, sendEmail: email, channels, marketing });
   } catch (err) {
     console.warn('[notify] erro ao notificar pedido:', err.message);
     return null;
@@ -240,6 +248,61 @@ export async function listRecentNotifications(limit = 50) {
     [Math.min(Number(limit) || 50, 200)]
   );
   return rows;
+}
+
+// ── Opt-out (SAIR / VOLTAR) ─────────────────────────────────────────────────────────────────────
+const optKey = (phone) => {
+  const n = normalizePhone(phone);
+  return n ? n : null;
+};
+
+export async function isOptedOut(phone) {
+  const key = optKey(phone);
+  if (!key) return false;
+  await schemaReady;
+  const { rows } = await pool.query('SELECT 1 FROM marketing_optouts WHERE phone = $1', [key]).catch(() => ({ rows: [] }));
+  return rows.length > 0;
+}
+
+export async function listOptedOutPhones() {
+  await schemaReady;
+  const { rows } = await pool.query('SELECT phone FROM marketing_optouts').catch(() => ({ rows: [] }));
+  return new Set(rows.map(r => r.phone));
+}
+
+export async function setOptOut(phone, optedOut, source = 'whatsapp') {
+  const key = optKey(phone);
+  if (!key) return false;
+  await schemaReady;
+  if (optedOut) {
+    await pool.query('INSERT INTO marketing_optouts (phone, source) VALUES ($1, $2) ON CONFLICT (phone) DO NOTHING', [key, source]);
+  } else {
+    await pool.query('DELETE FROM marketing_optouts WHERE phone = $1', [key]);
+  }
+  return true;
+}
+
+/**
+ * Envio directo de WhatsApp a um cliente (campanhas de marketing e automações).
+ * Devolve { ok, error, phone }. Não lança.
+ */
+export async function sendCustomerWhatsApp(rawPhone, text, { event = 'marketing', orderId = null } = {}) {
+  try {
+    const cfg = await getConfig();
+    if (!cfg.evolutionReady) return { ok: false, error: 'Evolution API não configurada' };
+    const phone = normalizePhone(rawPhone);
+    if (!phone) return { ok: false, error: 'Número inválido' };
+    const r = await sendWhatsApp(cfg.evolution, phone, text);
+    await logAttempt({ orderId, event, channel: 'whatsapp', recipient: phone, status: r.ok ? 'sent' : 'failed', error: r.error });
+    return { ...r, phone };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function isWhatsAppReady() {
+  const cfg = await getConfig();
+  return cfg.evolutionReady;
 }
 
 /** Envia uma mensagem de teste para um número qualquer (painel). */

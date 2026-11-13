@@ -1,58 +1,79 @@
 import express from 'express';
 import pool from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { sendMarketingEmail, sendWhatsAppMessage } from '../services/emailService.js';
+import { sendMarketingEmail } from '../services/emailService.js';
+import { normalizePhone, listOptedOutPhones, sendCustomerWhatsApp, isWhatsAppReady } from '../services/notificationService.js';
+import { OPT_OUT_FOOTER } from '../services/followupService.js';
 import { randomBytes } from 'crypto';
 
 const router = express.Router();
-const APP_URL = (process.env.APP_URL || 'https://www.natur-erva.co.mz').replace(/\/$/, '');
 
-// GET /api/marketing/customers — lista todos os clientes com email (perfis + customers do admin)
-router.get('/customers', authMiddleware, async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT id, name, email, phone, points, order_count FROM (
+// Progresso dos envios por WhatsApp (os envios correm em segundo plano)
+pool.query(`ALTER TABLE marketing_campaigns
+  ADD COLUMN IF NOT EXISTS sent_count INT NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS failed_count INT NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS skipped_count INT NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS finished_at TIMESTAMPTZ`).catch(err => console.warn('[marketing schema]', err.message));
 
-         -- 1. Perfis registados (qualquer role não-admin)
-         SELECT
-           p.id::text          AS id,
-           p.name,
-           p.email,
-           p.phone,
-           COALESCE(p.points, 0)          AS points,
-           COUNT(DISTINCT o.id)::int      AS order_count
+const firstName = (name) => {
+  const f = String(name || 'cliente').trim().split(/\s+/)[0] || 'cliente';
+  return f.charAt(0).toLocaleUpperCase('pt') + f.slice(1).toLocaleLowerCase('pt');
+};
+const personalize = (text, name) => String(text)
+  .replace(/{nome}/gi, firstName(name))
+  .replace(/{nome_completo}/gi, String(name || 'Cliente').trim());
+
+/**
+ * Todos os clientes contactáveis (perfis de clientes + clientes criados pela equipa), com email
+ * e/ou telefone. Deduplicados por email; os clientes sem conta entram mesmo só com telefone.
+ */
+async function loadCustomers() {
+  const { rows } = await pool.query(
+    `SELECT id, name, email, phone, points, order_count, source FROM (
+       SELECT p.id::text AS id, p.name, NULLIF(p.email, '') AS email, NULLIF(p.phone, '') AS phone,
+              COALESCE(p.points, 0) AS points,
+              COUNT(DISTINCT o.id)::int AS order_count, 'profile' AS source
          FROM profiles p
-         LEFT JOIN orders o ON o.created_by = p.id
-         WHERE p.is_active = true
-           AND p.email IS NOT NULL AND p.email <> ''
-           AND p.is_super_admin IS NOT TRUE
-         GROUP BY p.id
-
-         UNION
-
-         -- 2. Clientes criados pelo admin sem conta própria
-         SELECT
-           c.id::text          AS id,
-           c.name,
-           c.email,
-           c.phone,
-           0                              AS points,
-           COUNT(DISTINCT o.id)::int      AS order_count
+         LEFT JOIN orders o ON o.created_by = p.id OR (p.customer_id IS NOT NULL AND o.customer_id = p.customer_id)
+        WHERE p.is_active = true
+          AND p.is_super_admin IS NOT TRUE
+          AND COALESCE(p.role, 'CLIENTE') = 'CLIENTE'
+          AND ((p.email IS NOT NULL AND p.email <> '') OR (p.phone IS NOT NULL AND p.phone <> ''))
+        GROUP BY p.id
+       UNION ALL
+       SELECT c.id::text AS id, c.name, NULLIF(c.email, '') AS email, NULLIF(c.phone, '') AS phone,
+              0 AS points, COUNT(DISTINCT o.id)::int AS order_count, 'customer' AS source
          FROM customers c
          LEFT JOIN orders o ON o.customer_id = c.id
-         LEFT JOIN profiles p ON LOWER(p.email) = LOWER(c.email)
-         WHERE c.email IS NOT NULL AND c.email <> ''
-           AND p.id IS NULL
-         GROUP BY c.id
+        WHERE ((c.email IS NOT NULL AND c.email <> '') OR (c.phone IS NOT NULL AND c.phone <> ''))
+          AND NOT EXISTS (
+            SELECT 1 FROM profiles p
+             WHERE p.customer_id = c.id OR (c.email IS NOT NULL AND c.email <> '' AND LOWER(p.email) = LOWER(c.email))
+          )
+        GROUP BY c.id
+     ) combined
+     ORDER BY order_count DESC, name ASC`
+  );
+  const optedOut = await listOptedOutPhones();
+  return rows.map(r => {
+    const wa = normalizePhone(r.phone);
+    return { ...r, whatsapp: wa, opted_out: !!(wa && optedOut.has(wa)) };
+  });
+}
 
-       ) combined
-       ORDER BY order_count DESC, name ASC`
-    );
-    res.json(rows);
+// GET /api/marketing/customers
+router.get('/customers', authMiddleware, async (_req, res) => {
+  try {
+    res.json(await loadCustomers());
   } catch (err) {
     console.error('[GET /marketing/customers]', err);
     res.status(500).json({ error: 'Erro ao buscar clientes' });
   }
+});
+
+// GET /api/marketing/whatsapp-status — se a Evolution API está pronta para envios
+router.get('/whatsapp-status', authMiddleware, async (_req, res) => {
+  res.json({ ready: await isWhatsAppReady() });
 });
 
 // POST /api/marketing/send-email — enviar campanha por email
@@ -62,50 +83,36 @@ router.post('/send-email', authMiddleware, async (req, res) => {
     if (!subject?.trim() || !body?.trim())
       return res.status(400).json({ error: 'Assunto e corpo são obrigatórios' });
 
-    let recipients = [];
-
-    if (sendToAll) {
-      const { rows } = await pool.query(
-        `SELECT id, name, email FROM profiles WHERE role = 'CLIENTE' AND is_active = true AND email IS NOT NULL`
-      );
-      recipients = rows;
-    } else if (Array.isArray(recipientIds) && recipientIds.length > 0) {
-      const { rows } = await pool.query(
-        `SELECT id, name, email FROM profiles WHERE id = ANY($1) AND email IS NOT NULL`,
-        [recipientIds]
-      );
-      recipients = rows;
-    }
+    const all = await loadCustomers();
+    const ids = new Set(Array.isArray(recipientIds) ? recipientIds.map(String) : []);
+    const seen = new Set();
+    const recipients = all
+      .filter(c => c.email && (sendToAll || ids.has(c.id)))
+      .filter(c => { const k = c.email.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
 
     if (!recipients.length)
-      return res.status(400).json({ error: 'Nenhum destinatário selecionado' });
+      return res.status(400).json({ error: 'Nenhum destinatário com email' });
 
-    // Guardar campanha
     const { rows: campaignRows } = await pool.query(
       `INSERT INTO marketing_campaigns (title, subject, body, channel, recipient_count, created_by)
        VALUES ($1, $2, $3, 'email', $4, $5) RETURNING id`,
       [subject, subject, body, recipients.length, req.user.id]
     );
 
-    // Enviar emails (best-effort, em paralelo com limite)
     const BATCH = 10;
     let sent = 0;
     for (let i = 0; i < recipients.length; i += BATCH) {
       const batch = recipients.slice(i, i + BATCH);
-      await Promise.allSettled(
-        batch.map(r => {
-          const token = randomBytes(16).toString('hex');
-          return sendMarketingEmail({
-            to: r.email,
-            subject,
-            body,
-            attachments: attachments || [],
-            unsubscribeToken: token
-          });
-        })
-      );
+      await Promise.allSettled(batch.map(r => sendMarketingEmail({
+        to: r.email,
+        subject: personalize(subject, r.name),
+        body: personalize(body, r.name),
+        attachments: attachments || [],
+        unsubscribeToken: randomBytes(16).toString('hex'),
+      })));
       sent += batch.length;
     }
+    await pool.query(`UPDATE marketing_campaigns SET sent_count = $2, status = 'sent', finished_at = NOW() WHERE id = $1`, [campaignRows[0].id, sent]).catch(() => {});
 
     res.json({ success: true, sent, campaignId: campaignRows[0].id });
   } catch (err) {
@@ -114,95 +121,91 @@ router.post('/send-email', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/marketing/whatsapp-send — enviar via WhatsApp Business API (ou gerar links se API não configurada)
+/** Envio em segundo plano, com ritmo humano (o WhatsApp bloqueia números que enviam em rajada). */
+async function runWhatsAppCampaign(campaignId, recipients, message) {
+  let sent = 0, failed = 0;
+  for (const r of recipients) {
+    const text = personalize(message, r.name) + OPT_OUT_FOOTER;
+    const result = await sendCustomerWhatsApp(r.whatsapp, text, { event: 'campaign' });
+    if (result.ok) sent++; else failed++;
+    await pool.query('UPDATE marketing_campaigns SET sent_count = $2, failed_count = $3 WHERE id = $1', [campaignId, sent, failed]).catch(() => {});
+    if (result.ok) await new Promise(resolve => setTimeout(resolve, 4000 + Math.random() * 5000));
+  }
+  await pool.query(`UPDATE marketing_campaigns SET status = 'sent', finished_at = NOW() WHERE id = $1`, [campaignId]).catch(() => {});
+  console.log(`[marketing] campanha WhatsApp ${campaignId}: ${sent} enviadas, ${failed} falharam`);
+}
+
+// POST /api/marketing/whatsapp-send — campanha por WhatsApp (Evolution API); links wa.me se não estiver configurada
 router.post('/whatsapp-send', authMiddleware, async (req, res) => {
   try {
     const { message, recipientIds, sendToAll } = req.body;
-    if (!message?.trim())
-      return res.status(400).json({ error: 'Mensagem obrigatória' });
+    if (!message?.trim()) return res.status(400).json({ error: 'Mensagem obrigatória' });
+    if (message.length > 3000) return res.status(400).json({ error: 'Mensagem demasiado longa (máx. 3000 caracteres)' });
 
-    const hasApi = !!(process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_ACCESS_TOKEN);
+    const all = await loadCustomers();
+    const ids = new Set(Array.isArray(recipientIds) ? recipientIds.map(String) : []);
+    const seen = new Set();
+    let skipped = 0;
+    const recipients = [];
+    for (const c of all) {
+      if (!(sendToAll || ids.has(c.id)) || !c.whatsapp) continue;
+      if (seen.has(c.whatsapp)) continue;
+      seen.add(c.whatsapp);
+      if (c.opted_out) { skipped++; continue; }
+      recipients.push(c);
+    }
+    if (!recipients.length) {
+      return res.status(400).json({ error: skipped ? 'Todos os destinatários pediram para não receber promoções (SAIR).' : 'Nenhum destinatário com número de telemóvel' });
+    }
 
-    // Buscar destinatários com telefone
-    let recipients = [];
-    if (sendToAll) {
+    if (await isWhatsAppReady()) {
       const { rows } = await pool.query(
-        `SELECT id::text AS id, name, phone FROM profiles
-         WHERE is_active = true AND phone IS NOT NULL AND phone <> '' AND is_super_admin IS NOT TRUE
-         UNION
-         SELECT c.id::text AS id, c.name, c.phone FROM customers c
-         LEFT JOIN profiles p ON LOWER(p.email) = LOWER(c.email)
-         WHERE c.phone IS NOT NULL AND c.phone <> '' AND p.id IS NULL`
+        `INSERT INTO marketing_campaigns (title, body, channel, status, recipient_count, skipped_count, created_by)
+         VALUES ($1, $2, 'whatsapp', 'sending', $3, $4, $5) RETURNING id`,
+        [message.trim().split('\n')[0].slice(0, 80), message, recipients.length, skipped, req.user.id]
       );
-      recipients = rows;
-    } else if (Array.isArray(recipientIds) && recipientIds.length > 0) {
-      const { rows: pRows } = await pool.query(
-        `SELECT id::text AS id, name, phone FROM profiles WHERE id = ANY($1) AND phone IS NOT NULL`,
-        [recipientIds]
-      );
-      const { rows: cRows } = await pool.query(
-        `SELECT id::text AS id, name, phone FROM customers WHERE id = ANY($1) AND phone IS NOT NULL`,
-        [recipientIds]
-      );
-      recipients = [...pRows, ...cRows];
-    }
-
-    if (!recipients.length)
-      return res.status(400).json({ error: 'Nenhum destinatário com número de telemóvel' });
-
-    if (hasApi) {
-      // Envio real via WhatsApp Business API
-      let sent = 0;
-      let failed = 0;
-      const BATCH = 5;
-      for (let i = 0; i < recipients.length; i += BATCH) {
-        const batch = recipients.slice(i, i + BATCH);
-        const results = await Promise.allSettled(
-          batch.map(r => {
-            const personalMsg = message.replace(/{nome}/gi, r.name || 'Cliente');
-            return sendWhatsAppMessage({ phone: r.phone, message: personalMsg });
-          })
-        );
-        results.forEach(r => {
-          if (r.status === 'fulfilled' && r.value?.ok) sent++;
-          else failed++;
-        });
-        // Aguardar 1s entre batches para não exceder rate limit
-        if (i + BATCH < recipients.length) await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-
-      await pool.query(
-        `INSERT INTO marketing_campaigns (title, body, channel, recipient_count, created_by)
-         VALUES ($1, $2, 'whatsapp', $3, $4)`,
-        [`WhatsApp API — ${new Date().toLocaleDateString('pt-MZ')}`, message, sent, req.user.id]
-      );
-
-      res.json({ mode: 'api', sent, failed, total: recipients.length });
-    } else {
-      // Fallback: gerar links wa.me
-      const links = recipients.map(r => {
-        const phone = r.phone.replace(/\D/g, '');
-        const fullPhone = phone.startsWith('258') ? phone : `258${phone}`;
-        const personalMsg = message.replace(/{nome}/gi, r.name || 'Cliente');
-        return { name: r.name, phone: fullPhone, link: `https://wa.me/${fullPhone}?text=${encodeURIComponent(personalMsg)}` };
+      const campaignId = rows[0].id;
+      runWhatsAppCampaign(campaignId, recipients, message).catch(err => {
+        console.error('[marketing] campanha WhatsApp', err);
+        pool.query(`UPDATE marketing_campaigns SET status = 'failed', finished_at = NOW() WHERE id = $1`, [campaignId]).catch(() => {});
       });
-
-      await pool.query(
-        `INSERT INTO marketing_campaigns (title, body, channel, recipient_count, created_by)
-         VALUES ($1, $2, 'whatsapp', $3, $4)`,
-        [`WhatsApp Links — ${new Date().toLocaleDateString('pt-MZ')}`, message, links.length, req.user.id]
-      );
-
-      res.json({ mode: 'links', links, count: links.length });
+      // ~6,5 s por mensagem em média
+      return res.json({ mode: 'evolution', campaignId, total: recipients.length, skipped, estimatedSeconds: Math.round(recipients.length * 6.5) });
     }
+
+    // Sem Evolution: links wa.me para enviar um a um
+    const links = recipients.map(r => ({
+      name: r.name, phone: r.whatsapp,
+      link: `https://wa.me/${r.whatsapp}?text=${encodeURIComponent(personalize(message, r.name))}`,
+    }));
+    await pool.query(
+      `INSERT INTO marketing_campaigns (title, body, channel, status, recipient_count, created_by)
+       VALUES ($1, $2, 'whatsapp', 'links', $3, $4)`,
+      [`Links WhatsApp — ${new Date().toLocaleDateString('pt-MZ')}`, message, links.length, req.user.id]
+    );
+    res.json({ mode: 'links', links, count: links.length, skipped });
   } catch (err) {
     console.error('[POST /marketing/whatsapp-send]', err);
     res.status(500).json({ error: 'Erro ao enviar WhatsApp' });
   }
 });
 
+// GET /api/marketing/campaigns/:id — progresso de uma campanha
+router.get('/campaigns/:id', authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, channel, status, recipient_count, sent_count, failed_count, skipped_count, finished_at FROM marketing_campaigns WHERE id = $1',
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Campanha não encontrada' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar campanha' });
+  }
+});
+
 // GET /api/marketing/campaigns — histórico de campanhas
-router.get('/campaigns', authMiddleware, async (req, res) => {
+router.get('/campaigns', authMiddleware, async (_req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT c.*, p.name as created_by_name

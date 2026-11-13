@@ -3,7 +3,7 @@ import pool from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendEvolutionMessage, handleIncomingMessage } from '../services/assistantService.js';
 import { handleStaffPaymentMessage } from '../services/paymentService.js';
-import { NOTIFY_MODES, ensureNotificationSchema, listRecentNotifications, sendTestWhatsApp } from '../services/notificationService.js';
+import { NOTIFY_MODES, ensureNotificationSchema, listRecentNotifications, sendTestWhatsApp, setOptOut, sendCustomerWhatsApp } from '../services/notificationService.js';
 
 const router = express.Router();
 
@@ -144,7 +144,7 @@ router.post('/webhook/:secret/:event?', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM assistant_config WHERE id = 1');
     const config = rows[0];
-    if (!config || !config.is_enabled) return res.status(200).json({ ok: true });
+    if (!config) return res.status(200).json({ ok: true });
 
     const providedSecret = req.params.secret || req.headers['x-webhook-secret'];
     if (!providedSecret || providedSecret !== config.webhook_secret) {
@@ -156,7 +156,6 @@ router.post('/webhook/:secret/:event?', async (req, res) => {
       return res.status(200).json({ ok: true });
     }
 
-    console.log('[assistant webhook] payload recebido:', JSON.stringify(req.body).slice(0, 2000));
 
     const data = req.body?.data || req.body || {};
     const remoteJid = data?.key?.remoteJid || data?.remoteJid;
@@ -172,6 +171,24 @@ router.post('/webhook/:secret/:event?', async (req, res) => {
     // antes de comparar com authorized_numbers, senão a comparação nunca bate certo.
     const phone = String(remoteJid).split('@')[0].split(':')[0].replace(/\D/g, '');
     const authorized = (config.authorized_numbers || []).map(n => n.replace(/\D/g, ''));
+
+    // Clientes: só se trata o pedido de SAIR/VOLTAR das promoções (a assistente nunca lhes responde).
+    // Funciona mesmo com a assistente desligada; mensagens de grupos são ignoradas.
+    if (!authorized.includes(phone) && !String(remoteJid).endsWith('@g.us')) {
+      const word = text.trim().toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[.!]+$/, '');
+      if (/^(SAIR|STOP|PARAR|CANCELAR|REMOVER)$/.test(word)) {
+        await setOptOut(phone, true, 'whatsapp');
+        sendCustomerWhatsApp(phone, 'Feito. Não vai receber mais mensagens promocionais. Os avisos dos seus pedidos continuam.\n\nPara voltar a receber novidades e cupões, responda VOLTAR.', { event: 'optout' }).catch(() => {});
+        return;
+      }
+      if (/^(VOLTAR|ATIVAR|START)$/.test(word)) {
+        await setOptOut(phone, false);
+        sendCustomerWhatsApp(phone, 'Bem-vindo de volta! Vai voltar a receber novidades e cupões. Responda SAIR se quiser parar.', { event: 'optin' }).catch(() => {});
+        return;
+      }
+    }
+
+    if (!config.is_enabled) return; // assistente desligada
     if (!authorized.includes(phone)) {
       console.log(`[assistant webhook] número não autorizado: "${phone}" (autorizados: ${authorized.join(', ')})`);
       return; // número não autorizado — ignora silenciosamente

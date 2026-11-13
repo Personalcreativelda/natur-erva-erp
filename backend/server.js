@@ -56,6 +56,7 @@ import clinicBillingRoutes from './routes/clinicBilling.js';
 import incentivesRoutes  from './routes/incentives.js';
 import assistantRoutes   from './routes/assistant.js';
 import paymentRoutes     from './routes/payments.js';
+import followupRoutes    from './routes/followups.js';
 
 const app = express();
 const PORT = process.env.PORT || 3060;
@@ -174,6 +175,7 @@ app.use('/api/clinic',        clinicBillingRoutes);
 app.use('/api/incentives',    incentivesRoutes);
 app.use('/api/assistant',     assistantRoutes);
 app.use('/api/payments',      paymentRoutes);
+app.use('/api/followups',     followupRoutes);
 
 // ── 404 ────────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
@@ -199,6 +201,14 @@ app.listen(PORT, async () => {
     startStockAlertJob();
   } catch (err) {
     console.error('[stockAlertJob] falha ao agendar:', err.message);
+  }
+
+  // ── Automações de follow-up aos clientes (WhatsApp/email) ────────────────────
+  try {
+    const { startFollowupJob } = await import('./services/followupService.js');
+    startFollowupJob();
+  } catch (err) {
+    console.error('[followups] falha ao agendar:', err.message);
   }
 
   // ── Teste de ligação ao MinIO ──────────────────────────────────────────────

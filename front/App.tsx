@@ -1063,6 +1063,9 @@ const App = () => {
                   </TrackedPage>
                 </ProtectedRoute>
               } />
+              {/* Menu do telemóvel (/admin/menu e /admin/menu/<secção>): desenhado pelo Layout por cima;
+                  é uma rota para ficar no histórico — o Voltar do Android percorre Menu › Secção › Página */}
+              <Route path="menu/*" element={null} />
               <Route path="avaliacoes" element={
                 <ProtectedRoute user={currentUser} permission="admin.access">
                   <TrackedPage pagePath="/admin/avaliacoes" pageTitle="Avaliações">

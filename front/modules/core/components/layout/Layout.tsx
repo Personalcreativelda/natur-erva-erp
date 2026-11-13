@@ -1,5 +1,5 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useNavigationType } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { AdminBottomNavigation } from './AdminBottomNavigation';
 import { MobileAdminMenu } from './MobileAdminMenu';
@@ -54,7 +54,6 @@ export const Layout: React.FC<LayoutProps> = ({
  const { t, language, setLanguage } = useLanguage();
  const { hasPermission } = usePermissions(currentUser);
  const isMobile = useMobile(768);
- const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
  const [userMenuOpen, setUserMenuOpen] = useState(false);
  // Removed duplicate state
 
@@ -76,6 +75,29 @@ export const Layout: React.FC<LayoutProps> = ({
 
  // Obter pathname atual
  const location = useLocation();
+ const navigationType = useNavigationType();
+
+ // Menu do telemóvel = rotas /admin/menu e /admin/menu/<secção>. Por estar no histórico, o Voltar do
+ // Android percorre o caminho como numa app nativa: Página › Secção (ex.: Finanças) › Menu › anterior.
+ const menuMatch = location.pathname.match(/^\/admin\/menu(?:\/([^/]+))?\/?$/);
+ const mobileMenuOpen = !!menuMatch;
+ const menuSection = menuMatch?.[1] ? decodeURIComponent(menuMatch[1]) : null;
+ const historyIdx = () => (window.history.state as { idx?: number } | null)?.idx ?? 0;
+ const openMenu = () => navigate('/admin/menu');
+ const closeMenu = () => {
+ if (historyIdx() > 0) navigate(-1);
+ else navigate('/admin', { replace: true });
+ };
+ // Separador "Menu": abre; numa secção volta à raiz do menu; na raiz fecha (como o toque no separador activo)
+ const toggleMenuTab = () => {
+ if (!mobileMenuOpen) openMenu();
+ else if (menuSection) navigate('/admin/menu', { replace: true });
+ else closeMenu();
+ };
+ // No computador não há este menu: /admin/menu leva ao painel
+ useEffect(() => {
+ if (mobileMenuOpen && !isMobile) navigate('/admin', { replace: true });
+ }, [mobileMenuOpen, isMobile, navigate]);
 
  // Submenu item interface
  interface SubMenuItem {
@@ -296,13 +318,11 @@ export const Layout: React.FC<LayoutProps> = ({
 
  const handleNavigate = (page: string) => {
  onNavigate(page);
- setMobileMenuOpen(false);
  };
 
  const handleLogout = () => {
  onLogout();
  setUserMenuOpen(false);
- setMobileMenuOpen(false);
  };
 
  // Calcular margin-left do conteúdo baseado no estado do sidebar
@@ -350,7 +370,6 @@ export const Layout: React.FC<LayoutProps> = ({
  <button
  onClick={() => {
  setUserMenuOpen(!userMenuOpen);
- setMobileMenuOpen(false);
  }}
  className="flex items-center space-x-2 px-2 py-1.5 rounded-xl active:bg-surface-raised hover:bg-surface-raised/50 transition-all touch-manipulation min-h-[44px]"
  aria-label="Menu do usuário"
@@ -405,7 +424,6 @@ export const Layout: React.FC<LayoutProps> = ({
  <button
  onClick={() => {
  setUserMenuOpen(false);
- setMobileMenuOpen(false);
  onNavigate('profile');
  }}
  className="w-full flex items-center space-x-3 px-4 py-3 text-sm font-medium text-content-secondary hover:bg-surface-raised rounded-lg transition-colors touch-manipulation min-h-[44px]"
@@ -430,7 +448,6 @@ export const Layout: React.FC<LayoutProps> = ({
  <button
  onClick={() => {
  setUserMenuOpen(false);
- setMobileMenuOpen(false);
  navigate('/');
  }}
  className="w-full flex items-center space-x-3 px-4 py-3 text-sm font-medium text-content-secondary hover:bg-surface-raised rounded-lg transition-colors touch-manipulation min-h-[44px]"
@@ -466,14 +483,18 @@ export const Layout: React.FC<LayoutProps> = ({
  currentUser={currentUser}
  activePage={activePage}
  currentPath={toMenuPath(location.pathname)}
+ openSection={menuSection}
+ onOpenSection={(id) => navigate(`/admin/menu/${encodeURIComponent(id)}`)}
+ onCloseSection={() => (historyIdx() > 0 ? navigate(-1) : navigate('/admin/menu', { replace: true }))}
+ animate={navigationType !== 'POP'}
  language={language}
  onSetLanguage={setLanguage}
  onNavigateItem={handleNavigate}
- onNavigatePath={(path) => { navigate(path); setMobileMenuOpen(false); }}
- onOpenProfile={() => { navigate('/admin/perfis'); setMobileMenuOpen(false); }}
- onGoToSite={() => { setMobileMenuOpen(false); navigate('/'); }}
+ onNavigatePath={(path) => navigate(path)}
+ onOpenProfile={() => navigate('/admin/perfis')}
+ onGoToSite={() => navigate('/')}
  onLogout={handleLogout}
- onClose={() => setMobileMenuOpen(false)}
+ onClose={closeMenu}
  logoutLabel={t.auth.logout}
  />
  )}
@@ -484,7 +505,7 @@ export const Layout: React.FC<LayoutProps> = ({
  currentUser={currentUser}
  isMenuOpen={mobileMenuOpen}
  onOpenMenu={() => {
- setMobileMenuOpen(prev => !prev);
+ toggleMenuTab();
  setUserMenuOpen(false);
  }}
  />

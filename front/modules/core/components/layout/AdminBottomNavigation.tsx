@@ -55,7 +55,9 @@ export const AdminBottomNavigation: React.FC<AdminBottomNavigationProps> = ({
   [hasPermission]
  );
 
- const activeId = isMenuOpen ? 'menu' : resolveActive(location.pathname, items);
+ // Páginas que não são de nenhum separador (ex.: Faturas, aberta pelo Menu) pertencem à pilha do
+ // "Menu" — como nas apps nativas, esse separador fica destacado
+ const activeId = isMenuOpen ? 'menu' : (resolveActive(location.pathname, items) ?? 'menu');
 
  const renderItem = (
   id: string,

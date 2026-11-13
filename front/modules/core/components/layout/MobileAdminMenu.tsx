@@ -1,16 +1,20 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Globe, LogOut, Search, X } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 
 /**
  * Menu do painel no telemóvel/app — lista agrupada com navegação em profundidade
  * (padrão das Definições do iOS/Android, Shopify, Stripe):
- *   nível 1 → cartões por secção (Geral, Comercial, …) com linhas "ícone · nome · ›"
- *   nível 2 → itens com sub-páginas (ex.: Finanças › IVA, Faturas…) abrem um ecrã próprio com ← Voltar
+ *   nível 1 → cartões por secção (Geral, Comercial, …) com linhas "ícone · nome · ›"   (/admin/menu)
+ *   nível 2 → itens com sub-páginas (ex.: Finanças › IVA, Faturas…) num ecrã próprio   (/admin/menu/<id>)
  *
- * Cada nível é uma camada fixa própria: o botão Voltar do Android (closeTopOverlay) fecha só a de
- * cima — no submenu volta ao menu; no menu, fecha-o. A barra inferior do painel fica visível.
+ * Os níveis são ROTAS (ver Layout): ficam no histórico, por isso o Voltar do Android faz
+ * Página › Secção › Menu › página anterior, como numa app nativa. As camadas têm data-back-ignore
+ * para o Voltar usar o histórico em vez de "fechar a camada de cima". A barra inferior fica visível.
  */
+
+// Posição da lista guardada entre visitas (ao voltar de uma página, o menu está onde estava)
+const scrollMemory = new Map<string, number>();
 
 export interface MobileMenuChild { id: string; label: string; icon?: any; path: string }
 export interface MobileMenuItem { id: string; label: string; icon: any; group?: string; children?: MobileMenuChild[] }
@@ -30,6 +34,26 @@ interface Props {
   onLogout: () => void;
   onClose: () => void;
   logoutLabel: string;
+  /** id do item cuja sub-lista está aberta (vem do URL /admin/menu/<id>) */
+  openSection: string | null;
+  onOpenSection: (id: string) => void;
+  onCloseSection: () => void;
+  /** false ao voltar atrás (Voltar do Android): sem animação de entrada */
+  animate?: boolean;
+}
+
+/** Guarda e repõe o scroll de um contentor por chave. */
+function useRememberedScroll(key: string) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollTop = scrollMemory.get(key) || 0;
+    const save = () => scrollMemory.set(key, el.scrollTop);
+    el.addEventListener('scroll', save, { passive: true });
+    return () => { save(); el.removeEventListener('scroll', save); };
+  }, [key]);
+  return ref;
 }
 
 // Cor do ícone por secção (como as apps nativas): ajuda a encontrar a secção de relance
@@ -97,9 +121,12 @@ const Card: React.FC<{ title?: string; children: React.ReactNode }> = ({ title, 
 export const MobileAdminMenu: React.FC<Props> = ({
   items, groupLabels, currentUser, activePage, currentPath, language, onSetLanguage,
   onNavigateItem, onNavigatePath, onOpenProfile, onGoToSite, onLogout, onClose, logoutLabel,
+  openSection, onOpenSection, onCloseSection, animate = true,
 }) => {
-  const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const openItemId = openSection;
   const [query, setQuery] = useState('');
+  const rootScrollRef = useRememberedScroll('root');
+  const sectionScrollRef = useRememberedScroll(`section:${openSection || ''}`);
   const path = toPath(currentPath);
 
   const isChildActive = (c: MobileMenuChild) => path === toPath(c.path) || path.startsWith(toPath(c.path) + '/');
@@ -148,11 +175,11 @@ export const MobileAdminMenu: React.FC<Props> = ({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (openItemId) setOpenItemId(null); else onClose();
+      if (openItemId) onCloseSection(); else onClose();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [openItemId, onClose]);
+  }, [openItemId, onClose, onCloseSection]);
 
   const roleLabel = (() => {
     const r = (currentUser.roles?.[0] || currentUser.role || '').toUpperCase();
@@ -163,7 +190,8 @@ export const MobileAdminMenu: React.FC<Props> = ({
     <>
       {/* ── Nível 1: menu ─────────────────────────────────────────────────── */}
       <div
-        className="md:hidden fixed inset-x-0 top-0 z-[45] flex flex-col bg-surface-base admin-menu-sheet animate-menu-sheet-in"
+        className={`md:hidden fixed inset-x-0 top-0 z-[45] flex flex-col bg-surface-base admin-menu-sheet ${animate && !openItemId ? 'animate-menu-sheet-in' : ''}`}
+        data-back-ignore
         style={SHEET_STYLE}
         role="dialog"
         aria-modal="true"
@@ -181,7 +209,7 @@ export const MobileAdminMenu: React.FC<Props> = ({
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain pb-6">
+        <div ref={rootScrollRef} className="flex-1 overflow-y-auto overscroll-contain pb-6">
           {/* Pesquisa */}
           <div className="px-4 pb-4">
             <div className="relative">
@@ -236,7 +264,7 @@ export const MobileAdminMenu: React.FC<Props> = ({
                         label={item.label}
                         hint={hasChildren ? (activeChild ? activeChild.label : (item.children!.length === 1 ? "1 opção" : `${item.children!.length} opções`)) : undefined}
                         active={isItemActive(item)}
-                        onClick={() => (hasChildren ? setOpenItemId(item.id) : onNavigateItem(item.id))}
+                        onClick={() => (hasChildren ? onOpenSection(item.id) : onNavigateItem(item.id))}
                       />
                     );
                   })}
@@ -273,7 +301,8 @@ export const MobileAdminMenu: React.FC<Props> = ({
       {/* ── Nível 2: sub-páginas de um item ───────────────────────────────── */}
       {openItem && (
         <div
-          className="md:hidden fixed inset-x-0 top-0 z-[46] flex flex-col bg-surface-base admin-menu-sheet animate-menu-push-in"
+          className={`md:hidden fixed inset-x-0 top-0 z-[46] flex flex-col bg-surface-base admin-menu-sheet ${animate ? 'animate-menu-push-in' : ''}`}
+          data-back-ignore
           style={SHEET_STYLE}
           role="dialog"
           aria-modal="true"
@@ -282,14 +311,14 @@ export const MobileAdminMenu: React.FC<Props> = ({
           <header className="flex h-14 shrink-0 items-center gap-1 px-2">
             <button
               type="button"
-              onClick={() => setOpenItemId(null)}
+              onClick={onCloseSection}
               aria-label="Voltar"
               className="tap-target flex h-10 items-center gap-0.5 rounded-full pl-1 pr-3 text-brand-700 dark:text-brand-300 active:bg-surface-overlay"
             >
               <ChevronLeft className="h-6 w-6" /> <span className="text-[15px] font-medium">Menu</span>
             </button>
           </header>
-          <div className="flex-1 overflow-y-auto overscroll-contain pb-6">
+          <div ref={sectionScrollRef} className="flex-1 overflow-y-auto overscroll-contain pb-6">
             <h1 className="px-5 pb-4 text-[22px] font-bold tracking-tight text-content-primary">{openItem.label}</h1>
             <Card>
               {openItem.children!.map(c => (
