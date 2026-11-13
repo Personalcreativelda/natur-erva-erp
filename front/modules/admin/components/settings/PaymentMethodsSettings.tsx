@@ -56,7 +56,11 @@ export const PaymentMethodsSettings: React.FC<Props> = ({ value, onChange, input
               <PaymentMethodLogo method={m.id} logoUrl={m.logoUrl} />
               <div className="min-w-0">
                 <p className="font-semibold text-content-primary">{m.label}</p>
-                <p className="text-xs text-content-muted">{m.enabled ? (m.merchantCode ? 'Activo no checkout' : 'Activo, mas falta o código do comerciante') : 'Desactivado'}</p>
+                <p className={`text-xs ${!m.enabled && m.merchantCode ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-content-muted'}`}>
+                  {m.enabled
+                    ? (m.merchantCode ? 'Activo no checkout' : 'Activo, mas falta o código do comerciante')
+                    : (m.merchantCode ? 'Desactivado — não aparece na loja. Ligue o interruptor.' : 'Desactivado')}
+                </p>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer shrink-0" aria-label={`Activar ${m.label}`}>
@@ -70,7 +74,11 @@ export const PaymentMethodsSettings: React.FC<Props> = ({ value, onChange, input
             <div>
               <label className={labelCls}>Código do comerciante</label>
               <input value={m.merchantCode} inputMode="numeric" placeholder="Fornecido pela operadora"
-                onChange={e => update(m.id, { merchantCode: e.target.value.replace(/\s+/g, '') })} className={inputCls} />
+                onChange={e => {
+                  const code = e.target.value.replace(/\s+/g, '');
+                  // Ao escrever o código pela primeira vez o método fica activo (pode ser desligado)
+                  update(m.id, !m.merchantCode && code && !m.enabled ? { merchantCode: code, enabled: true } : { merchantCode: code });
+                }} className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>Nome mostrado ao cliente</label>
