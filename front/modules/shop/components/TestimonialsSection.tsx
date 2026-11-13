@@ -65,12 +65,12 @@ const ReviewCard: React.FC<{ review: ProductReview; index: number; total: number
         <Link
           to={productUrl}
           aria-label={`Abrir o produto relacionado com o comentário de ${review.user_name}`}
-          className="flex-1 rounded-md text-content-secondary transition-colors hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 dark:hover:text-green-400"
+          className="flex w-full flex-1 items-center justify-center rounded-md text-content-secondary transition-colors hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 dark:hover:text-green-400"
         >
           {quote}
         </Link>
       ) : (
-        <div className="flex-1 text-content-secondary">{quote}</div>
+        <div className="flex w-full flex-1 items-center justify-center text-content-secondary">{quote}</div>
       )}
       <StarRow rating={review.rating} className="mt-4 justify-center" />
       <div className="mt-4 flex flex-col items-center">
@@ -203,7 +203,7 @@ export const TestimonialsSection: React.FC<{
               <div
                 ref={trackRef}
                 onScroll={updateCarousel}
-                className={`-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide sm:mx-0 sm:px-0 ${reviews.length < 3 ? 'lg:justify-center' : ''}`}
+                className={`-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide sm:mx-0 sm:scroll-px-0 sm:px-0 ${reviews.length < 3 ? 'lg:justify-center' : ''}`}
               >
                 {reviews.map((review, index) => (
                   <div key={review.id} className="w-[calc(100vw-2rem)] shrink-0 snap-start sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]">

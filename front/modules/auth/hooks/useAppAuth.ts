@@ -110,90 +110,16 @@ export const useAppAuth = (): UseAppAuthReturn => {
   // recarregada. Refs dão acesso às versões actuais sem reexecutar o efeito.
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
-  const handleLoginRef = useRef(handleLogin);
-  handleLoginRef.current = handleLogin;
 
   // Check for active session on load
   useEffect(() => {
-    const navigate = navigateRef.current;
-    const handleLogin = handleLoginRef.current;
     const checkSession = async () => {
       setIsAuthLoading(true);
 
-      // Verificar callback OAuth do Google (pode estar em hash ou query params)
+      // (O antigo callback OAuth do Supabase foi removido: o login Google usa /auth/google e
+      // /app-login?code=… — esse "code" fazia esta verificação esperar 1,5 s à toa.)
       const urlParams = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
-      const hasOAuthCallback = hash.includes('access_token') || hash.includes('code') || urlParams.get('code');
-
-      if (hasOAuthCallback) {
-        if (import.meta.env.DEV) console.log('OAuth callback detected, processing...');
-
-        // Aguardar mais tempo para o Supabase processar completamente o hash fragment
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Processar callback OAuth
-        const { user, error } = await authService.handleOAuthCallback();
-
-        if (user) {
-          if (import.meta.env.DEV) {
-            console.log('OAuth login successful:', user.email);
-            console.log('User role:', user.role);
-            console.log('User roles:', user.roles);
-          }
-
-          // Verificar se é cliente antes de fazer login
-          const isClientOnly = user.role === UserRole.CLIENTE ||
-            (user.roles && user.roles.length === 1 && user.roles[0] === 'CLIENTE');
-
-          if (import.meta.env.DEV) console.log('Is client only?', isClientOnly);
-
-          // Verificar modo atual da URL
-          const isAdminModeParam = urlParams.has('admin');
-          const isShopModeParam = urlParams.has('shop') || !isAdminModeParam;
-
-          // Se for cliente OU estiver em modo loja, ir para loja
-          if (isClientOnly || isShopModeParam) {
-            setIsShopMode(true);
-            setActivePage('shop');
-          }
-
-          handleLogin(user);
-
-          // Limpar URL dos parâmetros OAuth
-          try {
-            if (isClientOnly || isShopModeParam) {
-              // Cliente ou modo loja: navegar para loja
-              navigate('/');
-            } else {
-              // Admin/Staff em modo admin: navegar para admin
-              navigate('/admin');
-            }
-          } catch (e) {
-            if (import.meta.env.DEV) console.warn('Could not clean OAuth URL:', e);
-          }
-        } else if (error) {
-          console.error('OAuth error:', error);
-          // Navegar baseado no modo
-          if (urlParams.has('admin')) {
-            navigate('/admin');
-          } else {
-            navigate('/');
-          }
-        } else {
-          // Ainda processando, tentar novamente após um delay
-          if (import.meta.env.DEV) console.log('OAuth still processing, retrying...');
-          setTimeout(async () => {
-            const { user: retryUser, error: retryError } = await authService.handleOAuthCallback();
-            if (retryUser) {
-              handleLogin(retryUser);
-            } else if (retryError) {
-              // Error handling would need toast here, but we'll leave it for now
-            }
-          }, 2000);
-        }
-        setIsAuthLoading(false);
-        return;
-      }
 
       // Verificar se está em modo admin (via hash ou query param)
       const adminMode = hash === '#admin' || urlParams.has('admin');
@@ -277,6 +203,24 @@ export const useAppAuth = (): UseAppAuthReturn => {
       setIsAuthLoading(false);
     };
     checkSession();
+  }, []);
+
+  // Login concluído fora do fluxo normal (app Android: deep link /app-login ou polling) — entra
+  // directamente com o utilizador, sem recarregar a página e repetir todos os ecrãs de carregamento.
+  useEffect(() => {
+    const onExternalLogin = (event: Event) => {
+      const { user, redirectTo } = ((event as CustomEvent).detail || {}) as { user?: User; redirectTo?: string };
+      if (!user) return;
+      const isClientOnly = user.role === UserRole.CLIENTE ||
+        (user.roles && user.roles.length === 1 && user.roles[0] === 'CLIENTE');
+      setSessionCheckError(false);
+      setIsShopMode(isClientOnly || !redirectTo?.startsWith('/admin'));
+      setActivePage(isClientOnly ? 'shop' : 'dashboard');
+      setCurrentUser(user);
+      if (redirectTo) navigateRef.current(redirectTo, { replace: true });
+    };
+    window.addEventListener('auth:login', onExternalLogin);
+    return () => window.removeEventListener('auth:login', onExternalLogin);
   }, []);
 
   // Sessão infinita: não há timeout por inatividade nem logout periódico.

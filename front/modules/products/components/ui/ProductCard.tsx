@@ -179,7 +179,7 @@ const ProductCardComponent: React.FC<{
  </Link>
 
  {(ratingStats.total > 0 || (product.totalSold || 0) > 0 || canReview) && (
- <div className="flex items-center gap-1.5 text-[11px] text-content-muted leading-none">
+ <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-content-muted leading-none">
  {ratingStats.total > 0 && (
  <button
  type="button"
@@ -195,19 +195,15 @@ const ProductCardComponent: React.FC<{
  <button
  type="button"
  onClick={() => setShowReviewModal(true)}
- className="flex items-center gap-1 font-medium text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+ className="flex shrink-0 items-center gap-1 whitespace-nowrap font-medium text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
  >
- <span className="flex items-center gap-px" aria-hidden="true">
- {[1, 2, 3, 4, 5].map(star => (
- <Star key={star} className="w-3 h-3 text-amber-400" />
- ))}
- </span>
+ <Star className="w-3 h-3 text-amber-400" aria-hidden="true" />
  <span>Avaliar</span>
  </button>
  )}
  {(ratingStats.total > 0 || canReview) && (product.totalSold || 0) > 0 && <span aria-hidden="true">·</span>}
  {(product.totalSold || 0) > 0 && (
- <span>{product.totalSold! >= 1000 ? `${(product.totalSold! / 1000).toFixed(1)}k` : product.totalSold} {product.totalSold === 1 ? 'vendido' : 'vendidos'}</span>
+ <span className="whitespace-nowrap">{product.totalSold! >= 1000 ? `${(product.totalSold! / 1000).toFixed(1)}k` : product.totalSold} {product.totalSold === 1 ? 'vendido' : 'vendidos'}</span>
  )}
  </div>
  )}

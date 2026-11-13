@@ -18,7 +18,8 @@ import { useVersionCheck } from './modules/core/hooks/useVersionCheck';
 import { UpdateBanner } from './modules/core/components/ui/UpdateBanner';
 
 // Pages - lazy loaded para reduzir bundle inicial (evitar 504)
-const Dashboard = lazy(() => import('./modules/core/pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const loadDashboardPage = () => import('./modules/core/pages/Dashboard');
+const Dashboard = lazy(() => loadDashboardPage().then(m => ({ default: m.Dashboard })));
 const Orders = lazy(() => import('./modules/sales/pages/Orders').then(m => ({ default: m.Orders })));
 const Sales = lazy(() => import('./modules/sales/pages/Sales').then(m => ({ default: m.Sales })));
 const Users = lazy(() => import('./modules/admin/pages/Users').then(m => ({ default: m.Users })));
@@ -109,6 +110,13 @@ const PageLoadingFallback = () => (
   </div>
 );
 
+/** Um único ecrã de arranque (sessão + código da área): mesmo sítio e aspecto, para não "saltar". */
+const AppBootLoader = () => (
+  <div className="min-h-[100dvh] flex items-center justify-center bg-surface-base" role="status" aria-label="A carregar">
+    <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+  </div>
+);
+
 /** Wrapper que mostra popup de login em páginas acessíveis (ex: Sobre) */
 const AboutUsWithLoginPrompt: React.FC<{
   currentUser: User | null;
@@ -165,8 +173,21 @@ const AreaMarker: React.FC = () => {
   }, [pathname]);
   return null;
 };
-const PublicLayout = lazy(() => import('./components/layouts/PublicLayout').then(m => ({ default: m.PublicLayout })));
-const AdminLayout = lazy(() => import('./components/layouts/AdminLayout').then(m => ({ default: m.AdminLayout })));
+const loadPublicLayout = () => import('./components/layouts/PublicLayout');
+const loadAdminLayout = () => import('./components/layouts/AdminLayout');
+const PublicLayout = lazy(() => loadPublicLayout().then(m => ({ default: m.PublicLayout })));
+const AdminLayout = lazy(() => loadAdminLayout().then(m => ({ default: m.AdminLayout })));
+
+// Descarregar o código da área certa JÁ, em paralelo com a verificação da sessão — antes só começava
+// depois, e cada parte mostrava o seu próprio spinner (vários ecrãs de carregamento seguidos).
+if (typeof window !== 'undefined') {
+  if (window.location.pathname.startsWith('/admin')) {
+    loadAdminLayout().catch(() => {});
+    loadDashboardPage().catch(() => {});
+  } else {
+    loadPublicLayout().catch(() => {});
+  }
+}
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PageSkeleton, ConnectionErrorState } from './modules/core/components/ui/Skeleton';
 import { ShopProvider } from './contexts/ShopContext';
@@ -404,11 +425,7 @@ const App = () => {
   const handleDeleteSupplier = handlers.handleDeleteSupplier;
 
   if (isAuthLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-base">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
-      </div>
-    );
+    return <AppBootLoader />;
   }
 
   // Rotas públicas — função de render (NÃO um componente declarado dentro do App):
@@ -494,7 +511,7 @@ const App = () => {
         <CompatibilityRedirect />
         <AreaMarker />
         <MobileShell />
-        <Suspense fallback={<PageLoadingFallback />}>
+        <Suspense fallback={<AppBootLoader />}>
         <Routes>
           {currentUser ? (
             <Route path="/admin/*" element={
@@ -516,11 +533,14 @@ const App = () => {
               <Route index element={
                 <ProtectedRoute user={currentUser} permission="dashboard.view">
                   <TrackedPage pagePath="/admin" pageTitle="Dashboard">
+                    {/* Esqueleto desde o 1.º instante até haver dados: antes aparecia o dashboard vazio,
+                        depois o esqueleto e só então os dados (o `loading` só passa a true no efeito) */}
                     {loadError && !hasLoadedOnce ? (
                       <ConnectionErrorState onRetry={loadData} />
-                    ) : loading && !hasLoadedOnce ? (
+                    ) : !hasLoadedOnce ? (
                       <PageSkeleton />
                     ) : (
+                      <Suspense fallback={<PageSkeleton />}>
                       <Dashboard
                         orders={orders}
                         customers={customers}
@@ -534,6 +554,7 @@ const App = () => {
                           navigate(route);
                         }}
                       />
+                      </Suspense>
                     )}
                   </TrackedPage>
                 </ProtectedRoute>

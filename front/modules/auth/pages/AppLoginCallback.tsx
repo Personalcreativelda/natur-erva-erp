@@ -4,11 +4,12 @@ import { Loader2 } from 'lucide-react';
 import { authService } from '../services/authService';
 import { isClientUser } from '../../core/hooks/useUserPermissions';
 import { closeSystemBrowser } from '../../core/mobile/native';
+import { completeAppLogin } from '../appGoogleLogin';
 
 /**
  * /app-login?code=… — destino do login Google feito no browser do sistema.
  * Na app chega pelo link verificado (deep link); troca o código de uso único pela sessão e
- * recarrega para a área certa: clientes ficam na loja, equipa vai para o painel.
+ * entra directamente (sem recarregar a app): clientes ficam na loja, equipa vai para o painel.
  */
 export const AppLoginCallback: React.FC = () => {
   const [params] = useSearchParams();
@@ -22,12 +23,19 @@ export const AppLoginCallback: React.FC = () => {
       if (cancelled) return;
       if (!user) {
         // O código pode já ter sido usado pela própria app (polling): com sessão activa, segue em frente
-        if (localStorage.getItem('auth_token')) { closeSystemBrowser(); window.location.replace('/'); return; }
+        if (localStorage.getItem('auth_token')) {
+          authService.getCurrentUser().then(existing => {
+            if (cancelled) return;
+            if (!existing) { setError(redeemError || 'Não foi possível concluir o login.'); return; }
+            closeSystemBrowser();
+            completeAppLogin(existing, isClientUser(existing) ? '/' : '/admin');
+          });
+          return;
+        }
         setError(redeemError || 'Não foi possível concluir o login.'); return;
       }
       closeSystemBrowser();
-      // Recarregar: a verificação de sessão do App lê o token novo
-      window.location.replace(isClientUser(user) ? '/' : '/admin');
+      completeAppLogin(user, isClientUser(user) ? '/' : '/admin');
     });
     return () => { cancelled = true; };
   }, [params]);

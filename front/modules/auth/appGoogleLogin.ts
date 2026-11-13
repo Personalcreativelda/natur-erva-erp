@@ -10,6 +10,13 @@ import { closeSystemBrowser, openInSystemBrowser } from '../core/mobile/native';
  * sessão para esse nonce já existe — assim o login conclui na app mesmo que o Android abra o link
  * de regresso no browser em vez de na app.
  */
+/** Evento ouvido pelo useAppAuth: entra com o utilizador sem recarregar a app (evita ecrãs de loading repetidos). */
+export const AUTH_LOGIN_EVENT = 'auth:login';
+
+export function completeAppLogin(user: unknown, redirectTo?: string) {
+  window.dispatchEvent(new CustomEvent(AUTH_LOGIN_EVENT, { detail: { user, redirectTo } }));
+}
+
 const POLL_MS = 2000;
 const TIMEOUT_MS = 5 * 60 * 1000;
 let activeTimer: number | null = null;
@@ -39,8 +46,8 @@ export async function startAppGoogleLogin(): Promise<boolean> {
       if (user) {
         stop();
         closeSystemBrowser();
-        // Recarregar para o App ler a sessão nova: clientes ficam onde estavam, equipa vai para o painel
-        window.location.replace(isClientUser(user) ? window.location.pathname + window.location.search : '/admin');
+        // Sem recarregar: clientes ficam onde estavam, equipa vai para o painel
+        completeAppLogin(user, isClientUser(user) ? undefined : '/admin');
       }
     } finally {
       busy = false;
