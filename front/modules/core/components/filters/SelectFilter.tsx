@@ -37,6 +37,8 @@ export const SelectFilter = <T extends string>({
  'border border-border-default bg-surface-raised text-content-primary',
  'rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500',
  isCompact ? 'px-3 py-2 text-sm' : 'px-3 py-2 text-sm',
+ // w-full no contentor → o select também ocupa a largura toda (antes ficava do tamanho do texto)
+ className.split(/\s+/).includes('w-full') ? 'w-full' : '',
  selectClassName,
  ].join(' ')}
  >

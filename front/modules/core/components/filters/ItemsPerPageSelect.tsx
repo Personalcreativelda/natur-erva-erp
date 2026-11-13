@@ -34,6 +34,7 @@ export const ItemsPerPageSelect: React.FC<ItemsPerPageSelectProps> = ({
  className={[
  'bg-surface-raised border border-border-default text-content-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500',
  isCompact ? 'px-3 py-2 text-sm' : 'px-3 py-2 text-sm',
+ className.split(/\s+/).includes('w-full') ? 'flex-1 min-w-0' : '',
  selectClassName,
  ].join(' ')}
  aria-label={label || 'Itens por página'}

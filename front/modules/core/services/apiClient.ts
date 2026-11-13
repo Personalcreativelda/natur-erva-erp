@@ -62,8 +62,11 @@ async function request<T>(
   try {
     const res = await fetch(url, config);
 
-    if (res.status === 401) {
-      // Token expirado — limpar e recarregar para forçar login
+    // 401 só significa "sessão expirada" quando o pedido levava um token. Nos pedidos sem
+    // sessão (login, registo, Google, recuperar senha) o 401 é a resposta do próprio
+    // formulário — ex.: "Credenciais inválidas" — e tem de chegar ao utilizador tal como veio.
+    const sentToken = !!headers['Authorization'];
+    if (res.status === 401 && sentToken) {
       setApiToken(null);
       window.dispatchEvent(new CustomEvent('auth:logout', { detail: { reason: 'token_expired' } }));
       throw new ApiError('Sessão expirada. Faça login novamente.', 401);

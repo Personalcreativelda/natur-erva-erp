@@ -196,6 +196,32 @@ export const authService = {
     }
   },
 
+  /**
+   * Login Google na app Android (o Google bloqueia OAuth em WebViews): no browser do sistema,
+   * depois de entrar, pede um código de uso único para devolver a sessão à app.
+   */
+  async requestAppHandoffCode(): Promise<{ code?: string; error?: string }> {
+    try {
+      const { code } = await api.post<{ code: string }>('/auth/app-handoff', {});
+      return { code };
+    } catch (err: any) {
+      return { error: err.message || 'Não foi possível concluir o login.' };
+    }
+  },
+
+  /** Na app: troca o código de uso único pela sessão. */
+  async redeemAppHandoffCode(code: string): Promise<LoginResult> {
+    try {
+      const result = await api.post<{ token: string; user: any }>('/auth/app-handoff/redeem', { code }, { noAuth: true });
+      if (!result?.token || !result?.user) return { user: null, error: 'Resposta inválida do servidor' };
+      setApiToken(result.token);
+      currentUser = mapUser(result.user);
+      return { user: currentUser };
+    } catch (err: any) {
+      return { user: null, error: err.message || 'Não foi possível concluir o login.' };
+    }
+  },
+
   async signInWithGoogleCredential(credential: string): Promise<LoginResult> {
     try {
       const result = await api.post<{ token: string; user: any }>('/auth/google', { credential }, { noAuth: true });

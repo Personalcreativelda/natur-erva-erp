@@ -2864,6 +2864,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  Período
  </label>
  <PeriodFilter
+ fullWidth
  selectedPeriod={filterPeriod}
  onPeriodChange={(period) => {
  setFilterPeriod(period);
@@ -2909,8 +2910,17 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  )}
 
 
+ {/* Sem pedidos para os filtros actuais (antes ficava só uma caixa vazia) */}
+ {paginatedOrders.length === 0 && (
+ <div className="flex flex-col items-center justify-center text-center py-14 px-6 bg-surface-raised border border-border-default rounded-2xl">
+ <Package className="w-10 h-10 text-content-muted opacity-60 mb-3" />
+ <p className="font-semibold text-content-primary">Nenhum pedido encontrado</p>
+ <p className="text-sm text-content-muted mt-1 max-w-xs">Não há pedidos para o período e filtros escolhidos. Experimente outro período ou limpe a pesquisa.</p>
+ </div>
+ )}
+
  {/* Grid View */}
- {viewMode === 'grid' && (
+ {viewMode === 'grid' && paginatedOrders.length > 0 && (
  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
  {paginatedOrders.map(order => {
  const isSelected = selectedOrderIds.includes(order.id);
@@ -3164,7 +3174,7 @@ ${order.trackingCode ? `<div class="track-box"><span style="font-size:10px;color
  )}
 
  {/* List View - Tabela */}
- {viewMode === 'list' && (
+ {viewMode === 'list' && paginatedOrders.length > 0 && (
  <div className="overflow-auto max-h-[calc(100vh-280px)] rounded-lg border border-border-default">
  <table className="w-full border-collapse">
  {/* Cabeçalho da Tabela */}

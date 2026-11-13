@@ -3,7 +3,6 @@ import { ModalPortal } from '../ui/ModalPortal';
 import { X, User, Mail, Lock, Phone, Loader2, Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
 import { authService } from '../../../auth/services/authService';
 import { User as UserType } from '../../../core/types/types';
-import { Logo } from '../ui/Logo';
 
 function getPasswordStrength(p: string): { score: number; label: string } {
  if (!p) return { score: 0, label: 'Fraca' };
@@ -121,8 +120,8 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ onClose, onSuccess }) 
  };
 
  return (
- <ModalPortal open onClose={onClose} zIndex={10001} className="p-4">
- <div className="bg-surface-raised rounded-2xl shadow-2xl max-w-md w-full mx-auto max-h-[92dvh] overflow-y-auto border border-border-default animate-scaleIn relative">
+ <ModalPortal open onClose={onClose} zIndex={10001} className="p-0 sm:p-4">
+ <div className="bg-surface-raised rounded-2xl shadow-2xl max-w-md w-full mx-auto max-h-[92dvh] overflow-y-auto border border-border-default animate-scaleIn relative max-sm:min-h-[100dvh] max-sm:max-h-[100dvh] max-sm:max-w-none max-sm:rounded-none max-sm:border-0 max-sm:shadow-none max-sm:pt-14">
  <button aria-label="Fechar"
  onClick={onClose}
  className="tap-target absolute top-4 right-4 text-content-muted hover:text-content-secondary transition-colors z-10"
@@ -132,9 +131,6 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ onClose, onSuccess }) 
 
  <div className="px-6 sm:px-8 py-5 sm:py-6">
  <div className="text-center mb-3">
- <div className="mb-2 flex justify-center" style={{ maxWidth: '50%', margin: '0 auto' }}>
- <Logo className="h-4" isDarkMode={document.documentElement.classList.contains('dark')} />
- </div>
  <h2 className="text-lg font-bold text-content-primary mb-1">
  Criar Conta
  </h2>

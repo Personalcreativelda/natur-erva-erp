@@ -57,6 +57,21 @@ export const getLaunchUrl = async (): Promise<string | null> => {
   }
 };
 
+/** Browser do sistema disponível (plugin Browser, APK 1.2+). */
+export const canOpenSystemBrowser = (): boolean => !!plugin('Browser');
+
+/** Abre um URL no browser do sistema (Custom Tab) — ex.: login Google, que o Google bloqueia em WebViews. */
+export const openInSystemBrowser = async (url: string): Promise<boolean> => {
+  const Browser = plugin('Browser');
+  if (!Browser) return false;
+  await Browser.open({ url, presentationStyle: 'popover' });
+  return true;
+};
+
+export const closeSystemBrowser = (): void => {
+  try { plugin('Browser')?.close?.(); } catch { /* já fechado */ }
+};
+
 export const exitApp = (): void => {
   plugin('App')?.exitApp?.();
 };

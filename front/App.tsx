@@ -70,6 +70,9 @@ const AdminBlog = lazy(() => import('./modules/admin/pages/Blog').then(m => ({ d
 const BlogPage = lazy(() => import('./modules/shop/pages/BlogPage').then(m => ({ default: m.BlogPage })));
 const BlogPostPage = lazy(() => import('./modules/shop/pages/BlogPostPage').then(m => ({ default: m.BlogPostPage })));
 const ResetPasswordPage = lazy(() => import('./modules/shop/pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
+// Login Google na app Android (browser do sistema → código de uso único → app)
+const AppGoogleLogin = lazy(() => import('./modules/auth/pages/AppGoogleLogin'));
+const AppLoginCallback = lazy(() => import('./modules/auth/pages/AppLoginCallback'));
 const SobreNos = lazy(() => import('./modules/shop/pages/SobreNos'));
 const Politica = lazy(() => import('./modules/shop/pages/Politica'));
 const Contactos = lazy(() => import('./modules/shop/pages/Contactos'));
@@ -452,6 +455,8 @@ const App = () => {
             <Route path="politica" element={<Suspense fallback={<PageLoadingFallback />}><Politica /></Suspense>} />
             <Route path="contactos" element={<Suspense fallback={<PageLoadingFallback />}><Contactos /></Suspense>} />
             <Route path="reset-password" element={<Suspense fallback={<PageLoadingFallback />}><ResetPasswordPage /></Suspense>} />
+            <Route path="entrar-google" element={<Suspense fallback={<PageLoadingFallback />}><AppGoogleLogin /></Suspense>} />
+            <Route path="app-login" element={<Suspense fallback={<PageLoadingFallback />}><AppLoginCallback /></Suspense>} />
             {/* Rastreio público de encomendas — sem autenticação */}
             <Route path="rastrear-encomenda" element={<Suspense fallback={<PageLoadingFallback />}><OrderTrackingPage /></Suspense>} />
             {/* Scanner remoto POS — público, token na URL */}

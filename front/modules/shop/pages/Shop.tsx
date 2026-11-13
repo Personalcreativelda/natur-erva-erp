@@ -812,8 +812,9 @@ export const Shop: React.FC<ShopProps> = ({ currentUser: propCurrentUser, onLogi
             ...categories.filter(c => (counts.get(c.name) || 0) > 0).map(c => ({ id: c.id, name: c.name, label: c.name, count: counts.get(c.name) || 0 })),
           ];
           return (
-            <div className="chips-fade -mx-4 sm:mx-0 mb-5 overflow-x-auto scrollbar-hide">
-              <div className="flex gap-2 px-4 sm:px-0 sm:flex-wrap w-max sm:w-auto" role="group" aria-label="Filtrar por categoria">
+            // Categorias em várias linhas (antes deslizavam na horizontal e as últimas ficavam escondidas)
+            <div className="mb-5">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por categoria">
                 {chips.map(c => {
                   const active = selectedCategory === c.name;
                   return (

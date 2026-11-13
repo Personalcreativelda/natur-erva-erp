@@ -235,6 +235,62 @@ router.get('/me', async (req, res) => {
   }
 });
 
+// ─── Login Google na app Android ─────────────────────────────────────────────
+// O Google não permite OAuth dentro de WebViews (erro disallowed_useragent). A app abre o
+// login no browser do sistema; depois de entrar, o site pede aqui um código de uso único
+// (2 min) e devolve-o à app pelo link verificado https://www.natur-erva.co.mz/app-login.
+// A app troca o código pela sessão — o token nunca aparece no link nem no histórico.
+const APP_HANDOFF_TTL_MS = 2 * 60 * 1000;
+const appHandoffCodes = new Map(); // code -> { token, expiresAt }
+
+function purgeExpiredHandoffs() {
+  const now = Date.now();
+  for (const [code, entry] of appHandoffCodes) if (entry.expiresAt < now) appHandoffCodes.delete(code);
+}
+
+// POST /api/auth/app-handoff  (autenticado) → { code }
+router.post('/app-handoff', (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer '))
+      return res.status(401).json({ error: 'Não autenticado' });
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, JWT_SECRET);
+
+    purgeExpiredHandoffs();
+    const code = randomBytes(24).toString('hex');
+    appHandoffCodes.set(code, { token, expiresAt: Date.now() + APP_HANDOFF_TTL_MS });
+    res.json({ code });
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError')
+      return res.status(401).json({ error: 'Token inválido ou expirado' });
+    res.status(500).json({ error: 'Erro interno' });
+  }
+});
+
+// POST /api/auth/app-handoff/redeem  { code } → { token, user }  (uso único)
+router.post('/app-handoff/redeem', async (req, res) => {
+  try {
+    purgeExpiredHandoffs();
+    const { code } = req.body || {};
+    const entry = code && appHandoffCodes.get(code);
+    if (!entry)
+      return res.status(400).json({ error: 'Link de login inválido ou expirado. Tente entrar novamente.' });
+    appHandoffCodes.delete(code);
+
+    const decoded = jwt.verify(entry.token, JWT_SECRET);
+    const { rows } = await pool.query('SELECT * FROM profiles WHERE id = $1 AND is_active = true', [decoded.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Utilizador não encontrado' });
+    const roles = await getRoles(rows[0].id, rows[0].role);
+    res.json({ token: entry.token, user: buildUserResponse(rows[0], roles) });
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError')
+      return res.status(400).json({ error: 'Sessão expirada. Tente entrar novamente.' });
+    console.error('[Auth AppHandoff]', err);
+    res.status(500).json({ error: 'Erro interno' });
+  }
+});
+
 // ─── POST /api/auth/logout ────────────────────────────────────────────────────
 router.post('/logout', (req, res) => {
   res.json({ success: true });

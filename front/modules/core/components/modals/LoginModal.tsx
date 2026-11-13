@@ -3,10 +3,10 @@ import { ModalPortal } from '../ui/ModalPortal';
 import { Eye, EyeOff, Loader2, X } from 'lucide-react';
 import { User } from '../../../core/types/types';
 import { authService } from '../../../auth/services/authService';
-import { Logo } from '../ui/Logo';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { SignUpModal } from './SignUpModal';
 import { GoogleLogin } from '@react-oauth/google';
+import { canOpenSystemBrowser, isNativeApp, openInSystemBrowser } from '../../mobile/native';
 
 interface LoginModalProps {
  onLogin: (identifier: string, password: string) => void;
@@ -81,10 +81,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
  }
  };
 
+ const inNativeApp = isNativeApp();
+
  return (
  <>
- <ModalPortal open onClose={onClose} zIndex={10000} className="p-4">
- <div className="relative bg-surface-raised rounded-3xl px-5 sm:px-7 pt-6 pb-5 max-w-sm w-full mx-auto shadow-2xl border border-border-default animate-scaleIn max-h-[92dvh] overflow-y-auto">
+ <ModalPortal open onClose={onClose} zIndex={10000} className="p-0 sm:p-4">
+ <div className="relative bg-surface-raised rounded-3xl px-5 sm:px-7 pt-6 pb-5 max-w-sm w-full mx-auto shadow-2xl border border-border-default animate-scaleIn max-h-[92dvh] overflow-y-auto max-sm:min-h-[100dvh] max-sm:max-h-[100dvh] max-sm:max-w-none max-sm:rounded-none max-sm:border-0 max-sm:shadow-none max-sm:pt-14">
  <button
  type="button"
  onClick={onClose}
@@ -94,10 +96,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
  <X className="w-5 h-5" />
  </button>
 
- <div className="text-center mb-5">
- <div className="flex justify-center mb-4">
- <Logo width={120} height={40} className="w-auto" isDarkMode={document.documentElement.classList.contains('dark')} />
- </div>
+ <div className="text-center mb-5 pt-1">
  <h2 className="text-xl font-bold text-content-primary">Entrar</h2>
  <p className="text-content-muted text-sm mt-1">Aceda à sua conta para continuar</p>
  </div>
@@ -189,7 +188,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
  </button>
 
  {/* Google — só aparece se estiver configurado (antes mostrava um botão desactivado) */}
- {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+ {import.meta.env.VITE_GOOGLE_CLIENT_ID && (!inNativeApp || canOpenSystemBrowser()) && (
  <>
  <div className="flex items-center gap-3 text-xs text-content-muted">
  <span className="h-px flex-1 bg-border-default" />
@@ -199,6 +198,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onUser
  <div className="flex justify-center min-h-[44px]">
  {googleLoading
  ? <div className="flex items-center gap-2 text-content-muted text-sm"><Loader2 className="w-4 h-4 animate-spin" /> A autenticar...</div>
+ : inNativeApp
+ ? (
+ // Na app Android o Google bloqueia o login dentro da WebView: abre o browser do sistema
+ <button
+ type="button"
+ onClick={() => { openInSystemBrowser(`${window.location.origin}/entrar-google`); }}
+ className="w-full max-w-[300px] h-11 flex items-center justify-center gap-3 rounded-full border border-border-default bg-white text-[#1f1f1f] font-medium text-[15px] hover:bg-gray-50 active:bg-gray-100 transition-colors"
+ >
+ <svg viewBox="0 0 48 48" className="w-5 h-5" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+ Continuar com Google
+ </button>
+ )
  : <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Erro ao autenticar com Google.')} useOneTap={false} text="continue_with" shape="pill" width="300" />
  }
  </div>

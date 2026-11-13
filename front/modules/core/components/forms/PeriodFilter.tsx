@@ -21,6 +21,8 @@ export interface PeriodFilterProps {
  customStartDate?: string;
  customEndDate?: string;
  onCustomDatesChange?: (start: string, end: string) => void;
+ /** Ocupa a largura toda do contentor (ex.: grelha de filtros no telemóvel) */
+ fullWidth?: boolean;
 }
 
 export const PeriodFilter: React.FC<PeriodFilterProps> = ({
@@ -28,7 +30,8 @@ export const PeriodFilter: React.FC<PeriodFilterProps> = ({
  onPeriodChange,
  customStartDate,
  customEndDate,
- onCustomDatesChange
+ onCustomDatesChange,
+ fullWidth = false
 }) => {
  const [isOpen, setIsOpen] = React.useState(false);
  const [showCustomPicker, setShowCustomPicker] = React.useState(false);
@@ -257,7 +260,7 @@ export const PeriodFilter: React.FC<PeriodFilterProps> = ({
  }, [isOpen]);
 
  return (
- <div className="relative flex items-center gap-3 flex-wrap">
+ <div className={`relative flex items-center gap-3 flex-wrap ${fullWidth ? 'w-full' : ''}`}>
  <button
  ref={buttonRef}
  type="button"
@@ -266,7 +269,7 @@ export const PeriodFilter: React.FC<PeriodFilterProps> = ({
  e.stopPropagation();
  setIsOpen(!isOpen);
  }}
- className={`flex items-center gap-2 px-4 py-2 bg-surface-raised border rounded-lg hover:bg-surface-base transition-colors text-sm font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-brand-500 ${
+ className={`${fullWidth ? 'w-full justify-between' : ''} flex items-center gap-2 px-4 py-2 bg-surface-raised border rounded-lg hover:bg-surface-base transition-colors text-sm font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-brand-500 ${
  selectedPeriod !== 'today' || customStartDate || customEndDate
  ? 'border-brand-500 dark:border-brand-400 bg-brand-600/10 dark:bg-brand-600/20 text-brand-700 dark:text-brand-300 '
  : 'border-border-strong text-content-primary'
