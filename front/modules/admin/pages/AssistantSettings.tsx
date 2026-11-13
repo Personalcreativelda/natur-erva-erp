@@ -118,7 +118,7 @@ export function AssistantSettings({ showToast }: Props) {
             <div>
               <h3 className="font-semibold text-content-primary flex items-center gap-2"><Bot className="w-4 h-4" /> Assistente ativo</h3>
               <p className="text-xs text-content-muted mt-1">
-                Nesta fase o assistente só responde a perguntas (stock, vendas, encomendas) — não altera nada no sistema.
+                Responde a perguntas (stock, vendas, encomendas) e trata dos pagamentos M-Pesa/e-Mola: confirmar, rejeitar e associar SMS do comerciante.
               </p>
             </div>
             <label className="inline-flex items-center cursor-pointer shrink-0">
@@ -193,6 +193,12 @@ export function AssistantSettings({ showToast }: Props) {
             <div className="bg-surface-raised border border-border-default rounded-xl p-5 space-y-3">
               <p className="text-xs font-semibold text-content-muted uppercase tracking-wide">Números Autorizados</p>
               <p className="text-xs text-content-muted">Só estes números podem falar com o assistente. Mensagens de qualquer outro número são ignoradas.</p>
+              <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/50 p-3 text-xs text-green-800 dark:text-green-300 space-y-1">
+                <p className="font-semibold">Pagamentos M-Pesa / e-Mola</p>
+                <p>Estes números recebem o aviso "💰 Pagamento a confirmar" sempre que um cliente envia o código da transação, e podem responder:</p>
+                <p className="font-mono">CONFIRMAR NE-…  ·  REJEITAR NE-… motivo</p>
+                <p>Também podem reencaminhar para aqui a SMS de confirmação que o comerciante recebe — o pedido com o mesmo código fica pago automaticamente.</p>
+              </div>
               <div className="flex gap-2">
                 <input value={newNumber} onChange={e => setNewNumber(e.target.value)} onKeyDown={e => e.key === 'Enter' && addNumber()}
                   placeholder="258841234567" className={inputCls} />

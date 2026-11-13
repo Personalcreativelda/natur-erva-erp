@@ -5,7 +5,7 @@ import { AdminBottomNavigation } from './AdminBottomNavigation';
 import { RouteTransition } from '../../mobile/RouteTransition';
 
 import { User, UserRole } from '../../../core/types/types';
-import { X, LogOut, ChevronDown, User as UserIcon, Globe, LayoutDashboard, ShoppingCart, TrendingUp, Truck, Users, Package, ShoppingBag, BarChart3, Activity, FileText, ArrowLeftRight, Wallet, Repeat, Share2, Megaphone, Image, Tag, Ruler, List, ClipboardCheck, AlertTriangle, Scale, Shield, Boxes, Store, MapPin, CreditCard, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, RefreshCw, FolderOpen, HeartPulse, Search } from 'lucide-react';
+import { X, LogOut, ChevronDown, User as UserIcon, Globe, LayoutDashboard, ShoppingCart, TrendingUp, Truck, Users, Package, ShoppingBag, BarChart3, Activity, FileText, ArrowLeftRight, Wallet, Repeat, Share2, Megaphone, Image, Tag, Ruler, List, ClipboardCheck, AlertTriangle, Scale, Shield, Boxes, Store, MapPin, CreditCard, BookOpen, Building2, UserCog, FolderKanban, Headphones, Clock, MessageSquare, RefreshCw, FolderOpen, HeartPulse, Search, Bot } from 'lucide-react';
 import { useLanguage } from '../../../core/contexts/LanguageContext';
 import { Logo } from '../ui/Logo';
 import { Avatar } from '../ui/Avatar';
@@ -263,6 +263,7 @@ export const Layout: React.FC<LayoutProps> = ({
  { id: 'hr', label: 'Recursos Humanos', icon: UserCog, permission: 'hr.view', group: 'gestao' },
  { id: 'projects', label: 'Projectos', icon: FolderKanban, permission: 'projects.view', group: 'gestao' },
  { id: 'helpdesk', label: 'Central de Ajuda', icon: Headphones, permission: 'helpdesk.view', group: 'gestao' },
+ { id: 'assistant', label: 'Assistente IA', icon: Bot, permission: 'system.backup', group: 'gestao' },
  { id: 'messaging', label: 'Mensagens', icon: MessageSquare, permission: 'messaging.view', group: 'gestao' },
  { id: 'documents', label: 'Documentos', icon: FolderOpen, permission: 'documents.view', group: 'gestao' },
 
